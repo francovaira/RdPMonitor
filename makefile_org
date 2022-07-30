@@ -1,0 +1,32 @@
+CFLAGS = -Wall -pedantic -Werror -Wextra -Wconversion -std=gnu11
+
+TP1: init list.o md5.o deliveryManager.o deliveryManagerSocket.o
+	mkdir -p build
+	gcc -o build/deliveryManager deliveryManager.o -lrt
+	gcc deliveryManagerSocket.o list.o md5.o -o build/deliveryManagerSocket -lrt -pthread
+	make clean_post
+
+init:
+	make clean
+
+deliveryManager.o: deliveryManager.c deliveryManager.h
+	gcc -c deliveryManager.c
+
+deliveryManagerSocket.o: deliveryManagerSocket.c deliveryManagerSocket.h
+	gcc -c deliveryManagerSocket.c
+
+list.o: ../list_utils/list.c ../list_utils/list.h ../list_utils/shared.h
+	gcc -c -I../list_utils ../list_utils/list.c
+
+md5.o: ../MD5/md5.c ../MD5/md5.h ../MD5/global.h
+	gcc -c -I../MD5 ../MD5/md5.c
+
+clean:
+	rm -f *.o
+	rm -f *.so
+	rm -f build/deliveryManager
+	rm -f build/deliveryManagerSocket
+
+clean_post:
+	rm -f *.o
+	rm -f *.so
