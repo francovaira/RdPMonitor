@@ -5,7 +5,6 @@ MONITOR: init main.o monitor.o procesador_petri.o
 	mkdir -p build
 	gcc main.o monitor.o procesador_petri.o -o build/main -pthread
 	make clean_post
-	clear
 	./build/main
 
 init:

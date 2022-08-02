@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
 #include "monitor.h"
 #include "procesador_petri.h"
 
@@ -21,6 +22,7 @@ typedef struct segmento
     int *secuencia;
     unsigned int segmento_size;
     monitor_t *monitor;
+    char *id;
 } segmento_t;
 
 

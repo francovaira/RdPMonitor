@@ -22,17 +22,20 @@
 
 
 //CONFIGURACION RED DE PETRI
-#define PLAZAS 10
-#define TRANSICIONES 11
-#define HILOS 3
+#define PLAZAS 8
+#define TRANSICIONES 6
+#define HILOS 2
+
+/*#define MARCADO \
+0,0,0,0,1,0,1,1,0,0*/
 
 #define MARCADO \
-0,0,0,0,1,0,1,1,0,0
+1,0,0,1,0,0,0,3 
 
 #define NOPERENNE \
-1,0,1,0,0,1,1,1,0,0,1
+1,0,1,0,0,1
 
-#define INCIDENCIA \
+/*#define INCIDENCIA \
 1,-1,0,0,0,0,0,0,0,0,0 ,\
 0,1,-1,0,0,-1,0,0,0,0,0,\
 0,0,1,-1,0,0,1,0,0,0,0 ,\
@@ -42,7 +45,17 @@
 -1,0,1,0,0,1,0,0,0,0,0 ,\
 0,0,0,0,0,0,1,0,-1,0,1 ,\
 0,0,0,0,0,0,0,0,1,-1,0 ,\
-0,0,0,0,0,0,0,1,-1,0,0
+0,0,0,0,0,0,0,1,-1,0,0*/
+
+#define INCIDENCIA \
+-1,0,0,0,1,0,\
+1,0,0,-1,0,0,\
+0,0,0,1,-1,0,\
+0,-1,0,0,0,1,\
+0,1,-1,0,0,0,\
+0,0,1,0,0,-1,\
+1,-1,0,0,0,0,\
+-1,1,0,0,0,0
 
 
 // CONFIGURACION WIFI

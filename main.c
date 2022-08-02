@@ -6,11 +6,13 @@
 
 int main(void)
 {
-    pthread_t main_thread;
+    pthread_t threadPROD;
+    pthread_t threadCONS;
     pthread_attr_t attr;
     monitor_t monitor;
     procesador_petri_t petri;
-    segmento_t segmento;
+    segmento_t segmentoPROD;
+    segmento_t segmentoCONS;
     int s;
 
     printf("\nholis por aca 1\n");
@@ -18,10 +20,17 @@ int main(void)
     procesador_de_petri_init(&petri);
     monitor_init(&monitor, &petri);
 
-    int seq[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    segmento.secuencia = seq;
-    segmento.segmento_size = 11;
-    segmento.monitor = &monitor;
+    int seqPROD[3] = {0, 3, 4}; // T invariante del productor
+    segmentoPROD.secuencia = seqPROD;
+    segmentoPROD.segmento_size = 3;
+    segmentoPROD.monitor = &monitor;
+    segmentoPROD.id = "PROD";
+    
+    int seqCONS[3] = {1, 2, 5}; // T invariante del consumidor
+    segmentoCONS.secuencia = seqCONS;
+    segmentoCONS.segmento_size = 3;
+    segmentoCONS.monitor = &monitor;
+    segmentoCONS.id = "CONS";
 
     pthread_attr_init(&attr);
     s = pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
@@ -32,10 +41,8 @@ int main(void)
     if (s != 0)
         handle_error_en(s, "pthread_attr_setschedpolicy");
 
-    for (int i = 0; i < HILOS; ++i)
-    {
-        pthread_create(&main_thread, &attr, thread_run, (void *) &segmento);
-    }
+    pthread_create(&threadPROD, &attr, thread_run, (void *) &segmentoPROD);
+    pthread_create(&threadCONS, &attr, thread_run, (void *) &segmentoCONS);
 
     pause();
 }
@@ -43,13 +50,20 @@ int main(void)
 static void *thread_run(void *arg)
 {
     segmento_t *self = arg;
+    long int cantidad_disparos;
+    time_t t;
+    time(&t);
+    //printf("\n current time is : %s",ctime(&t));
+
     while (1)
     {
         for (int i = 0; i < self->segmento_size; ++i)
         {
             if(self->secuencia[i] != NULL_TRANSITION)
             {
-                self->monitor->disparar(self->monitor,self->secuencia[i]); // FIXME original
+                printf("HILO %s ##### cantidad de disparos: %ld\n", self->id, ++cantidad_disparos);
+                self->monitor->disparar(self->monitor,self->secuencia[i]);
+                //printf("time: %s\n\n", ctime(&t));
             }
             
             // ejecuta las acciones correspondientes al disparo
@@ -57,9 +71,7 @@ static void *thread_run(void *arg)
             {
                 self->actions[i](self->objetos[i]);
             }*/
-            sleep(1);
         }
-        printf("post delay\n");
     }
 }
 
