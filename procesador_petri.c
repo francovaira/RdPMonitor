@@ -31,13 +31,11 @@ static int petri_disparar(procesador_petri_t *petri, int disparo)
 void petri_toString(procesador_petri_t *petri)
 {
     printf("MARCADO: ");
-    //ESP_LOGW(TAG, "MARCADO: "); // FIXME reemplazar por printf
-    for (int i = 0; i < PLAZAS; ++i) {
-        //ESP_LOGW(TAG, "%li, ", petri->matriz_estado[i]); // FIXME reemplazar por printf
+    for (int i = 0; i < PLAZAS; ++i)
+    {
         printf("%li, ", petri->matriz_estado[i]);
     }
     printf("\n");
-    //ESP_LOGW(TAG,"\n"); // FIXME reemplazar por printf
 }
 
 void procesador_de_petri_init(procesador_petri_t *petri)

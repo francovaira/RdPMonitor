@@ -20,9 +20,12 @@ int main(void)
     procesador_de_petri_init(&petri);
     monitor_init(&monitor, &petri);
 
-    int seqPROD[3] = {0, 3, 4}; // T invariante del productor
+    //int seqPROD[3] = {0, 3, 4}; // T invariante del productor
+    //int seqPROD[4] = {2, 12, 13, 3}; // Se ponen los numeros de transicion - 1 porque arranca a contar desde cero
+    //int seqPROD[8] = {2, 12, 20, 22, 19, 9, 5, 1}; // Se ponen los numeros de transicion - 1 porque arranca a contar desde cero -- SECUENCIA RONDA
+    int seqPROD[18] = {0, 6, 16, 21, 13, 10, 14, 9, 5, 1, 2, 12, 20, 22, 19, 9, 5, 1}; // SECUENCIA MAS RANDOM
     segmentoPROD.secuencia = seqPROD;
-    segmentoPROD.segmento_size = 3;
+    segmentoPROD.segmento_size = 18;
     segmentoPROD.monitor = &monitor;
     segmentoPROD.id = "PROD";
     
@@ -42,7 +45,7 @@ int main(void)
         handle_error_en(s, "pthread_attr_setschedpolicy");
 
     pthread_create(&threadPROD, &attr, thread_run, (void *) &segmentoPROD);
-    pthread_create(&threadCONS, &attr, thread_run, (void *) &segmentoCONS);
+    //pthread_create(&threadCONS, &attr, thread_run, (void *) &segmentoCONS);
 
     pause();
 }
@@ -61,7 +64,7 @@ static void *thread_run(void *arg)
         {
             if(self->secuencia[i] != NULL_TRANSITION)
             {
-                printf("HILO %s ##### cantidad de disparos: %ld\n", self->id, ++cantidad_disparos);
+                printf("HILO %s ##### cantidad de disparos: %ld --- Intentando disparar transicion %d\n", self->id, ++cantidad_disparos, self->secuencia[i]);
                 self->monitor->disparar(self->monitor,self->secuencia[i]);
                 //printf("time: %s\n\n", ctime(&t));
             }

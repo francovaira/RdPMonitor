@@ -12,16 +12,41 @@ static void print_marcado(procesador_petri_t *petri)
     printf("\r\n");
 }
 
+static void print_occupancy(procesador_petri_t *petri)
+{
+    printf("------------------- OCCUPANCY -------------------");
+
+    for (int i = 0; i < PLAZAS; ++i)
+    {
+        if(i%2==0)
+        {
+            if(i%3==0)
+            {
+                printf("\n");
+            }
+
+            if(petri->matriz_estado[i] == 1)
+            {
+                printf("X   ");
+            }
+            else
+            {
+                printf("O   ");
+            }
+        }
+    }
+    printf("\r\n\n");
+}
+
 void monitor_disparar2(monitor_t *monitor, int disparo)
 {
     pthread_mutex_lock(&monitor->entrada);
 
     int k = monitor->petri->solicitud_disparo(monitor->petri, disparo); // SOLO CONSULTA SI PUEDE DISPARAR
-    //if (k == 0) // 0 si no se pudo disparar
-    while (k == 0)
+    while (k == 0) // if (k == 0) no se pudo disparar
     {
         #if DEBUG
-            //ESP_LOGW(TAG, "No Sensibilizada: %i -- espera\n", disparo); // FIXME reemplazar por printf
+            printf("No sensibilizada: %i -- espera\n", disparo);
         #endif
 //      if(monitor->petri->matriz_noperennes[disparo])
 //      {
@@ -37,16 +62,16 @@ void monitor_disparar2(monitor_t *monitor, int disparo)
     monitor->petri->disparar(monitor->petri, disparo); // DISPARA EFECTIVAMENTE
 
     #if DEBUG
-        //ESP_LOGW(TAG, "Si sensibilizada: %i -- disparo\n",disparo); // FIXME reemplazar por printf
         print_marcado(monitor->petri);
-        printf("Si sensibilizada: %i -- disparo\n",disparo);
+        print_occupancy(monitor->petri);
+        printf("Si sensibilizada: %i -- disparo\n", disparo);
         // monitor->petri->toString(monitor->petri);
     #endif
 
     for (int i = 0; i < TRANSICIONES; ++i)
     {
-        pthread_cond_broadcast(&monitor->condition[i]);
-        //pthread_cond_signal(&monitor->condition[i]); // FIXME original
+        //pthread_cond_broadcast(&monitor->condition[i]);
+        pthread_cond_signal(&monitor->condition[i]); // FIXME original
     }
     pthread_mutex_unlock(&monitor->entrada);
 }
