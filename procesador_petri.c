@@ -4,6 +4,7 @@
 static const char* TAG = "Petri";
 static long int matriz_estado_aux[PLAZAS];
 
+// Retorna 1 si es posible disparar la red con la transicion deseada. En caso contrario retorna cero.
 static int petri_solicitud_disparo(procesador_petri_t *petri, int t_disparar)
 {
     for (int i = 0; i < PLAZAS; ++i)
@@ -15,6 +16,7 @@ static int petri_solicitud_disparo(procesador_petri_t *petri, int t_disparar)
     return 1;
 }
 
+// Dispara la red dada la transicion [disparo]. Retorna 1 si pudo disparar, 0 caso contrario
 static int petri_disparar(procesador_petri_t *petri, int disparo)
 {
     if(petri_solicitud_disparo(petri, disparo))
