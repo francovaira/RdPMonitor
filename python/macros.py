@@ -9,8 +9,7 @@ TRANSICIONES = 6
 HILOS = 2
 
 # PRODUCTOR CONSUMIDOR
-#MARCADO = [1,0,0,1,0,0,0,3]
-MARCADO = [1,0,0,1,0,0,3,0]
+MARCADO = [1,0,0,1,0,0,0,3]
 
 INCIDENCIA = [  [-1,0,0,0,1,0],
                 [1,0,0,-1,0,0],
