@@ -1,20 +1,8 @@
 from threading import Thread
 from time import perf_counter
 
-
 def replace(filename, substr, new_substr):
     print(f'Processing the file {filename} with {substr} and {new_substr}')
-    # get the contents of the file
-    #with open(filename, 'r') as f:
-    #    content = f.read()
-
-    # replace the substr by new_substr
-    #content = content.replace(substr, new_substr)
-
-    # write data into the file
-    #with open(filename, 'w') as f:
-    #    f.write(content)
-
 
 def main():
     filenames = [
@@ -30,16 +18,11 @@ def main():
         'c:/temp/test10.txt',
     ]
 
-    # create threads
-    #threads = [Thread(target=replace, args=(filename, 'id', 'ids'))
-    #        for filename in filenames]
-
     # create and start 10 threads
     threads = []
     for n in range(1, 8):
         t = Thread(target=replace, args=(filenames[n], 'id', 'new_id'))
         threads.append(t)
-        #t.start()
 
     # start the threads
     for thread in threads:
