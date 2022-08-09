@@ -67,14 +67,9 @@ for i in range(cols):
     for j in range(rows):
         grid[i][j] = spot(i, j)
 
-
 # Set start and end node
 start = grid[1][1]
 end = grid[3][6]
-# SHOW RECT
-# for i in range(cols):
-#     for j in range(rows):
-#         grid[i][j].show((255, 255, 255), 1)
 
 for i in range(0,rows):
     grid[0][i].show(grey, 0)
@@ -162,6 +157,53 @@ def heurisitic(n, e):
     d = abs(n.i - e.i) + abs(n.j - e.j)
     return d
 
+# returns a list of speeds and distances for the robot to drive along the path
+def getSequenceParameters(cellSequence):
+    currentCell = cellSequence
+    reversedCellSequence = []
+    orderedCellSequence = []
+    pathSequence = []
+    oneCellDistance = 1
+
+    # get ordered sequence from cell sequence pointers
+    for i in range(round(cellSequence.f)):
+        reversedCellSequence.append(currentCell)
+        if(currentCell.previous != None):
+            currentCell = currentCell.previous
+    reversedCellSequence.append(currentCell)
+
+    for i in reversed(reversedCellSequence):
+        orderedCellSequence.append(i)
+
+    for i in range(len(orderedCellSequence)-1):
+        deltaX = orderedCellSequence[i+1].i - orderedCellSequence[i].i
+        deltaY = orderedCellSequence[i+1].j - orderedCellSequence[i].j
+        #print(f"delta ({deltaX},{deltaY})")
+
+        if(deltaX!=0 and deltaY!=0):
+            print("Error - Unable to move along 2 axis at the same time")
+            # FIXME hacer de ultima que capture el error y lo divida en 2 movimientos separados, ver
+
+        if(deltaX>0 and deltaX==1 and deltaY==0):
+            # move right
+            print("DERECHA")
+            pathSequence.append([0.25, 0.25, 0, oneCellDistance])
+        elif(deltaX<0 and deltaX==-1 and deltaY==0):
+            # move left
+            print("IZQUIERDA")
+            pathSequence.append([-0.25, -0.25, 0, oneCellDistance])
+        elif(deltaY>0 and deltaY==1 and deltaX==0):
+            # move downwards
+            print("ABAJO")
+            pathSequence.append([-0.25, 0.25, 0, oneCellDistance])
+        elif(deltaY<0 and deltaY==-1 and deltaX==0):
+            # move upwards
+            print("ARRIBA")
+            pathSequence.append([0.25, -0.25, 0, oneCellDistance])
+
+    # messages generated with format [vel_x; vel_y; theta; setpoint]
+    return pathSequence
+
 
 def main():
     end.show((255, 8, 127), 0)
@@ -174,22 +216,29 @@ def main():
                 lowestIndex = i
 
         current = openSet[lowestIndex]
-        if current == end: # FINISHED CALCULATING
+        openSet.pop(lowestIndex)
+        closedSet.append(current)
+
+        # FINISHED CALCULATING
+        if current == end:
             print('done', current.f)
             start.show((255,8,127),0)
-            temp = current.f
+            pathDistance = current.f
+
+            seqParams = []
+            seqParams = getSequenceParameters(current)
+            print(seqParams)
 
             print("#### SECUENCIA ------------------")
             for i in range(round(current.f)):
                 current.closed = False
                 current.show((0,0,255), 0)
-                #print("X:" + current.i + " Y:" + current.j)
                 print(f"X:{current.i} Y:{current.j}")
                 current = current.previous
             end.show((255, 8, 127), 0)
 
             Tk().wm_withdraw()
-            result = messagebox.askokcancel('Program Finished', ('The program finished, the shortest distance \n to the path is ' + str(temp) + ' blocks away, \n would you like to re run the program?'))
+            result = messagebox.askokcancel('Program Finished', ('The program finished, the shortest distance \n to the path is ' + str(pathDistance) + ' blocks away, \n would you like to re run the program?'))
             if result == True:
                 os.execl(sys.executable,sys.executable, *sys.argv)
             else:
@@ -202,8 +251,8 @@ def main():
                             break
             pygame.quit()
 
-        openSet.pop(lowestIndex)
-        closedSet.append(current)
+        #openSet.pop(lowestIndex)
+        #closedSet.append(current)
 
         neighbors = current.neighbors
         for i in range(len(neighbors)):
