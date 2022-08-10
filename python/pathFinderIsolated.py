@@ -154,7 +154,8 @@ def main():
                 seqParams = getSequenceParameters(current)
                 print(seqParams)
                 print(f"Iterations {iterations}")
-                exit()
+                finished = True
+                break
 
             neighbors = current.neighbors
             for i in range(len(neighbors)):
@@ -173,6 +174,8 @@ def main():
 
                 if neighbor.previous == None:
                     neighbor.previous = current
+
+    exit()
 
 while True:
     main()

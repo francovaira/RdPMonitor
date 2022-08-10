@@ -1,0 +1,180 @@
+
+class Cell:
+    def __init__(self, posX, posY):
+        self.i = posX
+        self.j = posY
+        self.f = 0
+        self.g = 0
+        self.h = 0
+        self.neighbors = []
+        self.previous = None
+        self.obs = False
+        self.closed = False
+        self.value = 1
+
+    def addNeighbors(self, grid, rows, cols):
+        i = self.i
+        j = self.j
+        if i < cols-1 and grid[self.i + 1][j].obs == False:
+            self.neighbors.append(grid[self.i + 1][j])
+        if i > 0 and grid[self.i - 1][j].obs == False:
+            self.neighbors.append(grid[self.i - 1][j])
+        if j < rows-1 and grid[self.i][j + 1].obs == False:
+            self.neighbors.append(grid[self.i][j + 1])
+        if j > 0 and grid[self.i][j - 1].obs == False:
+            self.neighbors.append(grid[self.i][j - 1])
+
+class PathFinder:
+    def __init__(self, rows, cols):
+        self.rows = rows
+        self.cols = cols
+        self.grid = [0 for i in range(cols)]
+
+        # create 2d array that represents the map
+        for i in range(cols):
+            self.grid[i] = [0 for i in range(rows)]
+
+        # Initialize grid with cells
+        for i in range(cols):
+            for j in range(rows):
+                self.grid[i][j] = Cell(i, j)
+
+        # Mark map borders as obstacles
+        for i in range(0,rows):
+            self.grid[0][i].obs = True
+            self.grid[cols-1][i].obs = True
+        for i in range(0,cols):
+            self.grid[i][rows-1].obs = True
+            self.grid[i][0].obs = True
+
+        # Initialize neighbors for each cell
+        for i in range(cols):
+            for j in range(rows):
+                self.grid[i][j].addNeighbors(self.grid, self.rows, self.cols)
+
+    def calculatePath(self, startX, startY, endX, endY):
+        finished = False
+        iterations = 0
+
+        start = self.__getCell(startX, startY)
+        end = self.__getCell(endX, endY)
+
+        # FIXME checkear que si el inicio o el final estan en un obstaculo, no calcular la trayectoria
+
+        if(start == None or end == None):
+            print("Invalid coordinates")
+            return
+
+        openSet = []
+        closedSet = []
+
+        openSet.append(start)
+
+        while(not finished):
+
+            iterations = iterations + 1
+
+            if len(openSet) > 0:
+                lowestIndex = 0
+                for i in range(len(openSet)):
+                    if openSet[i].f < openSet[lowestIndex].f:
+                        lowestIndex = i
+
+                current = openSet[lowestIndex]
+                openSet.pop(lowestIndex)
+                closedSet.append(current)
+                current.closed = True
+
+                # FINISHED CALCULATING
+                if current == end:
+                    print('done', current.f)
+                    pathDistance = current.f
+
+                    seqParams = []
+                    seqParams = self.__getSequenceParameters(current)
+                    print(seqParams)
+                    print(f"Iterations {iterations}")
+                    finished = True
+                    break
+
+                neighbors = current.neighbors
+                for i in range(len(neighbors)):
+                    neighbor = neighbors[i]
+                    if neighbor not in closedSet:
+                        tempG = current.g + current.value
+                        if neighbor in openSet:
+                            if neighbor.g > tempG:
+                                neighbor.g = tempG
+                        else:
+                            neighbor.g = tempG
+                            openSet.append(neighbor)
+
+                    neighbor.h = self.__heurisitic(neighbor, end)
+                    neighbor.f = neighbor.g + neighbor.h
+
+                    if neighbor.previous == None:
+                        neighbor.previous = current
+
+    def __getCell(self, x, y):
+        if((x >= self.cols or x < 0) or (y >= self.rows or y < 0)):
+            return None
+        else:
+            return self.grid[x][y]
+
+    def __heurisitic(self, n, e):
+        d = abs(n.i - e.i) + abs(n.j - e.j)
+        return d
+
+    # returns a list of speeds and distances for the robot to drive along the path
+    def __getSequenceParameters(self, cellSequence):
+        currentCell = cellSequence
+        reversedCellSequence = []
+        orderedCellSequence = []
+        pathSequence = []
+        oneCellDistance = 1
+
+        # get ordered sequence from cell sequence pointers
+        for i in range(round(cellSequence.f)):
+            reversedCellSequence.append(currentCell)
+            if(currentCell.previous != None):
+                currentCell = currentCell.previous
+        reversedCellSequence.append(currentCell)
+
+        print("#### SECUENCIA ------------------")
+        for i in reversed(reversedCellSequence):
+            orderedCellSequence.append(i)
+            print(f"X:{i.i} Y:{i.j}")
+
+        print(f"START ({orderedCellSequence[0].i},{orderedCellSequence[0].j})")
+        print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
+        print()
+
+        for i in range(len(orderedCellSequence)-1):
+            deltaX = orderedCellSequence[i+1].i - orderedCellSequence[i].i
+            deltaY = orderedCellSequence[i+1].j - orderedCellSequence[i].j
+            #print(f"delta ({deltaX},{deltaY})")
+
+            if(deltaX!=0 and deltaY!=0):
+                print("Error - Unable to move along 2 axis at the same time")
+                # FIXME hacer de ultima que capture el error y lo divida en 2 movimientos separados, ver
+
+            if(deltaX>0 and deltaX==1 and deltaY==0):
+                # move right
+                print("DERECHA")
+                pathSequence.append([0.25, 0.25, 0, oneCellDistance])
+            elif(deltaX<0 and deltaX==-1 and deltaY==0):
+                # move left
+                print("IZQUIERDA")
+                pathSequence.append([-0.25, -0.25, 0, oneCellDistance])
+            elif(deltaY>0 and deltaY==1 and deltaX==0):
+                # move downwards
+                print("ABAJO")
+                pathSequence.append([-0.25, 0.25, 0, oneCellDistance])
+            elif(deltaY<0 and deltaY==-1 and deltaX==0):
+                # move upwards
+                print("ARRIBA")
+                pathSequence.append([0.25, -0.25, 0, oneCellDistance])
+
+        # messages generated with format [vel_x; vel_y; theta; setpoint]
+        return pathSequence
+
