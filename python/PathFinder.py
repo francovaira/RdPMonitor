@@ -109,7 +109,7 @@ class PathFinder:
                             neighbor.g = tempG
                             openSet.append(neighbor)
 
-                    neighbor.h = self.__heurisitic(neighbor, end)
+                    neighbor.h = self.__heuristic(neighbor, end)
                     neighbor.f = neighbor.g + neighbor.h
 
                     if neighbor.previous == None:
@@ -121,7 +121,7 @@ class PathFinder:
         else:
             return self.grid[x][y]
 
-    def __heurisitic(self, n, e):
+    def __heuristic(self, n, e):
         d = abs(n.i - e.i) + abs(n.j - e.j)
         return d
 
@@ -149,6 +149,8 @@ class PathFinder:
         print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
         print()
 
+        direction = 0 # 0 = upwards / 1 = right / 2 = downwards / 3 = left
+        directionAux = 0 # robot is supposed to start "looking upwards"
         for i in range(len(orderedCellSequence)-1):
             deltaX = orderedCellSequence[i+1].i - orderedCellSequence[i].i
             deltaY = orderedCellSequence[i+1].j - orderedCellSequence[i].j
@@ -158,22 +160,35 @@ class PathFinder:
                 print("Error - Unable to move along 2 axis at the same time")
                 # FIXME hacer de ultima que capture el error y lo divida en 2 movimientos separados, ver
 
+            #if(i != 0 and direction != directionAux): # ignore first iteration because i do not know the direction of the first movement 
+                # must perform a turn
+                #directionAux = direction
+
             if(deltaX>0 and deltaX==1 and deltaY==0):
                 # move right
                 print("DERECHA")
+                #if(mustAppendTurn):
+                #    pathSequence.append(asdasd)
+
                 pathSequence.append([0.25, 0.25, 0, oneCellDistance])
+                direction = 1
             elif(deltaX<0 and deltaX==-1 and deltaY==0):
                 # move left
                 print("IZQUIERDA")
                 pathSequence.append([-0.25, -0.25, 0, oneCellDistance])
+                direction = 3
             elif(deltaY>0 and deltaY==1 and deltaX==0):
                 # move downwards
                 print("ABAJO")
                 pathSequence.append([-0.25, 0.25, 0, oneCellDistance])
+                direction = 2
             elif(deltaY<0 and deltaY==-1 and deltaX==0):
                 # move upwards
                 print("ARRIBA")
                 pathSequence.append([0.25, -0.25, 0, oneCellDistance])
+                direction = 0
+
+            # FIXME agregar filtro para agregar movimientos de rotacion al tener que cambiar de direccion
 
         # messages generated with format [vel_x; vel_y; theta; setpoint]
         return pathSequence

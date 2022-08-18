@@ -1,7 +1,7 @@
 import threading
+from threading import Thread, Lock
 import time
 import numpy
-from threading import Thread, Lock
 import macros
 from RdP import RdP
 from Monitor import Monitor
