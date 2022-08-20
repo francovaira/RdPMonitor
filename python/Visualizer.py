@@ -68,14 +68,14 @@ class VisualizerCell:
 
 class Visualizer:
 
-    def __init__(self, canvasHorizontalSizePixels, canvasVerticalSizePixels, horizontalCells, verticalCells, queue):
+    def __init__(self, canvasHorizontalSizePixels, canvasVerticalSizePixels, horizontalCells, verticalCells, pipeReceiver):
         pygame.init()
         self.canvas = pygame.display.set_mode((canvasHorizontalSizePixels, canvasVerticalSizePixels))
         self.canvasHorizontalSizePixels = canvasHorizontalSizePixels
         self.canvasVerticalSizePixels = canvasVerticalSizePixels
         self.updateAccessLock = Lock()
         self.running = True
-        self.queue = queue
+        self.pipeReceiver = pipeReceiver
 
         self.canvas.fill(Colors.BACKGROUND.value) # set background color
         pygame.display.set_caption("Titulesco")
@@ -141,16 +141,13 @@ class Visualizer:
             self.__draw()
 
             try:
-                queueItem = self.queue.get(False,)
-                #print(f"{queueItem[0]},{queueItem[1]},{queueItem[2]}")
-                if(queueItem != None):
-                    if(self.updateCell(queueItem[0],queueItem[1],queueItem[2]) != 0):
-                        print("ERROR Unable to update cell from queue message")
+                pipeReceived = self.pipeReceiver.recv()
+                if(pipeReceived != None):
+                    #print(f"{pipeReceived[0]},{pipeReceived[1]},{pipeReceived[2]}")
+                    if(self.updateCell(pipeReceived[0],pipeReceived[1],pipeReceived[2]) != 0):
+                        print("ERROR Unable to update cell from pipeReceiver message")
             finally:
                 pass
-
-            #print("MOTOR_VIZUALIZER")
-            #time.sleep(0.1)
 
     def update(self):
         for i in range(self.horizontalCells):
