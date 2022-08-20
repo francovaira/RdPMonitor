@@ -126,8 +126,6 @@ class Visualizer:
 
     def run(self):
         while self.running:
-        #if(self.running):
-            #print("ENTRE")
             for event in pygame.event.get():
                 if event.type == QUIT:
                     self.running = False
@@ -140,14 +138,14 @@ class Visualizer:
             #valueY = random.randint(1, 10-2)
             #self.updateCell(valueX, valueY, value)
 
-            self.draw()
+            self.__draw()
 
             try:
-                #print("MOTOR_VIZUALIZER" + self.queue.get(False,))
                 queueItem = self.queue.get(False,)
                 #print(f"{queueItem[0]},{queueItem[1]},{queueItem[2]}")
                 if(queueItem != None):
-                    self.updateCell(queueItem[0],queueItem[1],queueItem[2])
+                    if(self.updateCell(queueItem[0],queueItem[1],queueItem[2]) != 0):
+                        print("ERROR Unable to update cell from queue message")
             finally:
                 pass
 
@@ -160,39 +158,29 @@ class Visualizer:
                 #self.grid[i][j].update(True)
                 self.grid[i][j].update(random.randint(0,1))
 
-    def draw(self):
-        # print(f"DRAW <{id(self.grid)}>")
+    def __draw(self):
         for i in range(self.horizontalCells):
             for j in range(self.verticalCells):
                 self.grid[i][j].draw()
-        # print(f"DRAW <{id(self.grid)}>")
 
         pygame.display.update()
 
+
     def updateCell(self, posX, posY, show):
-        #self.updateAccessLock.acquire()
-        #try:
-        #    print("LOCK ACQUIRED")
-        #self.__updateCell(posX, posY, show) # invoke private function for modifying the grid
-        #self.updateAccessLock.release()
-        #print("LOCK RELEASED")
-
-        self.updateAccessLock.acquire()
-        try:
-            #print("LOCK ACQUIRED")
-            self.__updateCell(posX, posY, show) # invoke private function for modifying the grid
-        finally:
-            #print("LOCK RELEASED")
-            self.updateAccessLock.release()
-
-    def __updateCell(self, posX, posY, show):
         if(posX >= self.horizontalCells or posY >= self.verticalCells or posX < 0 or posY < 0):
             return -1
         else:
-            self.grid[posX][posY].update(show)
-            # print(f"ASDASDASDKJFKJ <{id(self.grid)}>")
-            return 0
+            self.updateAccessLock.acquire()
+            try:
+                #print("LOCK ACQUIRED")
+                self.__updateCell(posX, posY, show) # invoke private function for modifying the grid
+            finally:
+                #print("LOCK RELEASED")
+                self.updateAccessLock.release()
+        return 0
 
+    def __updateCell(self, posX, posY, show):
+        self.grid[posX][posY].update(show)
 
 
 
