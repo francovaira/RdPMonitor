@@ -119,7 +119,7 @@ class Visualizer:
 
         sysfont = pygame.font.get_default_font()
         font = pygame.font.SysFont(None, 20)
-        img = font.render("HOLA PEPE", True, Colors.WHITE.value)
+        img = font.render("ValEnTiN", True, Colors.WHITE.value)
         self.canvas.blit(img, (20, 20))
         pygame.display.update()
         time.sleep(0.5)
@@ -162,7 +162,6 @@ class Visualizer:
         for i in range(self.horizontalCells):
             for j in range(self.verticalCells):
                 self.grid[i][j].draw()
-
         pygame.display.update()
 
 

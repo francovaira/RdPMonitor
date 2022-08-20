@@ -6,8 +6,13 @@ import time
 import numpy
 from Visualizer import Visualizer
 
-queue = Queue(100)
-viz = Visualizer(800, 800, 20, 20, queue)
+#queue = Queue(100)
+#viz = Visualizer(800, 800, 20, 20, queue)
+
+def updateMap(valueX, valueY, show, queue):
+    if(not queue.full()):
+        #queue.put([valueX, valueY, show], True)
+        queue.put([valueX, valueY, show], False)
 
 def thread_run(id, queue):
     while(1):
@@ -16,14 +21,14 @@ def thread_run(id, queue):
         valueY = random.randint(1, 10-2)
 
         print(f"{time.time()} [{id}] ### Intentando modificar ...")
-        if(not queue.full()):
-            queue.put([valueX, valueY, value], True)
-            #queue.put(["holis", value, id])
+        updateMap(valueX, valueY, value, queue)
 
         #print(f"{time.time()} [{id}] ### FIN DE MODIFICAR")
 
-
 if __name__ == "__main__":
+
+    queue = Queue(100)
+    viz = Visualizer(800, 800, 20, 20, queue)
 
     threads = []
     thread_A = Thread(target=thread_run, args=('THR_A', queue))
