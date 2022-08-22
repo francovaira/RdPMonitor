@@ -1,4 +1,4 @@
-from multiprocessing import Process, Lock, Pipe # FIXME con el que corresponda, borrar el otro
+from multiprocessing import Process, Lock, Pipe
 import threading
 from threading import Thread, Lock
 import random

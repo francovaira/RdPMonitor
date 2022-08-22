@@ -113,7 +113,7 @@ class Visualizer:
         for i in range(20):
             valueX = random.randint(1, horizontalCells-2)
             valueY = random.randint(1, verticalCells-2)
-            self.grid[valueX][valueY].update(True)
+            self.grid[valueX][valueY].update(True) # FIXME capaz reemplazar por updateCell que tiene el lock
 
         #pygame.init() # FIXME
 
@@ -132,7 +132,7 @@ class Visualizer:
                     pygame.quit()
                     quit()
 
-            #self.update() # in case some other update must be done
+            #self.__update() # in case some other update must be done
             #value = random.randint(0,1)
             #valueX = random.randint(1, 10-2)
             #valueY = random.randint(1, 10-2)
@@ -149,19 +149,6 @@ class Visualizer:
             finally:
                 pass
 
-    def update(self):
-        for i in range(self.horizontalCells):
-            for j in range(self.verticalCells):
-                #self.grid[i][j].update(True)
-                self.grid[i][j].update(random.randint(0,1))
-
-    def __draw(self):
-        for i in range(self.horizontalCells):
-            for j in range(self.verticalCells):
-                self.grid[i][j].draw()
-        pygame.display.update()
-
-
     def updateCell(self, posX, posY, show):
         if(posX >= self.horizontalCells or posY >= self.verticalCells or posX < 0 or posY < 0):
             return -1
@@ -177,6 +164,18 @@ class Visualizer:
 
     def __updateCell(self, posX, posY, show):
         self.grid[posX][posY].update(show)
+
+    def __update(self):
+        for i in range(self.horizontalCells):
+            for j in range(self.verticalCells):
+                #self.grid[i][j].update(True)
+                self.grid[i][j].update(random.randint(0,1))
+
+    def __draw(self):
+        for i in range(self.horizontalCells):
+            for j in range(self.verticalCells):
+                self.grid[i][j].draw()
+        pygame.display.update()
 
 
 
