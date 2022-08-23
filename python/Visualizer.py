@@ -51,16 +51,16 @@ class VisualizerCell:
             self.color = Colors.DARK_GREY.value
 
     def update(self, show):
-        r = random.randint(0,255)
-        g = random.randint(0,255)
-        b = random.randint(0,255)
-        self.color = ((r,g,b))
-        # if(show):
-        #     #print(f"UPDATING ({self.posX},{self.posY}) OCCUPIED_PLACE")
-        #     self.setType(CellTypes.OCCUPIED_PLACE)
-        # else:
-        #     #print(f"UPDATING ({self.posX},{self.posY}) FREE_PLACE")
-        #     self.setType(CellTypes.FREE_PLACE)
+        # r = random.randint(0,255)
+        # g = random.randint(0,255)
+        # b = random.randint(0,255)
+        # self.color = ((r,g,b))
+        if(show):
+            #print(f"UPDATING ({self.posX},{self.posY}) OCCUPIED_PLACE")
+            self.setType(CellTypes.OCCUPIED_PLACE)
+        else:
+            #print(f"UPDATING ({self.posX},{self.posY}) FREE_PLACE")
+            self.setType(CellTypes.FREE_PLACE)
 
     def draw(self):
         pygame.draw.rect(self.canvas, self.color, (self.posX*self.width, self.posY*self.height, self.width, self.height), self.borderWidth)
@@ -132,12 +132,6 @@ class Visualizer:
                     pygame.quit()
                     quit()
 
-            #self.__update() # in case some other update must be done
-            #value = random.randint(0,1)
-            #valueX = random.randint(1, 10-2)
-            #valueY = random.randint(1, 10-2)
-            #self.updateCell(valueX, valueY, value)
-
             self.__draw()
 
             try:
@@ -168,7 +162,6 @@ class Visualizer:
     def __update(self):
         for i in range(self.horizontalCells):
             for j in range(self.verticalCells):
-                #self.grid[i][j].update(True)
                 self.grid[i][j].update(random.randint(0,1))
 
     def __draw(self):
