@@ -1,5 +1,4 @@
-import threading
-from multiprocessing import Process, Lock
+from multiprocessing import Lock
 import pygame
 from pygame.locals import *
 import random
@@ -51,10 +50,6 @@ class VisualizerCell:
             self.color = Colors.DARK_GREY.value
 
     def update(self, show):
-        # r = random.randint(0,255)
-        # g = random.randint(0,255)
-        # b = random.randint(0,255)
-        # self.color = ((r,g,b))
         if(show):
             #print(f"UPDATING ({self.posX},{self.posY}) OCCUPIED_PLACE")
             self.setType(CellTypes.OCCUPIED_PLACE)
@@ -113,9 +108,8 @@ class Visualizer:
         for i in range(20):
             valueX = random.randint(1, horizontalCells-2)
             valueY = random.randint(1, verticalCells-2)
-            self.grid[valueX][valueY].update(True) # FIXME capaz reemplazar por updateCell que tiene el lock
-
-        #pygame.init() # FIXME
+            #self.updateCell(valueX, valueY, True)
+            self.grid[valueX][valueY].setType(CellTypes.OBSTACLE)
 
         sysfont = pygame.font.get_default_font()
         font = pygame.font.SysFont(None, 20)
