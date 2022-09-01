@@ -27,12 +27,15 @@ class CellTypes(Enum):
 class VisualizerCell:
     def __init__(self, canvas, type, posX, posY, width, height):
         self.canvas = canvas
-        self.setType(type)
+        self.type = CellTypes.FREE_PLACE.value
+        self.color = Colors.BLACK.value
         self.posX = posX
         self.posY = posY
         self.width = width
         self.height = height
         self.borderWidth = 0
+
+        self.setType(type)
 
     # lo bueno de esto es que podes setear el estilo de cada tipo, incluso el borde y demases
     def setType(self, type):

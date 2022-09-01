@@ -27,6 +27,7 @@ def main():
     monitor = Monitor(threading.Lock(), rdp)
     viz = Visualizer(800, 800, 25, 25, pipeRdPReceiver)
 
+    # luego esta secuencia provendria desde el path finder, mediando una interfaz para traducir a transiciones
     seqROBOT = [2, 12, 20, 22, 19, 9, 5, 1] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
 
     # create threads for each robot
@@ -35,7 +36,7 @@ def main():
     threads.append(thread_ROBOT)
     thread_ROBOT.start()
 
-    processVisualizer = Process(target=viz.run())
+    processVisualizer = Process(target=viz.run()) # FIXME aca para optimizar podria llamarse directamente a un init o algo asi y que de ese directamente pase al run() asi capaz seria mejor
     processVisualizer.start()
     processVisualizer.join()
 

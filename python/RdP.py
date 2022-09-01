@@ -32,15 +32,17 @@ class RdP:
                 # update visualizer
                 if(i%2 == 0):
                     placeShow = 1 if self.matrizEstado[i] != 0 else 0
-                    posX, posY = self.translatePlaceIDToPosition(i)
-                    self.updateVisualizerMap(posX, posY, placeShow)
+                    posX, posY = self.__translatePlaceIDToPosition(i)
+                    self.__updateVisualizerMap(posX, posY, placeShow)
             return 1
         return 0
 
-    def updateVisualizerMap(self, valueX, valueY, show):
+    # FIXME se podria hacer un metodo que devuelva el marcado pero SOLO de las plazas de ocupacion.
+
+    def __updateVisualizerMap(self, valueX, valueY, show):
         self.pipeRdPTransmitter.send([valueX, valueY, show])
 
-    def translatePlaceIDToPosition(self, placeID):
+    def __translatePlaceIDToPosition(self, placeID):
         placeID = placeID // 2
         y = placeID // 3 + 1
         x = (y * 3) - placeID
