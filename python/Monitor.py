@@ -19,16 +19,17 @@ class Monitor:
 
     def monitor_disparar(self, transition, id):
         with self.conditions[transition]:
-            k = self.petriNet.solicitud_disparo(transition)
+            k = self.petriNet.solicitudDisparo(transition)
             while(k == 0):
                 print(f"{time.time()} [{id}] ### No sensibilizada {transition} -- esperando...")
                 self.conditions[transition].wait() # espera que otro hilo lo despierte
-                k = self.petriNet.solicitud_disparo(transition)
+                k = self.petriNet.solicitudDisparo(transition)
 
             # disparar efectivamente - obtener el nuevo marcado
             self.fireCountIncrement()
             print(f"{time.time()} [{id}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.fireCount}")
-            self.petriNet.red_disparar(transition)
+            #self.petriNet.redDisparar(transition)
+            self.petriNet.redDisparar(transition, id)
             self.petriNet.print_marcado()
             self.conditions[transition].notify_all()
 

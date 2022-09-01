@@ -34,6 +34,7 @@ class VisualizerCell:
         self.width = width
         self.height = height
         self.borderWidth = 0
+        self.robotID = ""
 
         self.setType(type)
 
@@ -52,17 +53,25 @@ class VisualizerCell:
             self.type = type
             self.color = Colors.DARK_GREY.value
 
-    def update(self, show):
+    def setRobotID(self, robotID):
+        self.robotID = robotID
+
+    def update(self, show, id):
         if(show):
-            #print(f"UPDATING ({self.posX},{self.posY}) OCCUPIED_PLACE")
             self.setType(CellTypes.OCCUPIED_PLACE)
+            self.setRobotID(id)
         else:
-            #print(f"UPDATING ({self.posX},{self.posY}) FREE_PLACE")
             self.setType(CellTypes.FREE_PLACE)
+            self.setRobotID(None)
 
     def draw(self):
         pygame.draw.rect(self.canvas, self.color, (self.posX*self.width, self.posY*self.height, self.width, self.height), self.borderWidth)
 
+        # draw robot ID
+        if(self.robotID != None):
+            font = pygame.font.SysFont(None, 20)
+            img = font.render(self.robotID, True, Colors.WHITE.value)
+            self.canvas.blit(img, (self.posX*self.width + 5, self.posY*self.height + 5))
 
 class Visualizer:
 
@@ -134,27 +143,26 @@ class Visualizer:
             try:
                 pipeReceived = self.pipeReceiver.recv()
                 if(pipeReceived != None):
-                    #print(f"{pipeReceived[0]},{pipeReceived[1]},{pipeReceived[2]}")
-                    if(self.updateCell(pipeReceived[0],pipeReceived[1],pipeReceived[2]) != 0):
+                    if(self.updateCell(pipeReceived[0],pipeReceived[1],pipeReceived[2], pipeReceived[3]) != 0):
                         print("ERROR Unable to update cell from pipeReceiver message")
             finally:
                 pass
 
-    def updateCell(self, posX, posY, show):
+    def updateCell(self, posX, posY, show, id):
         if(posX >= self.horizontalCells or posY >= self.verticalCells or posX < 0 or posY < 0):
             return -1
         else:
             self.updateAccessLock.acquire()
             try:
                 #print("LOCK ACQUIRED")
-                self.__updateCell(posX, posY, show) # invoke private function for modifying the grid
+                self.__updateCell(posX, posY, show, id) # invoke private function for modifying the grid
             finally:
                 #print("LOCK RELEASED")
                 self.updateAccessLock.release()
         return 0
 
-    def __updateCell(self, posX, posY, show):
-        self.grid[posX][posY].update(show)
+    def __updateCell(self, posX, posY, show, id):
+        self.grid[posX][posY].update(show, id)
 
     def __update(self):
         for i in range(self.horizontalCells):
