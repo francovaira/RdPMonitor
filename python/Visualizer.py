@@ -80,7 +80,6 @@ class Visualizer:
         self.canvas = pygame.display.set_mode((canvasHorizontalSizePixels, canvasVerticalSizePixels))
         self.canvasHorizontalSizePixels = canvasHorizontalSizePixels
         self.canvasVerticalSizePixels = canvasVerticalSizePixels
-        self.updateAccessLock = Lock()
         self.running = True
         self.pipeReceiver = pipeReceiver
 
@@ -120,13 +119,12 @@ class Visualizer:
         for i in range(20):
             valueX = random.randint(1, horizontalCells-2)
             valueY = random.randint(1, verticalCells-2)
-            #self.updateCell(valueX, valueY, True)
             self.grid[valueX][valueY].setType(CellTypes.OBSTACLE)
 
         sysfont = pygame.font.get_default_font()
         font = pygame.font.SysFont(None, 20)
         img = font.render("ValEnTiN", True, Colors.WHITE.value)
-        self.canvas.blit(img, (20, 20))
+        self.canvas.blit(img, ((self.canvasHorizontalSizePixels//2)-30, (self.canvasVerticalSizePixels//2)-10))
         pygame.display.update()
         time.sleep(0.5)
 
@@ -143,31 +141,22 @@ class Visualizer:
             try:
                 pipeReceived = self.pipeReceiver.recv()
                 if(pipeReceived != None):
-                    if(self.updateCell(pipeReceived[0],pipeReceived[1],pipeReceived[2], pipeReceived[3]) != 0):
+                    if(self.__updateCell(pipeReceived[0],pipeReceived[1],pipeReceived[2], pipeReceived[3]) != 0):
                         print("ERROR Unable to update cell from pipeReceiver message")
             finally:
                 pass
 
-    def updateCell(self, posX, posY, show, id):
+    def __updateCell(self, posX, posY, show, id):
         if(posX >= self.horizontalCells or posY >= self.verticalCells or posX < 0 or posY < 0):
             return -1
         else:
-            self.updateAccessLock.acquire()
-            try:
-                #print("LOCK ACQUIRED")
-                self.__updateCell(posX, posY, show, id) # invoke private function for modifying the grid
-            finally:
-                #print("LOCK RELEASED")
-                self.updateAccessLock.release()
-        return 0
-
-    def __updateCell(self, posX, posY, show, id):
-        self.grid[posX][posY].update(show, id)
+            self.grid[posX][posY].update(show, id)
+            return 0
 
     def __update(self):
         for i in range(self.horizontalCells):
             for j in range(self.verticalCells):
-                self.grid[i][j].update(random.randint(0,1))
+                self.grid[i][j].update(random.randint(0,1), "AAAAA")
 
     def __draw(self):
         for i in range(self.horizontalCells):

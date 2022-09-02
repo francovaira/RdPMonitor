@@ -13,10 +13,10 @@ def thread_run(monitor, secuencia, id):
     while(1):
         for transicion in secuencia:
             if(transicion != macros.NULL_TRANSITION):
-                print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
+                #print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
-                monitor.monitor_disparar(transicion, id)
-                time.sleep(0.1)
+                monitor.monitorDisparar(transicion, id)
+                #time.sleep(5)
 
 def main():
 
