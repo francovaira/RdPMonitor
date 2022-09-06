@@ -7,6 +7,7 @@ import macros
 from RdP import RdP
 from Monitor import Monitor
 from Visualizer import Visualizer
+from Map import Map
 
 
 def thread_run(monitor, secuencia, id):
@@ -16,15 +17,20 @@ def thread_run(monitor, secuencia, id):
                 #print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
                 monitor.monitorDisparar(transicion, id)
-                #time.sleep(5)
+                #time.sleep(0.1)
 
 def main():
 
-    pipeRdPReceiver, pipeRdPTransmitter = Pipe()
+    mapHorizontalSize = 10
+    mapVerticalSize = 10
 
-    rdp = RdP(macros.PLAZAS, macros.TRANSICIONES, macros.MARCADO, macros.INCIDENCIA, pipeRdPTransmitter)
+    pipeRdPReceiver, pipeMap2VisualizerTX = Pipe() # FIXME OJO que el pipe puede ser cuello de botella, si se llena y eso se traba la red
+
+    map = Map(mapHorizontalSize, mapVerticalSize, pipeMap2VisualizerTX)
+    #rdp = RdP(macros.PLAZAS, macros.TRANSICIONES, macros.MARCADO, macros.INCIDENCIA, pipeRdPTransmitter)
+    rdp = RdP(macros.PLAZAS, macros.TRANSICIONES, macros.MARCADO, macros.INCIDENCIA, map)
     monitor = Monitor(threading.Lock(), rdp)
-    viz = Visualizer(800, 800, 12, 12, pipeRdPReceiver)
+    viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, pipeRdPReceiver)
 
     # luego esta secuencia provendria desde el path finder, mediando una interfaz para traducir a transiciones
     seqROBOT_A = [2, 12, 20, 22, 19, 9, 5, 1] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
