@@ -107,20 +107,15 @@ class Visualizer:
             for j in range(self.verticalCells):
                 self.grid[i][j] = VisualizerCell(self.canvas, CellTypes.FREE_PLACE, i, j, self.cellWidth, self.cellHeight)
 
-        # Define borders
-        for i in range(0,self.horizontalCells):
-            self.grid[i][0].setType(CellTypes.BORDER)
-            self.grid[i][self.verticalCells-1].setType(CellTypes.BORDER)
-        for i in range(0, self.verticalCells):
-            self.grid[0][i].setType(CellTypes.BORDER)
-            self.grid[self.horizontalCells-1][i].setType(CellTypes.BORDER)
-
         # Draw random cells
-        for i in range(20):
-            valueX = random.randint(1, self.horizontalCells-2)
-            valueY = random.randint(1, self.verticalCells-2)
-            self.grid[valueX][valueY].setType(CellTypes.OBSTACLE)
+        # for i in range(20):
+        #     valueX = random.randint(1, self.horizontalCells-2)
+        #     valueY = random.randint(1, self.verticalCells-2)
+        #     self.grid[valueX][valueY].setType(CellTypes.OBSTACLE)
 
+        # Draw defined map obstacles
+        # To implement
+        
         sysfont = pygame.font.get_default_font()
         font = pygame.font.SysFont(None, 20)
         img = font.render("ValEnTiN", True, Colors.WHITE.value)

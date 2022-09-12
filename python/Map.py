@@ -6,13 +6,6 @@ class MapCellTypes(Enum): # they have the format (enumID, isOccupable)
     OBSTACLE = (1, False)
     OCCUPABLE = (2, True)
 
-# class MapCellOccupationStates(Enum):
-#     FREE_PLACE = 0
-#     OCCUPIED_PLACE = 1
-#     RESERVED_PLACE = 2
-
-
-
 class MapCell:
     def __init__(self, posX, posY):
         self.posX = posX # these are the "ordinal" coordinates (only whole numbers)
@@ -22,9 +15,6 @@ class MapCell:
         self.xCoordinate = posX * self.cellWidth # these are the "metric" coordinates, position in space (real numbers)
         self.yCoordinate = posY * self.cellHeight
 
-        #self.cellType = MapCellTypes.OCCUPABLE.value[0]
-        #self.isOccupable = MapCellTypes.OCCUPABLE.value[1]
-        #self.occupationState = MapCellOccupationStates.FREE_PLACE.value
         self.setType(MapCellTypes.OCCUPABLE)
         self.setOccupationState(MapCellOccupationStates.FREE_PLACE)
 
@@ -71,23 +61,8 @@ class Map:
             for j in range(self.verticalCells):
                 self.gridMap[i][j] = MapCell(i, j)
 
-        # Define borders
-        for i in range(0,self.horizontalCells):
-            self.gridMap[i][0].setType(MapCellTypes.BORDER)
-            self.gridMap[i][self.verticalCells-1].setType(MapCellTypes.BORDER)
-        for i in range(0, self.verticalCells):
-            self.gridMap[0][i].setType(MapCellTypes.BORDER)
-            self.gridMap[self.horizontalCells-1][i].setType(MapCellTypes.BORDER)
-
-
     def updatePosition(self, posX, posY, occupationState, id):
         # FIXME agregar checkeo de limites
         self.gridMap[posX][posY].setOccupationState(occupationState)
         self.pipeMap2VisualizerTX.send([posX, posY, occupationState.value, id])
-        #self.__updateVisualizer()
         return 0
-
-    def __updateVisualizer(self, ):
-        # send thru pipe
-        #self.pipeMap2VisualizerTX.send([valueX, valueY, newState, id])
-        return
