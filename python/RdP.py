@@ -1,19 +1,22 @@
 import time
+import macros_mapa as rdp
+from decouple import config
 from MapCellOccupationStates import MapCellOccupationStates
 
 class RdP:
 
     #def __init__(self, placesCount, transitionCount, initialMark, incidence, pipeRdPTransmitter):
-    def __init__(self, placesCount, transitionCount, initialMark, incidence, map):
-        self.placesCount = placesCount
-        self.transitionCount = transitionCount
-        self.initialMark = initialMark
-        self.incidence = incidence
+    def __init__(self, map):
+        self.initialMark = rdp.MARCADO
+        self.incidence = rdp.INCIDENCIA
         self.matrizEstado = []
         self.matrizEstadoPrior = []
         self.markingChangedPlaces = []
         self.map = map
-        #self.pipeRdPTransmitter = pipeRdPTransmitter
+        self.placesCount = len(rdp.INCIDENCIA)
+        self.transitionCount = len(rdp.INCIDENCIA[0])
+        self.mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
+        self.mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
 
         for i in range(0, self.placesCount):
             self.matrizEstado.append(self.initialMark[i])
@@ -40,27 +43,21 @@ class RdP:
 
             # update visualizer
             for placeID in self.markingChangedPlaces:
-                #placeNewState = 1 if self.matrizEstado[placeID] != 0 else 0
                 placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
                 posX, posY = self.__translatePlaceIDToPosition(placeID)
-                #self.__updateVisualizerMap(posX, posY, placeNewState, id)
                 if(self.__updateMap(posX, posY, placeNewState, id)):
                     print("ERROR while trying to modify Map from RdP")
             self.markingChangedPlaces.clear()
-
             return 1
         return 0
-
-    #def __updateVisualizerMap(self, valueX, valueY, newState, id):
-        # self.pipeRdPTransmitter.send([valueX, valueY, newState, id])
 
     def __updateMap(self, posX, posY, newState, id):
         return self.map.updatePosition(posX, posY, newState, id)
 
     def __translatePlaceIDToPosition(self, placeID):
-        placeID = placeID // 2
-        y = placeID // 3 + 1
-        x = (y * 3) - placeID
+        place = placeID // len(self.markingChangedPlaces)
+        y = place // self.mapHorizontalSize
+        x = place % self.mapVerticalSize
         return x,y
 
     def printMarking(self):
