@@ -1,3 +1,4 @@
+import multiprocessing
 from multiprocessing import Process, Lock, Pipe
 import threading
 from threading import Thread, Lock
@@ -23,7 +24,7 @@ def main():
     mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
     mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
 
-    pipeRdPReceiver, pipeMap2VisualizerTX = Pipe() # FIXME OJO que el pipe puede ser cuello de botella, si se llena y eso se traba la red
+    pipeRdPReceiver, pipeMap2VisualizerTX = multiprocessing.Pipe(duplex=False) # FIXME OJO que el pipe puede ser cuello de botella, si se llena y eso se traba la red
 
     map = Map(mapHorizontalSize, mapVerticalSize, pipeMap2VisualizerTX)
     rdp = RdP(map)
@@ -43,7 +44,7 @@ def main():
     thread_ROBOT_A.start()
     # thread_ROBOT_B.start()
 
-    processVisualizer = Process(target=viz.run()) # FIXME aca para optimizar podria llamarse directamente a un init o algo asi y que de ese directamente pase al run() asi capaz seria mejor
+    processVisualizer = multiprocessing.Process(target=viz.run()) # FIXME aca para optimizar podria llamarse directamente a un init o algo asi y que de ese directamente pase al run() asi capaz seria mejor
     processVisualizer.start()
     processVisualizer.join()
 
