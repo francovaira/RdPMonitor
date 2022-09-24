@@ -28,7 +28,7 @@ class Monitor:
             # disparar efectivamente - obtener el nuevo marcado
             self.petriNet.redDisparar(transition, id)
             self.fireCountIncrement()
-            #print(f"{time.time()} [{id}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.fireCount}")
+            print(f"{time.time()} [{id}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.fireCount}")
             #self.petriNet.printMarking()
             #self.conditions[transition].notify_all()
 

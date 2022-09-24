@@ -5,7 +5,6 @@ from MapCellOccupationStates import MapCellOccupationStates
 
 class RdP:
 
-    #def __init__(self, placesCount, transitionCount, initialMark, incidence, pipeRdPTransmitter):
     def __init__(self, map):
         self.initialMark = rdp.MARCADO
         self.incidence = rdp.INCIDENCIA
@@ -39,9 +38,9 @@ class RdP:
                 if(self.matrizEstado[i] != self.matrizEstadoPrior[i]):
                     if(i%2 == 0): # will update only occupancy places
                         self.markingChangedPlaces.append(i) # store places IDs
-                    self.matrizEstadoPrior[i] = self.matrizEstado[i]
+                    self.matrizEstadoPrior[i] = self.matrizEstado[i] # FIXME capaz meter aca adentro la actualizacion del mapa, para no crear otra lista al pepe
 
-            # update visualizer
+            # update visualizer // FIXME refactorizar
             for placeID in self.markingChangedPlaces:
                 placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
                 posX, posY = self.__translatePlaceIDToPosition(placeID)
