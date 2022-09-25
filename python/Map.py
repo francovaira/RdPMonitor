@@ -1,15 +1,6 @@
 import multiprocessing
 from multiprocessing import Manager
-from enum import Enum
-from MapCellOccupationStates import MapCellOccupationStates
-
-# FIXMEE capaz ver de hacer que esta clase directamente devuelva la referencia al map y que el otro lo lea
-
-
-class MapCellTypes(Enum): # they have the format (enumID, isOccupable)
-    BORDER = (0, False)
-    OBSTACLE = (1, False)
-    OCCUPABLE = (2, True)
+from Enums import MapCellOccupationStates, MapCellTypes
 
 class MapCell:
     def __init__(self, posX, posY):
@@ -27,13 +18,25 @@ class MapCell:
         self.robotsReservingCell = [] # will store the IDs of the robots that are currently reserving this cell
         self.robotsRequestingCell = [] # will store the IDs of the robots that are currently wanting to enter this cell
 
+    def getPosX(self):
+        return self.posX
+
+    def getPosY(self):
+        return self.posY
+
     def setType(self, cellType):
-        self.cellType = cellType.value[0]
+        #self.cellType = cellType.value[0]
+        #self.isOccupable = cellType.value[1]
+        self.cellType = cellType
         self.isOccupable = cellType.value[1]
+
+    def getType(self):
+        return self.cellType
 
     def setOccupationState(self, occupationState):
         if(self.isOccupable):
-            self.occupationState = occupationState.value # FIXME aca ver que onda con esto, se asigna un entero pero capaz deberia ser el mismo enum en si
+            #self.occupationState = occupationState.value # FIXME aca ver que onda con esto, se asigna un entero pero capaz deberia ser el mismo enum en si
+            self.occupationState = occupationState
         else:
             self.occupationState = None
 
@@ -51,20 +54,18 @@ class MapCell:
                 self.robotsList.append(robotID)
 
     def removeRobot(self, robotID):
-        #if(self.isOccupable): # FIXME capaz no haria falta
-            if(any(elem == robotID for elem in self.robotsList)): # check existence
-                self.robotsList.remove(robotID)
+        if(any(elem == robotID for elem in self.robotsList)): # check existence
+            self.robotsList.remove(robotID)
 
 class Map:
 
-    def __init__(self, horizontalCells, verticalCells, pipeMap2VisualizerTX):
+    def __init__(self, horizontalCells, verticalCells):
         self.horizontalCells = horizontalCells # FIXME estas deberian provenir del archivo en si
         self.verticalCells = verticalCells
-        self.pipeMap2VisualizerTX = pipeMap2VisualizerTX
         self.manager = multiprocessing.Manager()
         self.mapInSharedMemory = self.manager.list()
 
-        # create 2D array for the grid (2D map)
+        # create 2D array for the grid (2D map) in shared memory
         self.mapInSharedMemory = [0 for i in range(self.horizontalCells)]
         for i in range(self.horizontalCells):
             self.mapInSharedMemory[i] = [0 for i in range(self.verticalCells)]
@@ -74,13 +75,16 @@ class Map:
             for j in range(self.verticalCells):
                 self.mapInSharedMemory[i][j] = MapCell(i, j)
 
-
     def getMapInSharedMemory(self):
         return self.mapInSharedMemory
 
     def updatePosition(self, posX, posY, occupationState, id):
-        # FIXME agregar checkeo de limites
-        #self.gridMap[posX][posY].setOccupationState(occupationState)
-        self.mapInSharedMemory[posX][posY].setOccupationState(occupationState)
-        #self.pipeMap2VisualizerTX.send([posX, posY, occupationState.value, id])
-        return 0
+        if(posX >= self.horizontalCells or posY >= self.verticalCells or posX < 0 or posY < 0):
+            return -1
+        else:
+            self.mapInSharedMemory[posX][posY].setOccupationState(occupationState)
+            if(occupationState == MapCellOccupationStates.FREE_PLACE):
+                self.mapInSharedMemory[posX][posY].removeRobot(id)
+            elif(occupationState == MapCellOccupationStates.OCCUPIED_PLACE):
+                self.mapInSharedMemory[posX][posY].addRobot(id)
+            return 0
