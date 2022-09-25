@@ -46,6 +46,12 @@ class VisualizerCell:
             img = font.render(self.robotID, True, Colors.BLACK.value)
             self.canvas.blit(img, (self.mapCell.getPosX()*self.width + 5, self.mapCell.getPosY()*self.height + 5))
 
+        # draw place ID
+        if(self.mapCell.getPlaceID() != None):
+            font = pygame.font.SysFont(None, 20)
+            img = font.render(str(self.mapCell.getPlaceID()), True, Colors.BLACK.value)
+            self.canvas.blit(img, (self.mapCell.getPosX()*self.width + 5, self.mapCell.getPosY()*self.height + 20))
+
 class Visualizer:
 
     def __init__(self, canvasHorizontalSizePixels, canvasVerticalSizePixels, horizontalCells, verticalCells, mapInSharedMemory):
@@ -65,10 +71,10 @@ class Visualizer:
             else:
                 verticalCells = horizontalCells
 
-        self.horizontalCells = horizontalCells
-        self.verticalCells = verticalCells
-        self.cellWidth = canvasHorizontalSizePixels // horizontalCells
-        self.cellHeight = canvasVerticalSizePixels // verticalCells
+        self.horizontalCells = horizontalCells + 2
+        self.verticalCells = verticalCells + 2
+        self.cellWidth = canvasHorizontalSizePixels // self.horizontalCells
+        self.cellHeight = canvasVerticalSizePixels // self.verticalCells
 
         # create 2D array for the grid
         self.grid = [0 for i in range(self.horizontalCells)]
@@ -83,10 +89,6 @@ class Visualizer:
         # Draw defined map obstacles
         # To implement
 
-        # Draw borders
-        # To implement
-
-        sysfont = pygame.font.get_default_font()
         font = pygame.font.SysFont(None, 20)
         img = font.render("ValEnTiN", True, Colors.WHITE.value)
         self.canvas.blit(img, ((self.canvasHorizontalSizePixels//2)-30, (self.canvasVerticalSizePixels//2)-10))
@@ -105,7 +107,7 @@ class Visualizer:
             self.__drawDisplay()
             time.sleep(0.1)
 
-    def __updateFromMap(self):
+    def __updateFromMap(self): # FIXME optimizar para que no actualice los bordes
         for i in range(self.horizontalCells):
             for j in range(self.verticalCells):
                 self.grid[i][j].update()

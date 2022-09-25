@@ -14,10 +14,10 @@ def thread_run(monitor, secuencia, id):
     while(1):
         for transicion in secuencia:
             if(transicion != int(config('NULL_TRANSITION'))):
-                print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
+                #print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
                 monitor.monitorDisparar(transicion, id)
-                time.sleep(0.5)
+                time.sleep(0.05)
 
 def main():
 
@@ -30,7 +30,8 @@ def main():
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # luego esta secuencia provendria desde el path finder, mediando una interfaz para traducir a transiciones
-    seqROBOT_A = [0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
+    #seqROBOT_A = [142, 0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
+    seqROBOT_A = [0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122, 135, 133, 131, 117, 91, 65, 39, 13] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
     seqROBOT_B = [50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 6, 8, 10, 24] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
 
     # create threads for each robot
