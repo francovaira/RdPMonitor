@@ -10,7 +10,6 @@ class RdP:
         self.incidence = rdp.INCIDENCIA
         self.matrizEstado = []
         self.matrizEstadoPrior = []
-        #self.markingChangedPlaces = []
         self.map = map
         self.placesCount = len(rdp.INCIDENCIA)
         self.transitionCount = len(rdp.INCIDENCIA[0])
@@ -37,29 +36,18 @@ class RdP:
                 # check which places changed marking since last iteration
                 if(self.matrizEstado[i] != self.matrizEstadoPrior[i]):
                     if(i%2 == 0): # will update only occupancy places
-                        posX, posY = self.__translatePlaceIDToPosition(i)
-                        placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.matrizEstado[i] != 0 else MapCellOccupationStates.FREE_PLACE
-                        if(self.map.updatePosition(posX, posY, placeNewState, id)):
-                            print("ERROR while trying to modify Map from RdP")
-                        #self.markingChangedPlaces.append(i) # store places IDs
-                    self.matrizEstadoPrior[i] = self.matrizEstado[i] # FIXME capaz meter aca adentro la actualizacion del mapa, para no crear otra lista al pepe
-
-            # update visualizer // FIXME refactorizar
-            # for placeID in self.markingChangedPlaces:
-            #     placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
-            #     posX, posY = self.__translatePlaceIDToPosition(placeID)
-            #     #if(self.__updateMap(posX, posY, placeNewState, id)):
-            #     if(self.map.updatePosition(posX, posY, newState, id)):
-            #         print("ERROR while trying to modify Map from RdP")
-            # self.markingChangedPlaces.clear()
+                        self.__updateMap(i, id)
+                    self.matrizEstadoPrior[i] = self.matrizEstado[i]
             return 1
         return 0
 
-    # def __updateMap(self, posX, posY, newState, id):
-    #     return self.map.updatePosition(posX, posY, newState, id)
+    def __updateMap(self, placeID, id):
+        posX, posY = self.__translatePlaceIDToPosition(placeID)
+        placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
+        if(self.map.updatePosition(posX, posY, placeNewState, id)):
+            print("ERROR while trying to modify Map from RdP")
 
     def __translatePlaceIDToPosition(self, placeID):
-        #place = placeID // len(self.markingChangedPlaces)
         place = placeID // 2
         y = place // self.mapHorizontalSize
         x = place % self.mapVerticalSize

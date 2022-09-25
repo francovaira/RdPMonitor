@@ -19,3 +19,4 @@ class Colors(Enum):
     GREY = (127, 127, 127)
     DARK_GREY = (180, 180, 180)
     BACKGROUND = BLACK
+

@@ -25,8 +25,6 @@ class MapCell:
         return self.posY
 
     def setType(self, cellType):
-        #self.cellType = cellType.value[0]
-        #self.isOccupable = cellType.value[1]
         self.cellType = cellType
         self.isOccupable = cellType.value[1]
 
@@ -35,7 +33,6 @@ class MapCell:
 
     def setOccupationState(self, occupationState):
         if(self.isOccupable):
-            #self.occupationState = occupationState.value # FIXME aca ver que onda con esto, se asigna un entero pero capaz deberia ser el mismo enum en si
             self.occupationState = occupationState
         else:
             self.occupationState = None
@@ -74,6 +71,15 @@ class Map:
         for i in range(self.horizontalCells):
             for j in range(self.verticalCells):
                 self.mapInSharedMemory[i][j] = MapCell(i, j)
+
+        # Define map obstacles # FIXME esto deberia venir desde el archivo de defincion del mapa
+        for i in range(self.verticalCells-3):
+            self.mapInSharedMemory[1][i+1].setType(MapCellTypes.OBSTACLE)
+            self.mapInSharedMemory[2][i+1].setType(MapCellTypes.OBSTACLE)
+
+        for i in range(self.verticalCells-3):
+            self.mapInSharedMemory[4][i+1].setType(MapCellTypes.OBSTACLE)
+            self.mapInSharedMemory[5][i+1].setType(MapCellTypes.OBSTACLE)
 
     def getMapInSharedMemory(self):
         return self.mapInSharedMemory
