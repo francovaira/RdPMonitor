@@ -5,6 +5,7 @@ from threading import Thread, Lock
 import time
 import numpy
 from decouple import config
+import macros_mapa
 from RdP import RdP
 from Monitor import Monitor
 from Visualizer import Visualizer
@@ -17,12 +18,14 @@ def thread_run(monitor, secuencia, id):
                 #print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
                 monitor.monitorDisparar(transicion, id)
-                time.sleep(0.05)
+                time.sleep(0.1)
 
 def main():
 
-    mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
-    mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
+    #mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
+    #mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
+    mapHorizontalSize = len(macros_mapa.MAPA[0])
+    mapVerticalSize = len(macros_mapa.MAPA)
 
     map = Map(mapHorizontalSize, mapVerticalSize)
     rdp = RdP(map)

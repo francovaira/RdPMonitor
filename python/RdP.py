@@ -13,8 +13,6 @@ class RdP:
         self.map = map
         self.placesCount = len(rdp.INCIDENCIA)
         self.transitionCount = len(rdp.INCIDENCIA[0])
-        self.mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
-        self.mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
 
         for i in range(0, self.placesCount):
             self.matrizEstado.append(self.initialMark[i])
@@ -54,4 +52,3 @@ class RdP:
             str.append(self.matrizEstado[i])
         print(str)
         print()
-

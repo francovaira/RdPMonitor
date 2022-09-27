@@ -1,7 +1,6 @@
 from multiprocessing import Lock
 import pygame
 from pygame.locals import *
-import random
 import time
 from Enums import Colors, MapCellOccupationStates, MapCellTypes
 
@@ -65,14 +64,8 @@ class Visualizer:
         self.canvas.fill(Colors.BACKGROUND.value) # set background color
         pygame.display.set_caption("Titulesco")
 
-        if(horizontalCells != verticalCells): # FIXME refactorizar esto para que venga directamente desde la config o la red
-            if(horizontalCells < verticalCells):
-                horizontalCells = verticalCells
-            else:
-                verticalCells = horizontalCells
-
-        self.horizontalCells = horizontalCells + 2
-        self.verticalCells = verticalCells + 2
+        self.horizontalCells = horizontalCells
+        self.verticalCells = verticalCells
         self.cellWidth = canvasHorizontalSizePixels // self.horizontalCells
         self.cellHeight = canvasVerticalSizePixels // self.verticalCells
 
@@ -86,12 +79,9 @@ class Visualizer:
             for j in range(self.verticalCells):
                 self.grid[i][j] = VisualizerCell(self.canvas, self.mapInSharedMemory[i][j], self.cellWidth, self.cellHeight)
 
-        # Draw defined map obstacles
-        # To implement
-
-        font = pygame.font.SysFont(None, 20)
+        font = pygame.font.SysFont(None, 25)
         img = font.render("ValEnTiN", True, Colors.WHITE.value)
-        self.canvas.blit(img, ((self.canvasHorizontalSizePixels//2)-30, (self.canvasVerticalSizePixels//2)-10))
+        self.canvas.blit(img, ((self.canvasHorizontalSizePixels//2)-45, (self.canvasVerticalSizePixels//2)))
         pygame.display.update()
         time.sleep(0.5)
 
@@ -105,7 +95,7 @@ class Visualizer:
 
             self.__updateFromMap()
             self.__drawDisplay()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
     def __updateFromMap(self): # FIXME optimizar para que no actualice los bordes
         for i in range(self.horizontalCells):

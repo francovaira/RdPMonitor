@@ -1,6 +1,7 @@
 import multiprocessing
 from multiprocessing import Manager
 from Enums import MapCellOccupationStates, MapCellTypes
+import macros_mapa
 
 class MapCell:
     def __init__(self, posX, posY):
@@ -67,8 +68,8 @@ class MapCell:
 class Map:
 
     def __init__(self, horizontalCells, verticalCells):
-        self.horizontalCells = horizontalCells + 2 # FIXME estas deberian provenir del archivo en si
-        self.verticalCells = verticalCells + 2
+        self.horizontalCells = horizontalCells
+        self.verticalCells = verticalCells
         self.manager = multiprocessing.Manager()
         self.mapInSharedMemory = self.manager.list()
 
@@ -83,24 +84,32 @@ class Map:
                 self.mapInSharedMemory[i][j] = MapCell(i, j)
 
         # Define map obstacles # FIXME esto deberia venir desde el archivo de defincion del mapa
-        for i in range(self.verticalCells-5):
-            self.mapInSharedMemory[2][i+2].setType(MapCellTypes.OBSTACLE)
-            self.mapInSharedMemory[3][i+2].setType(MapCellTypes.OBSTACLE)
+        # for i in range(self.verticalCells-4):
+        #     self.mapInSharedMemory[2][i+2].setType(MapCellTypes.OBSTACLE)
+        #     self.mapInSharedMemory[3][i+2].setType(MapCellTypes.OBSTACLE)
+        # for i in range(self.verticalCells-4):
+        #     self.mapInSharedMemory[5][i+2].setType(MapCellTypes.OBSTACLE)
+        #     self.mapInSharedMemory[6][i+2].setType(MapCellTypes.OBSTACLE)
 
-        for i in range(self.verticalCells-5):
-            self.mapInSharedMemory[5][i+2].setType(MapCellTypes.OBSTACLE)
-            self.mapInSharedMemory[6][i+2].setType(MapCellTypes.OBSTACLE)
+        # Initialize cells with map definition
+        for i in range(self.horizontalCells):
+            for j in range(self.verticalCells):
+                if(macros_mapa.MAPA[j][i] == macros_mapa.MAP_BORDER):
+                    self.mapInSharedMemory[i][j].setType(MapCellTypes.BORDER)
+                elif(macros_mapa.MAPA[j][i] == macros_mapa.MAP_OBSTACLE):
+                    self.mapInSharedMemory[i][j].setType(MapCellTypes.OBSTACLE)
+                elif(not macros_mapa.MAPA[j][i] == macros_mapa.MAP_OCCUPABLE):
+                    print("ERROR map cell definition unknown")
 
         # Define borders
-        for i in range(self.horizontalCells):
-            self.mapInSharedMemory[i][0].setType(MapCellTypes.BORDER)
-            self.mapInSharedMemory[i][self.verticalCells-1].setType(MapCellTypes.BORDER)
+        # for i in range(self.horizontalCells):
+        #     self.mapInSharedMemory[i][0].setType(MapCellTypes.BORDER)
+        #     self.mapInSharedMemory[i][self.verticalCells-1].setType(MapCellTypes.BORDER)
+        # for i in range(self.verticalCells):
+        #     self.mapInSharedMemory[0][i].setType(MapCellTypes.BORDER)
+        #     self.mapInSharedMemory[self.horizontalCells-1][i].setType(MapCellTypes.BORDER)
 
-        for i in range(self.verticalCells):
-            self.mapInSharedMemory[0][i].setType(MapCellTypes.BORDER)
-            self.mapInSharedMemory[self.horizontalCells-1][i].setType(MapCellTypes.BORDER)
-
-        # Associate map cells with RdP places
+        # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
         for i in range(self.verticalCells-2):
             for j in range(self.horizontalCells-2):
                 self.mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.horizontalCells-2))))
@@ -121,9 +130,6 @@ class Map:
         return 0
 
     def __getMapPositionFromPlaceID(self, placeID):
-        #place = placeID // 2
-        #y = (place // (self.horizontalCells-2))+1
-        #x = (place % (self.verticalCells-2)+1)
         for i in range(self.verticalCells-2):
             for j in range(self.horizontalCells-2):
                 if(self.mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
