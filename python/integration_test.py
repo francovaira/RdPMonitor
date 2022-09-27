@@ -22,8 +22,6 @@ def thread_run(monitor, secuencia, id):
 
 def main():
 
-    #mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
-    #mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
     mapHorizontalSize = len(macros_mapa.MAPA[0])
     mapVerticalSize = len(macros_mapa.MAPA)
 
