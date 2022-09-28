@@ -1,22 +1,28 @@
 from multiprocessing import Process, Lock, Pipe
 import threading
 from threading import Thread, Lock
-import time
-import numpy
 from RdP import RdP
 from Monitor import Monitor
 from Visualizer import Visualizer
 from Map import Map
 from decouple import config
+import mqqt_client as mqtt
+import time
+import numpy
+import queue
 
-def thread_run(monitor, secuencia, id):
+def thread_run(monitor, secuencia, id, cliente, cliente_queue):
     while(1):
         for transicion in secuencia:
             if(transicion != int(config('NULL_TRANSITION'))):
-                print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
+                # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
-                monitor.monitorDisparar(transicion, id)
-                time.sleep(0.5)
+                print(type(monitor.monitorDisparar(transicion, id)))
+                msg = cliente.publish("tuple", "bayyyr", qos=2)
+                msg.wait_for_publish()
+                # print(msg.is_published())
+                print(cliente_queue.get())
+                # time.sleep(2)
 
 def main():
 
@@ -27,16 +33,17 @@ def main():
 
     map = Map(mapHorizontalSize, mapVerticalSize, pipeMap2VisualizerTX)
     rdp = RdP(map)
+    mqttc, mqttc_queue =  mqtt.main()
     monitor = Monitor(threading.Lock(), rdp)
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, pipeRdPReceiver)
 
     # luego esta secuencia provendria desde el path finder, mediando una interfaz para traducir a transiciones
-    seqROBOT_A = [142, 0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
+    seqROBOT_A = [0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122, 136, 138, 140, 129, 103, 77, 51, 25, 11] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
     # seqROBOT_B = [22, 19, 9, 5, 1, 2, 12, 20] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
 
     # # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, seqROBOT_A, 'ROB_A'))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, seqROBOT_A, 'ROB_A', mqttc, mqttc_queue))
     # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, seqROBOT_B, 'ROB_B'))
     threads.append(thread_ROBOT_A)
     # threads.append(thread_ROBOT_B)

@@ -1,5 +1,6 @@
 import time
 import macros_mapa as rdp
+import html_filter
 from decouple import config
 from MapCellOccupationStates import MapCellOccupationStates
 
@@ -13,8 +14,8 @@ class RdP:
         self.matrizEstadoPrior = []
         self.markingChangedPlaces = []
         self.map = map
-        self.placesCount = len(rdp.INCIDENCIA)
-        self.transitionCount = len(rdp.INCIDENCIA[0])
+        self.placesCount = len(self.incidence)
+        self.transitionCount = len(self.incidence[0])
         self.mapHorizontalSize = int(config('MAP_HORIZONTAL_SIZE'))
         self.mapVerticalSize = int(config('MAP_VERTICAL_SIZE'))
 
@@ -63,7 +64,7 @@ class RdP:
     def printMarking(self):
         print("-------------------  MARCADO  -------------------");
         str = []
-        str.append(time.time())
+        # str.append(time.time())
         for i in range(0, self.placesCount):
             str.append(self.matrizEstado[i])
         print(str)

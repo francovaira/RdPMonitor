@@ -29,7 +29,7 @@ class Monitor:
             self.petriNet.redDisparar(transition, id)
             self.fireCountIncrement()
             #print(f"{time.time()} [{id}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.fireCount}")
-            #self.petriNet.printMarking()
+            self.petriNet.printMarking()
             #self.conditions[transition].notify_all()
 
         # notify for other conditions and potential waiting threads
