@@ -38,10 +38,14 @@ def thread_run(monitor, robotID, pathFinder):
     while(1):
         for transicion in transSeq:
             if(transicion != int(config('NULL_TRANSITION'))):
-                #print(f"{time.time()} [{robotID}] ### Intentando disparar transicion {transicion}")
-                monitor.monitorDisparar(transicion, robotID)
-                time.sleep(0.1)
-                #time.sleep(random.random()*1)
+                # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
+                # intenta disparar el monitor
+                print(type(monitor.monitorDisparar(transicion, id)))
+                msg = cliente.publish("tuple", "bayyyr", qos=2)
+                msg.wait_for_publish()
+                # print(msg.is_published())
+                print(cliente_queue.get())
+                # time.sleep(2)
 
 def main():
 
@@ -50,6 +54,7 @@ def main():
 
     map = Map(mapHorizontalSize, mapVerticalSize)
     rdp = RdP(map)
+    mqttc, mqttc_queue =  mqtt.main()
     monitor = Monitor(threading.Lock(), rdp)
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 

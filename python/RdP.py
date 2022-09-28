@@ -1,5 +1,6 @@
 import time
 import macros_mapa as rdp
+import html_filter
 from decouple import config
 from Enums import MapCellOccupationStates
 
