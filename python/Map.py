@@ -1,122 +1,129 @@
 import multiprocessing
 from multiprocessing import Manager
+from PathFinderIntegrated import PathFinder
 from Enums import MapCellOccupationStates, MapCellTypes
 import macros_mapa
 
 class MapCell:
     def __init__(self, posX, posY):
-        self.placeID = None
-        self.posX = posX # these are the "ordinal" coordinates (only whole numbers)
-        self.posY = posY
-        self.cellWidth = 1 # must be expressed in meters
-        self.cellHeight = 1
-        self.xCoordinate = posX * self.cellWidth # these are the "metric" coordinates, position in space (real numbers)
-        self.yCoordinate = posY * self.cellHeight
+        self.__placeID = None
+        self.__posX = posX # these are the "ordinal" coordinates (only whole numbers)
+        self.__posY = posY
+        self.__cellWidth = 1 # must be expressed in meters
+        self.__cellHeight = 1
+        self.__xCoordinate = posX * self.__cellWidth # these are the "metric" coordinates, position in space (real numbers)
+        self.__yCoordinate = posY * self.__cellHeight
 
         self.setType(MapCellTypes.OCCUPABLE)
         self.setOccupationState(MapCellOccupationStates.FREE_PLACE)
 
-        self.robotsList = [] # will store the IDs of all robots that are currently occupying this cell
-        self.robotsReservingCell = [] # will store the IDs of the robots that are currently reserving this cell
-        self.robotsRequestingCell = [] # will store the IDs of the robots that are currently wanting to enter this cell
+        self.__robotsList = [] # will store the IDs of all robots that are currently occupying this cell
+        self.__robotsReservingCell = [] # will store the IDs of the robots that are currently reserving this cell
+        self.__robotsRequestingCell = [] # will store the IDs of the robots that are currently wanting to enter this cell
 
     def getPosX(self):
-        return self.posX
+        return self.__posX
 
     def getPosY(self):
-        return self.posY
+        return self.__posY
 
     def setPlaceID(self, placeID):
-        self.placeID = placeID
+        self.__placeID = placeID
 
     def getPlaceID(self):
-        return self.placeID
+        return self.__placeID
 
     def setType(self, cellType):
-        self.cellType = cellType
-        self.isOccupable = cellType.value[1]
+        self.__cellType = cellType
+        self.__isOccupable = cellType.value[1]
 
     def getType(self):
-        return self.cellType
+        return self.__cellType
 
     def getIsOccupable(self):
-        return self.isOccupable
+        return self.__isOccupable
 
     def setOccupationState(self, occupationState):
-        if(self.isOccupable):
-            self.occupationState = occupationState
+        if(self.__isOccupable):
+            self.__occupationState = occupationState
         else:
-            self.occupationState = None
+            self.__occupationState = None
 
     def getOccupationState(self):
-        return self.occupationState
+        return self.__occupationState
 
     def getOccupantsID(self):
-        return None if len(self.robotsList) == 0 else self.robotsList[0]
+        return None if len(self.__robotsList) == 0 else self.__robotsList[0]
 
     def addRobot(self, robotID):
-        if(self.isOccupable):
-            if(any(elem == robotID for elem in self.robotsList)): # check for duplicates
+        if(self.__isOccupable):
+            if(any(elem == robotID for elem in self.__robotsList) or robotID == None or robotID == ""): # check for duplicates
                 return
             else:
-                self.robotsList.append(robotID)
+                self.__robotsList.append(robotID)
 
     def removeRobot(self, robotID):
-        if(any(elem == robotID for elem in self.robotsList)): # check existence
-            self.robotsList.remove(robotID)
+        if(robotID == None or robotID == ""):
+            return
+        elif(any(elem == robotID for elem in self.__robotsList)): # check existence
+            self.__robotsList.remove(robotID)
 
 class Map:
 
     def __init__(self, horizontalCells, verticalCells):
-        self.horizontalCells = horizontalCells
-        self.verticalCells = verticalCells
-        self.manager = multiprocessing.Manager()
-        self.mapInSharedMemory = self.manager.list()
+        self.__horizontalCells = horizontalCells
+        self.__verticalCells = verticalCells
+        self.__manager = multiprocessing.Manager() # https://maxinterview.com/code/shared-list-in-multiprocessing-python-F4DFE1E6CB141B9/
+        self.__mapInSharedMemory = self.__manager.list() # https://docs.python.org/3.9/library/multiprocessing.html#multiprocessing.Manager
+        self.__pathFinder = PathFinder(self.__verticalCells, self.__horizontalCells)
 
         # create 2D array for the grid (2D map) in shared memory
-        self.mapInSharedMemory = [0 for i in range(self.horizontalCells)]
-        for i in range(self.horizontalCells):
-            self.mapInSharedMemory[i] = [0 for i in range(self.verticalCells)]
+        self.__mapInSharedMemory = [0 for i in range(self.__horizontalCells)]
+        for i in range(self.__horizontalCells):
+            self.__mapInSharedMemory[i] = [0 for i in range(self.__verticalCells)]
 
         # Create cells for the map
-        for i in range(self.horizontalCells):
-            for j in range(self.verticalCells):
-                self.mapInSharedMemory[i][j] = MapCell(i, j)
+        for i in range(self.__horizontalCells):
+            for j in range(self.__verticalCells):
+                self.__mapInSharedMemory[i][j] = MapCell(i, j)
 
         # Initialize cells with map definition
-        for i in range(self.horizontalCells):
-            for j in range(self.verticalCells):
+        for i in range(self.__horizontalCells):
+            for j in range(self.__verticalCells):
                 if(macros_mapa.MAPA[j][i] == macros_mapa.MAP_BORDER):
-                    self.mapInSharedMemory[i][j].setType(MapCellTypes.BORDER)
+                    self.__mapInSharedMemory[i][j].setType(MapCellTypes.BORDER)
                 elif(macros_mapa.MAPA[j][i] == macros_mapa.MAP_OBSTACLE):
-                    self.mapInSharedMemory[i][j].setType(MapCellTypes.OBSTACLE)
+                    self.__mapInSharedMemory[i][j].setType(MapCellTypes.OBSTACLE)
                 elif(not macros_mapa.MAPA[j][i] == macros_mapa.MAP_OCCUPABLE):
                     print("ERROR map cell definition unknown")
 
         # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
-        for i in range(self.verticalCells-2):
-            for j in range(self.horizontalCells-2):
-                self.mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.horizontalCells-2))))
+        for i in range(self.__verticalCells-2):
+            for j in range(self.__horizontalCells-2):
+                self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
 
     def getMapInSharedMemory(self):
-        return self.mapInSharedMemory
+        return self.__mapInSharedMemory
+
+    def getPathFinder(self):
+        return self.__pathFinder
 
     def updatePosition(self, placeID, occupationState, robotID):
         posX, posY = self.__getMapPositionFromPlaceID(placeID)
-        if(not self.mapInSharedMemory[posX][posY].getIsOccupable()):
+        if(not self.__mapInSharedMemory[posX][posY].getIsOccupable()):
             return -1
 
-        self.mapInSharedMemory[posX][posY].setOccupationState(occupationState)
+        self.__mapInSharedMemory[posX][posY].setOccupationState(occupationState)
         if(occupationState == MapCellOccupationStates.FREE_PLACE):
-            self.mapInSharedMemory[posX][posY].removeRobot(robotID)
+            self.__mapInSharedMemory[posX][posY].removeRobot(robotID)
         elif(occupationState == MapCellOccupationStates.OCCUPIED_PLACE):
-            self.mapInSharedMemory[posX][posY].addRobot(robotID)
+            self.__mapInSharedMemory[posX][posY].addRobot(robotID)
         return 0
 
     def __getMapPositionFromPlaceID(self, placeID):
-        for i in range(self.verticalCells-2):
-            for j in range(self.horizontalCells-2):
-                if(self.mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
-                    return self.mapInSharedMemory[j+1][i+1].getPosX(), self.mapInSharedMemory[j+1][i+1].getPosY()
+        for i in range(self.__verticalCells-2):
+            for j in range(self.__horizontalCells-2):
+                if(self.__mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
+                    return self.__mapInSharedMemory[j+1][i+1].getPosX(), self.__mapInSharedMemory[j+1][i+1].getPosY()
         return None
 

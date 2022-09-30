@@ -4,6 +4,7 @@ import threading
 from threading import Thread, Lock
 import time
 import numpy
+import random
 from decouple import config
 import macros_mapa
 from RdP import RdP
@@ -11,14 +12,31 @@ from Monitor import Monitor
 from Visualizer import Visualizer
 from Map import Map
 
-def thread_run(monitor, secuencia, id):
+
+
+def thread_run(monitor, robotID, pathFinder):
+
+    # FIXME hacer que el robot tenga una "posicion/coordenada actual"
+
+    #if(robotID == "ROB_A"):
+        #pathFinder.calculatePath(1,1,5,6) # FIXME deberia tener un lock para acceder uno por vez
+
+    if(robotID == "ROB_A"):
+        plazasSeq = [0, 2, 4, 6, 8, 10, 12, 26, 40, 54, 68, 82, 80, 78, 76, 62, 48, 34, 20, 6, 4, 2, 0]
+    elif(robotID == "ROB_B"):
+        plazasSeq = [82, 80, 78, 76, 62, 48, 34, 20, 6, 4, 2, 0, 2, 4, 6, 8, 10, 12, 26, 40, 54, 68, 82]
+
+    transSeq = monitor.getTransitionSequence(plazasSeq)
+    monitor.setRobotInPlace(plazasSeq[0], robotID)
+    print(f"TRANSICIONES {robotID} {transSeq}")
+
     while(1):
-        for transicion in secuencia:
+        for transicion in transSeq:
             if(transicion != int(config('NULL_TRANSITION'))):
-                #print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-                # intenta disparar el monitor
-                monitor.monitorDisparar(transicion, id)
+                #print(f"{time.time()} [{robotID}] ### Intentando disparar transicion {transicion}")
+                monitor.monitorDisparar(transicion, robotID)
                 time.sleep(0.1)
+                #time.sleep(random.random()*1)
 
 def main():
 
@@ -32,13 +50,13 @@ def main():
 
     # luego esta secuencia provendria desde el path finder, mediando una interfaz para traducir a transiciones
     #seqROBOT_A = [142, 0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
-    seqROBOT_A = [0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122, 135, 133, 131, 117, 91, 65, 39, 13] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
-    seqROBOT_B = [50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 6, 8, 10, 24] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
+    #seqROBOT_A = [0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122, 135, 133, 131, 117, 91, 65, 39, 13] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
+    #seqROBOT_B = [50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 6, 8, 10, 24] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, seqROBOT_A, 'ROB_A'))
-    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, seqROBOT_B, 'ROB_B'))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder()))
+    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder()))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
     thread_ROBOT_A.start()
