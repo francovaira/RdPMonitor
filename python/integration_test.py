@@ -48,11 +48,6 @@ def main():
     monitor = Monitor(threading.Lock(), rdp)
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
-    # luego esta secuencia provendria desde el path finder, mediando una interfaz para traducir a transiciones
-    #seqROBOT_A = [142, 0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
-    #seqROBOT_A = [0, 2, 4, 6, 8, 10, 24, 50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 18, 44, 70, 96, 122, 135, 133, 131, 117, 91, 65, 39, 13] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
-    #seqROBOT_B = [50, 76, 102, 128, 141, 139, 137, 135, 133, 131, 117, 91, 65, 39, 13, 0, 2, 4, 6, 8, 10, 24] # Se ponen los numeros de transicion (arranca a contar desde cero) -- SECUENCIA RONDA
-
     # create threads for each robot
     threads = []
     thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder()))
@@ -62,7 +57,7 @@ def main():
     thread_ROBOT_A.start()
     thread_ROBOT_B.start()
 
-    processVisualizer = multiprocessing.Process(target=viz.run()) # FIXME aca para optimizar podria llamarse directamente a un init o algo asi y que de ese directamente pase al run() asi capaz seria mejor
+    processVisualizer = multiprocessing.Process(target=viz.run())
     processVisualizer.start()
 
     # wait for the threads to complete
