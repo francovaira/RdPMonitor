@@ -1,3 +1,4 @@
+from decouple import config
 import macros_mapa
 
 class PathFinderCell:
@@ -65,6 +66,7 @@ class PathFinder:
     def calculatePath(self, startX, startY, endX, endY):
         finished = False
         iterations = 0
+        maxIterations = int(config('PATH_FINDER_MAX_ITERATIONS'))
 
         start = self.__getCell(startX, startY)
         end = self.__getCell(endX, endY)
@@ -92,17 +94,20 @@ class PathFinder:
                 closedSet.append(current)
                 current.closed = True
 
-                # FINISHED CALCULATING
-                if(current == end):
+                # FINISHED CALCULATING or max iterations reached
+                if(iterations >= maxIterations):
+                    print(' NOT DONE - max iterations reached for PathFinder')
+                    finished = True
+                    return None
+                elif(current == end):
                     pathDistance = current.f
-                    print('DONE - Distance:', pathDistance)
+                    print(f"DONE - Distance: {pathDistance} // Iterations: {iterations}")
 
                     seqParams = []
-                    seqParams = self.__getSequenceParameters(current)
+                    seqParams = self.__getSequenceCoordinates(current)
                     #print(seqParams)
-                    print(f"Iterations {iterations}")
                     finished = True
-                    break
+                    return seqParams
 
                 neighbors = current.neighbors
                 for i in range(len(neighbors)):
@@ -131,6 +136,27 @@ class PathFinder:
     def __heuristic(self, n, e):
         d = abs(n.i - e.i) + abs(n.j - e.j)
         return d
+
+    # returns a list of (X,Y) coordinates to move along the map
+    def __getSequenceCoordinates(self, cellSequence):
+        currentCell = cellSequence
+        reversedCellSequence = []
+        orderedCellSequence = []
+        coordinatesPathSequence = []
+
+        # get ordered sequence from cell sequence pointers
+        for i in range(round(cellSequence.f)):
+            reversedCellSequence.append(currentCell)
+            if(currentCell.previous != None):
+                currentCell = currentCell.previous
+        reversedCellSequence.append(currentCell)
+
+        #print("#### SECUENCIA ------------------")
+        for i in reversed(reversedCellSequence):
+            orderedCellSequence.append(i)
+            coordinatesPathSequence.append((i.i, i.j))
+            #print(f"X:{i.i} Y:{i.j}")
+        return coordinatesPathSequence
 
     # returns a list of speeds and distances for the robot to drive along the path
     def __getSequenceParameters(self, cellSequence):

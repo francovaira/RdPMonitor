@@ -18,24 +18,27 @@ class Monitor:
     def fireCountIncrement(self):
         self.__fireCount = self.__fireCount+1
 
-    def monitorDisparar(self, transition, id):
+    def monitorDisparar(self, transition, robotID):
         with self.__conditions[transition]:
             k = self.__petriNet.solicitudDisparo(transition)
             while(k == 0):
-                #print(f"{time.time()} [{id}] ### No sensibilizada {transition} -- esperando...")
+                #print(f"{time.time()} [{robotID}] ### No sensibilizada {transition} -- esperando...")
                 self.__conditions[transition].wait() # espera que otro hilo lo despierte
                 k = self.__petriNet.solicitudDisparo(transition)
 
             # disparar efectivamente - obtener el nuevo marcado
-            self.__petriNet.redDisparar(transition, id)
+            self.__petriNet.redDisparar(transition, robotID)
             self.fireCountIncrement()
-            print(f"{time.time()} [{id}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.__fireCount}")
+            print(f"{time.time()} [{robotID}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.__fireCount}")
             #self.__petriNet.printMarking()
 
         # notify for other conditions and potential waiting threads
         for i in range(0, self.__petriNet.getTransitionCount()):
             with self.__conditions[i]:
                 self.__conditions[i].notify_all()
+
+    def getPlacesSequence(self, coordinatesSequence):
+        return self.__petriNet.getPlacesSequence(coordinatesSequence)
 
     def getTransitionSequence(self, placeSequence):
         return self.__petriNet.getTransitionSequence(placeSequence)

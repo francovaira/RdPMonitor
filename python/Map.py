@@ -127,3 +127,15 @@ class Map:
                     return self.__mapInSharedMemory[j+1][i+1].getPosX(), self.__mapInSharedMemory[j+1][i+1].getPosY()
         return None
 
+    def getPlacesSequenceFromCoordinates(self, coordinatesSequence):
+        placeSequence = []
+        for i in range(len(coordinatesSequence)):
+            for x in range(self.__horizontalCells):
+                for y in range(self.__verticalCells):
+                    if(self.__mapInSharedMemory[x][y].getPosX() == coordinatesSequence[i][0] and self.__mapInSharedMemory[x][y].getPosY() == coordinatesSequence[i][1]):
+                        placeSequence.append(self.__mapInSharedMemory[x][y].getPlaceID())
+        return placeSequence
+
+
+
+

@@ -18,12 +18,17 @@ def thread_run(monitor, robotID, pathFinder):
 
     # FIXME hacer que el robot tenga una "posicion/coordenada actual"
 
-    #if(robotID == "ROB_A"):
-        #pathFinder.calculatePath(1,1,5,6) # FIXME deberia tener un lock para acceder uno por vez
-
+    coordenadasPathFinder = []
     if(robotID == "ROB_A"):
+        coordenadasPathFinder = pathFinder.calculatePath(1,1,6,6) # FIXME deberia tener un lock para acceder uno por vez
+        placeSequence = monitor.getPlacesSequence(coordenadasPathFinder)
+
         plazasSeq = [0, 2, 4, 6, 8, 10, 12, 26, 40, 54, 68, 82, 80, 78, 76, 62, 48, 34, 20, 6, 4, 2, 0]
+        #plazasSeq = [16, 30, 44, 58, 72, 70, 56, 42, 28, 14, 16]
+        #plazasSeq = [0, 2, 4, 6, 8, 10, 12, 26, 40, 54, 68, 82, 80, 78, 76, 74, 72, 70, 56, 42, 28, 14, 0]
+        #plazasSeq = placeSequence
     elif(robotID == "ROB_B"):
+        #plazasSeq = [82, 80, 78, 76, 62, 48, 34, 20, 6, 4, 2, 0, 2, 4, 6, 8, 10, 12, 26, 40, 54, 68, 82]
         plazasSeq = [82, 80, 78, 76, 62, 48, 34, 20, 6, 4, 2, 0, 2, 4, 6, 8, 10, 12, 26, 40, 54, 68, 82]
 
     transSeq = monitor.getTransitionSequence(plazasSeq)

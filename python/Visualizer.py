@@ -95,7 +95,7 @@ class Visualizer:
 
             self.__updateFromMap()
             self.__drawDisplay()
-            time.sleep(0.1)
+            time.sleep(0.01)
 
     def __updateFromMap(self):
         for i in range(self.__horizontalCells-2):

@@ -41,38 +41,16 @@ class RdP:
             return 1
         return 0
 
-    def __updateMap(self, placeID, robotID):
-        if(placeID%2 == 0): # will update only occupancy places
-            placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.__matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
-            if(self.__map.updatePosition(placeID, placeNewState, robotID)):
-                print(f"ERROR while trying to modify Map from RdP - Cell {placeID} is not occupable")
-
     def setRobotInPlace(self, placeID, robotID): # Forces the marking to set a robot in a place
-        # FIXME agregar checkeo de placeID
-        if(placeID < 0 or placeID >= self.__placesCount):
+        # FIXME agregar checkeo de existencia de placeID
+        if(not self.__setOccupationInPlace(placeID) == 0):
             return -1
-        else:
-            if(not self.__setOccupationInPlace(placeID) == 0):
-                return -1
 
-            self.__updateMap(placeID, robotID)
-            return 0
-
-    def getTransitionSequence(self, placeSequence): # returns the transitions that must be fired to accomplish the place sequence
-        transitionSeq = []
-        for i in range(len(placeSequence)-1):
-            # FIXME check existence?
-            origen = placeSequence[i]
-            destino = placeSequence[i+1]
-
-            #for j in range(len(rdp.INCIDENCIA[0])): # cantidad de transiciones
-            for j in range(self.__transitionCount):
-                if(rdp.INCIDENCIA[origen][j] == -1 and rdp.INCIDENCIA[destino][j] == 1): # Explicacion: en el origen se "resta" un elemento porque el robot deja de estar aqui. Se "suma" 1 al destino para marcar que hay un robot
-                    transitionSeq.append(j)
-        return transitionSeq
+        self.__updateMap(placeID, robotID)
+        return 0
 
     def __setOccupationInPlace(self, placeID):
-        if(not placeID%2 == 0):
+        if(placeID < 0 or placeID >= self.__placesCount or not placeID%2 == 0):
             return -1
         else:
             if(self.__matrizEstado[placeID + 1] > 0): # if there is room in the place - it checks the resource place
@@ -82,6 +60,30 @@ class RdP:
                 return 0
             else:
                 return -1
+
+    def getPlacesSequence(self, coordinatesSequence): # returns the places that the robot must go through to accomplish the place sequence
+        return self.__map.getPlacesSequenceFromCoordinates(coordinatesSequence)
+
+    def getTransitionSequence(self, placeSequence): # returns the transitions that must be fired to accomplish the place sequence
+        # FIXME agregar que checkee el largo del resultado para detectar discontinuidades en la secuencia - deberia haber X cantidad de transiciones para recorrer Y plazas
+        transitionSeq = []
+        for i in range(len(placeSequence)-1):
+            # FIXME check existence?
+            origen = placeSequence[i]
+            destino = placeSequence[i+1]
+
+            for j in range(self.getTransitionCount()):
+                if(rdp.INCIDENCIA[origen][j] == -1 and rdp.INCIDENCIA[destino][j] == 1): # Explicacion: en el origen se "resta" un elemento porque el robot deja de estar aqui. Se "suma" 1 al destino para marcar que hay un robot
+                    transitionSeq.append(j)
+        return transitionSeq
+
+    def __updateMap(self, placeID, robotID):
+        if(placeID < 0 or placeID >= self.__placesCount or not placeID%2 == 0):
+            return -1
+        else:
+            placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.__matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
+            if(self.__map.updatePosition(placeID, placeNewState, robotID)):
+                print(f"ERROR while trying to modify Map from RdP - Cell {placeID} is not occupable")
 
     def printMarking(self):
         print("-------------------  MARCADO  -------------------");
