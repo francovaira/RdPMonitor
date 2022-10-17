@@ -1,10 +1,11 @@
 import threading
+from threading import Lock
 import time
 
 class Monitor:
 
-    def __init__(self, lock, petriNet):
-        self.__monitorLock = lock
+    def __init__(self, petriNet):
+        self.__monitorLock = threading.Lock()
         self.__petriNet = petriNet
         self.__conditions = []
         self.__directRdPAccessCondition = threading.Condition(self.__monitorLock)
@@ -14,9 +15,6 @@ class Monitor:
         for i in range(0, self.__petriNet.getTransitionCount()):
             cond = threading.Condition(self.__monitorLock) # reference to the main lock
             self.__conditions.append(cond)
-
-    def fireCountIncrement(self):
-        self.__fireCount = self.__fireCount+1
 
     def monitorDisparar(self, transition, robotID):
         with self.__conditions[transition]:
@@ -28,7 +26,7 @@ class Monitor:
 
             # disparar efectivamente - obtener el nuevo marcado
             self.__petriNet.redDisparar(transition, robotID)
-            self.fireCountIncrement()
+            self.__fireCountIncrement()
             print(f"{time.time()} [{robotID}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.__fireCount}")
             #self.__petriNet.printMarking()
 
@@ -37,15 +35,30 @@ class Monitor:
             with self.__conditions[i]:
                 self.__conditions[i].notify_all()
 
-    def getPlacesSequence(self, coordinatesSequence):
-        return self.__petriNet.getPlacesSequence(coordinatesSequence)
-
-    def getTransitionSequence(self, placeSequence):
-        return self.__petriNet.getTransitionSequence(placeSequence)
-
-    def setRobotInPlace(self, placeID, robotID):
+    def getTransitionSequence(self, coordinatesSequence):
         with self.__directRdPAccessCondition:
-            if(not self.__petriNet.setRobotInPlace(placeID, robotID) == 0):
-                print("ERROR INSIDE MONITOR unable to set robot in place")
+            return self.__petriNet.getTransitionSequence(coordinatesSequence)
+
+    # def getPlacesSequence(self, coordinatesSequence): # FIXME capaz solo obener transiciones en lugar de plazas, no le interesa al hilo de robot
+    #     with self.__directRdPAccessCondition:
+    #         return self.__petriNet.getPlacesSequence(coordinatesSequence)
+
+    # def getTransitionSequence(self, placeSequence):
+    #     with self.__directRdPAccessCondition:
+    #         return self.__petriNet.getTransitionSequence(placeSequence)
+
+    # def setRobotInPlace(self, placeID, robotID):
+    #     with self.__directRdPAccessCondition:
+    #         if(not self.__petriNet.setRobotInPlace(placeID, robotID) == 0):
+    #             print("ERROR INSIDE MONITOR unable to set robot in place")
+    #         self.__directRdPAccessCondition.notify_all()
+
+    def setRobotInCoordinate(self, coordinate, robotID):
+        with self.__directRdPAccessCondition:
+            if(not self.__petriNet.setRobotInCoordinate(coordinate, robotID) == 0):
+                print("ERROR INSIDE MONITOR unable to set robot in coordinate")
             self.__directRdPAccessCondition.notify_all()
+
+    def __fireCountIncrement(self):
+        self.__fireCount = self.__fireCount+1
 

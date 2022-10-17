@@ -1,6 +1,7 @@
 import multiprocessing
 from multiprocessing import Manager
 from PathFinderIntegrated import PathFinder
+from MapGenerator import MapGenerator
 from Enums import MapCellOccupationStates, MapCellTypes
 import macros_mapa
 
@@ -70,11 +71,18 @@ class MapCell:
 
 class Map:
 
-    def __init__(self, horizontalCells, verticalCells):
-        self.__horizontalCells = horizontalCells
-        self.__verticalCells = verticalCells
+    def __init__(self):
+        self.__mapGenerator = MapGenerator()
+        self.__mapDefinition = self.__mapGenerator.getMapDefinition()
+
+        if(self.__mapDefinition == None):
+            print("ERROR MAP CLASS - Unable to generate map")
+            return
+
         self.__manager = multiprocessing.Manager() # https://maxinterview.com/code/shared-list-in-multiprocessing-python-F4DFE1E6CB141B9/
         self.__mapInSharedMemory = self.__manager.list() # https://docs.python.org/3.9/library/multiprocessing.html#multiprocessing.Manager
+        self.__horizontalCells = self.__mapDefinition.getHorizontalSize()
+        self.__verticalCells = self.__mapDefinition.getVerticalSize()
         self.__pathFinder = PathFinder(self.__verticalCells, self.__horizontalCells)
 
         # create 2D array for the grid (2D map) in shared memory
@@ -90,17 +98,20 @@ class Map:
         # Initialize cells with map definition
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
-                if(macros_mapa.MAPA[j][i] == macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_BORDER):
                     self.__mapInSharedMemory[i][j].setType(MapCellTypes.BORDER)
-                elif(macros_mapa.MAPA[j][i] == macros_mapa.MAP_OBSTACLE):
+                elif(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OBSTACLE):
                     self.__mapInSharedMemory[i][j].setType(MapCellTypes.OBSTACLE)
-                elif(not macros_mapa.MAPA[j][i] == macros_mapa.MAP_OCCUPABLE):
+                elif(not self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OCCUPABLE):
                     print("ERROR map cell definition unknown")
 
         # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
         for i in range(self.__verticalCells-2):
             for j in range(self.__horizontalCells-2):
                 self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
+
+    def getMapDefinition(self):
+        return self.__mapDefinition
 
     def getMapInSharedMemory(self):
         return self.__mapInSharedMemory
@@ -125,6 +136,22 @@ class Map:
             for j in range(self.__horizontalCells-2):
                 if(self.__mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
                     return self.__mapInSharedMemory[j+1][i+1].getPosX(), self.__mapInSharedMemory[j+1][i+1].getPosY()
+        return None
+
+    def getPlaceIDFromMapCoordinate(self, coordinate):
+        #for i in range(self.__verticalCells-2):
+        #    for j in range(self.__horizontalCells-2):
+        #        if(self.__mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
+        #            return self.__mapInSharedMemory[j+1][i+1].getPosX(), self.__mapInSharedMemory[j+1][i+1].getPosY()
+        #return None
+
+        xPos = coordinate[0]
+        yPos = coordinate[1]
+
+        for i in range(self.__verticalCells-2):
+            for j in range(self.__horizontalCells-2):
+                if(xPos == self.__mapInSharedMemory[j+1][i+1].getPosX() and yPos == self.__mapInSharedMemory[j+1][i+1].getPosY()):
+                    return self.__mapInSharedMemory[j+1][i+1].getPlaceID()
         return None
 
     def getPlacesSequenceFromCoordinates(self, coordinatesSequence):

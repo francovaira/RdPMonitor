@@ -32,6 +32,13 @@ class PathFinderCell:
         if j > 0 and grid[self.i][j - 1].isObstacle == False:
             self.neighbors.append(grid[self.i][j - 1])
 
+    def reset(self):
+        self.f = 0
+        self.g = 0
+        self.h = 0
+        self.previous = None
+        self.closed = False
+
 class PathFinder:
     def __init__(self, rows, cols):
         self.rows = rows
@@ -74,6 +81,10 @@ class PathFinder:
         if(start == None or end == None or start.getIsObstacle() == True or end.getIsObstacle() == True):
             print("Invalid coordinates")
             return
+
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                self.grid[i][j].reset()
 
         openSet = []
         closedSet = []
