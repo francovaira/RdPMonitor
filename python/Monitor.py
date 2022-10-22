@@ -37,21 +37,11 @@ class Monitor:
 
     def getTransitionSequence(self, coordinatesSequence):
         with self.__directRdPAccessCondition:
-            return self.__petriNet.getTransitionSequence(coordinatesSequence)
-
-    # def getPlacesSequence(self, coordinatesSequence): # FIXME capaz solo obener transiciones en lugar de plazas, no le interesa al hilo de robot
-    #     with self.__directRdPAccessCondition:
-    #         return self.__petriNet.getPlacesSequence(coordinatesSequence)
-
-    # def getTransitionSequence(self, placeSequence):
-    #     with self.__directRdPAccessCondition:
-    #         return self.__petriNet.getTransitionSequence(placeSequence)
-
-    # def setRobotInPlace(self, placeID, robotID):
-    #     with self.__directRdPAccessCondition:
-    #         if(not self.__petriNet.setRobotInPlace(placeID, robotID) == 0):
-    #             print("ERROR INSIDE MONITOR unable to set robot in place")
-    #         self.__directRdPAccessCondition.notify_all()
+            transitionSequence = self.__petriNet.getTransitionSequence(coordinatesSequence)
+            if(transitionSequence == None):
+                print("ERROR INSIDE MONITOR unable to get transition sequence")
+            self.__directRdPAccessCondition.notify_all()
+            return transitionSequence
 
     def setRobotInCoordinate(self, coordinate, robotID):
         with self.__directRdPAccessCondition:

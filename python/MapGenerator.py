@@ -4,11 +4,25 @@ class MapDefinition:
 
     def __init__(self, mapDefinition):
         self.__mapDefinition = mapDefinition
-        self.__horizontalCells = 0
-        self.__verticalCells = 0
+        self.__horizontalCells = len(self.__mapDefinition[0]) # size with borders included
+        self.__verticalCells = len(self.__mapDefinition) # size with borders included
 
-        self.__horizontalCells = len(self.__mapDefinition[0])
-        self.__verticalCells = len(self.__mapDefinition)
+        self.__idMap = [None for i in range(self.__horizontalCells)]
+        for i in range(self.__horizontalCells):
+            self.__idMap[i] = [None for i in range(self.__verticalCells)]
+
+        self.__generateIDs(self.__idMap)
+
+    def __generateIDs(self, idMap):
+        for i in range(self.__verticalCells-2): # indexes are -2 because of borders
+            for j in range(self.__horizontalCells-2):
+                idMap[j+1][i+1] = 2*(j+i*(self.__horizontalCells-2))
+                # given that petri net structure is based on having one resource place and one occupation place for each cell,
+                # we need 2 places for each location in the map. The IDs are defined in such a way that even IDs always
+                # refer to an occupation place and the odd IDs to a resoruce place, as well as in the incidence matrix.
+
+    def getMapID(self):
+        return self.__idMap
 
     def getMapStructure(self):
         return self.__mapDefinition
@@ -34,14 +48,14 @@ class MapGenerator:
         return self.__mapDefinition
 
     def __fileMapDefinitionRead(self):
-            mapFile=open("mapDefinition.txt","r") # FIXME hacer un define/config
-            mapDefinitionRead=eval(mapFile.read())
-            mapFile.close()
+        mapFile=open("mapDefinition.txt","r") # FIXME hacer un define/config
+        mapDefinitionRead=eval(mapFile.read())
+        mapFile.close()
 
-            if(not self.__checkConsistency(mapDefinitionRead)):
-                mapDefinitionRead = None
+        if(not self.__checkConsistency(mapDefinitionRead)):
+            mapDefinitionRead = None
 
-            return mapDefinitionRead
+        return mapDefinitionRead
 
     def __checkConsistency(self, mapDefinition):
 

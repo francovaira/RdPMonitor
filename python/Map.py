@@ -83,7 +83,7 @@ class Map:
         self.__mapInSharedMemory = self.__manager.list() # https://docs.python.org/3.9/library/multiprocessing.html#multiprocessing.Manager
         self.__horizontalCells = self.__mapDefinition.getHorizontalSize()
         self.__verticalCells = self.__mapDefinition.getVerticalSize()
-        self.__pathFinder = PathFinder(self.__verticalCells, self.__horizontalCells)
+        self.__pathFinder = PathFinder(self.__mapDefinition)
 
         # create 2D array for the grid (2D map) in shared memory
         self.__mapInSharedMemory = [0 for i in range(self.__horizontalCells)]
@@ -106,9 +106,15 @@ class Map:
                     print("ERROR map cell definition unknown")
 
         # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
+        #for i in range(self.__verticalCells-2):
+        #    for j in range(self.__horizontalCells-2):
+        #        self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
+
+        # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
         for i in range(self.__verticalCells-2):
-            for j in range(self.__horizontalCells-2):
-                self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
+           for j in range(self.__horizontalCells-2):
+               #self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
+               self.__mapInSharedMemory[j+1][i+1].setPlaceID(self.__mapDefinition.getMapID()[j+1][i+1])
 
     def getMapDefinition(self):
         return self.__mapDefinition
@@ -120,7 +126,7 @@ class Map:
         return self.__pathFinder
 
     def updatePosition(self, placeID, occupationState, robotID):
-        posX, posY = self.__getMapPositionFromPlaceID(placeID)
+        posX, posY = self.__getMapCoordinateFromPlaceID(placeID)
         if(not self.__mapInSharedMemory[posX][posY].getIsOccupable()):
             return -1
 
@@ -131,7 +137,7 @@ class Map:
             self.__mapInSharedMemory[posX][posY].addRobot(robotID)
         return 0
 
-    def __getMapPositionFromPlaceID(self, placeID):
+    def __getMapCoordinateFromPlaceID(self, placeID):
         for i in range(self.__verticalCells-2):
             for j in range(self.__horizontalCells-2):
                 if(self.__mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
@@ -139,12 +145,6 @@ class Map:
         return None
 
     def getPlaceIDFromMapCoordinate(self, coordinate):
-        #for i in range(self.__verticalCells-2):
-        #    for j in range(self.__horizontalCells-2):
-        #        if(self.__mapInSharedMemory[j+1][i+1].getPlaceID() == placeID):
-        #            return self.__mapInSharedMemory[j+1][i+1].getPosX(), self.__mapInSharedMemory[j+1][i+1].getPosY()
-        #return None
-
         xPos = coordinate[0]
         yPos = coordinate[1]
 

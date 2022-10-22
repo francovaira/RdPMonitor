@@ -40,34 +40,45 @@ class PathFinderCell:
         self.closed = False
 
 class PathFinder:
-    def __init__(self, rows, cols):
-        self.rows = rows
-        self.cols = cols
-        self.grid = [0 for i in range(cols)]
+    def __init__(self, mapDefinition):
+        self.__mapDefinition = mapDefinition
+        self.rows = self.__mapDefinition.getHorizontalSize()
+        self.cols = self.__mapDefinition.getVerticalSize()
+        self.grid = [0 for i in range(self.cols)]
 
         # create 2d array that represents the map
-        for i in range(cols):
-            self.grid[i] = [0 for i in range(rows)]
+        for i in range(self.cols):
+            self.grid[i] = [0 for i in range(self.rows)]
 
         # Initialize grid with cells
-        for i in range(cols):
-            for j in range(rows):
+        for i in range(self.cols):
+            for j in range(self.rows):
                 self.grid[i][j] = PathFinderCell(i, j)
 
         # Initialize cells with map definition
+        # for i in range(self.cols):
+        #     for j in range(self.rows):
+        #         if( macros_mapa.MAPA[j][i] == macros_mapa.MAP_BORDER or
+        #             macros_mapa.MAPA[j][i] == macros_mapa.MAP_OBSTACLE  ):
+        #             self.grid[i][j].setIsObstacle(True)
+        #         elif(macros_mapa.MAPA[j][i] == macros_mapa.MAP_OCCUPABLE):
+        #             self.grid[i][j].setIsObstacle(False)
+        #         else:
+        #             print("ERROR map cell definition unknown")
+
         for i in range(self.cols):
             for j in range(self.rows):
-                if( macros_mapa.MAPA[j][i] == macros_mapa.MAP_BORDER or
-                    macros_mapa.MAPA[j][i] == macros_mapa.MAP_OBSTACLE  ):
+                if( self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_BORDER or
+                    self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OBSTACLE  ):
                     self.grid[i][j].setIsObstacle(True)
-                elif(macros_mapa.MAPA[j][i] == macros_mapa.MAP_OCCUPABLE):
+                elif(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OCCUPABLE):
                     self.grid[i][j].setIsObstacle(False)
                 else:
                     print("ERROR map cell definition unknown")
 
         # Initialize neighbors for each cell
-        for i in range(cols):
-            for j in range(rows):
+        for i in range(self.cols):
+            for j in range(self.rows):
                 self.grid[i][j].addNeighbors(self.grid, self.rows, self.cols)
 
     def calculatePath(self, startX, startY, endX, endY):
