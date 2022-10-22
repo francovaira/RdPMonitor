@@ -12,9 +12,10 @@ class RdP:
         self.__matrizEstado = []
         self.__matrizEstadoPrior = []
         self.__map = map
-        self.__placesCount = len(rdp.INCIDENCIA)
+        self.__placesCount = len(self.__incidence)
         self.__transitionCount = len(rdp.INCIDENCIA[0])
 
+        # print(f"CANTIDAD DE PLAZAS {self.__placesCount}")
         for i in range(0, self.__placesCount):
             self.__matrizEstado.append(self.__initialMark[i])
 

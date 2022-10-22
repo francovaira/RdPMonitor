@@ -2,25 +2,25 @@
 import paho.mqtt.client as mqtt
 import threading
 import queue
+import time
 
-mqttc_queue = queue.Queue()
+mqttc_condition = threading.Condition()
 
 def on_connect(mqttc, obj, flags, rc):
-    # print("rc: " + str(rc))
-    print(" ")
+    print("rc: " + str(rc))
 
 def on_message(mqttc, obj, msg):
-    print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
-    # print(a + "thread id_2: ", threading.get_ident())
-    mqttc_queue.put_nowait("Mensaje de la QQ")
+    # print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
+    mqttc_condition.acquire()
+    mqttc_condition.notify()
+    mqttc_condition.release()
 
 def on_publish(mqttc, obj, mid):
-    # print("mid: " + str(mid) + "aa")
-    print(" ")
+    print("mid: " + str(mid) + "aa")
     pass
 
 def on_subscribe(mqttc, obj, mid, granted_qos):
-    # print("Subscribed: " + str(mid) + " " + str(granted_qos))
+    print("Subscribed: " + str(mid) + " " + str(granted_qos))
     print(" ")
 
 def on_log(mqttc, obj, level, string):
@@ -30,7 +30,20 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection.")
 
-# def 
+
+def thread_run():
+    mqttc = mqtt.Client()
+    mqttc.max_inflight_messages_set(1)
+    try:
+        mqttc.connect("localhost", 1883, 60)
+        mqttc.loop_start()
+    except:
+        print("No se pudo conectar al broker.")
+
+    while True:
+        msg = mqttc.publish("/topic/ping", "motor_direction", qos=2)
+        msg.wait_for_publish()
+        time.sleep(1)
 
 def main():
     mqttc = mqtt.Client()
@@ -40,15 +53,16 @@ def main():
     mqttc.on_subscribe = on_subscribe
     mqttc.on_disconnect = on_disconnect
     # Uncomment to enable debug messages
-    mqttc.on_log = on_log
-    mqttc.connect("localhost", 1883, 60)
-    mqttc.loop_start()
-    mqttc.subscribe("topic", 2)
+    # mqttc.on_log = on_log
+    mqttc.max_inflight_messages_set(1)
+    try:
+        mqttc.connect("localhost", 1883, 60)
+        mqttc.loop_start()
+        mqttc.subscribe("/topic/robot", 2)
+    except:
+        print("No se pudo conectar al broker.")
 
-    return mqttc, mqttc_queue
-    # print("tuple")
-    # (rc, mid) = mqttc.publish("tuple", "bayyyr", qos=2)
-    # print("class")
-    # infot = mqttc.publish("class", "bar", qos=2)
-    
-    # print("asdasdkasd")
+    # thread_ping = threading.Thread(target=thread_run)
+    # thread_ping.start()
+
+    return mqttc, mqttc_condition
