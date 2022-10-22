@@ -55,8 +55,8 @@ def thread_run(monitor, robotID, pathFinder, cliente, cliente_queue):
                 # intenta disparar el monitor
                 cliente_queue.acquire()
                 monitor.monitorDisparar(transicion, robotID)
-                motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
-                msg = cliente.publish("/topic/qos0", motor_direction, qos=2)
+                # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
+                msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
                 msg.wait_for_publish()
                 # msg.is_published()
                 cliente_queue.wait()
@@ -89,13 +89,14 @@ def define_motor_direction(transSeq, transicion, plazasSeq):
     return motor_direction
 
 def main():
-    mapHorizontalSize = len(macros_mapa.MAPA[0])
-    mapVerticalSize = len(macros_mapa.MAPA)
+    map = Map()
 
-    map = Map(mapHorizontalSize, mapVerticalSize)
+    mapHorizontalSize = map.getMapDefinition().getHorizontalSize()
+    mapVerticalSize = map.getMapDefinition().getVerticalSize()
+
     rdp = RdP(map)
     mqttc, mqttc_queue =  mqtt.main()
-    monitor = Monitor(threading.Lock(), rdp)
+    monitor = Monitor(rdp)
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
