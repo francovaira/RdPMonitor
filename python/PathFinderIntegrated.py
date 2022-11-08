@@ -40,6 +40,7 @@ class PathFinderCell:
         self.closed = False
 
 class PathFinder:
+
     def __init__(self, mapDefinition):
         self.__mapDefinition = mapDefinition
         self.rows = self.__mapDefinition.getHorizontalSize()
@@ -56,16 +57,6 @@ class PathFinder:
                 self.grid[i][j] = PathFinderCell(i, j)
 
         # Initialize cells with map definition
-        # for i in range(self.cols):
-        #     for j in range(self.rows):
-        #         if( macros_mapa.MAPA[j][i] == macros_mapa.MAP_BORDER or
-        #             macros_mapa.MAPA[j][i] == macros_mapa.MAP_OBSTACLE  ):
-        #             self.grid[i][j].setIsObstacle(True)
-        #         elif(macros_mapa.MAPA[j][i] == macros_mapa.MAP_OCCUPABLE):
-        #             self.grid[i][j].setIsObstacle(False)
-        #         else:
-        #             print("ERROR map cell definition unknown")
-
         for i in range(self.cols):
             for j in range(self.rows):
                 if( self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_BORDER or

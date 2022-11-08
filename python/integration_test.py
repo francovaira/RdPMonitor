@@ -6,13 +6,12 @@ import time
 import numpy
 import random
 from decouple import config
+import mqqt_client as mqtt
 import macros_mapa
 from RdP import RdP
 from Monitor import Monitor
 from Visualizer import Visualizer
 from Map import Map
-import mqqt_client as mqtt
-import ws_server as ws
 
 def thread_run(monitor, robotID, pathFinder, cliente, cliente_queue):
 
@@ -53,14 +52,16 @@ def thread_run(monitor, robotID, pathFinder, cliente, cliente_queue):
             if(transicion != int(config('NULL_TRANSITION'))):
                 # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
-                cliente_queue.acquire()
+                #cliente_queue.acquire()
                 monitor.monitorDisparar(transicion, robotID)
                 # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
-                msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
-                msg.wait_for_publish()
+                #msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
+                #msg.wait_for_publish()
                 # msg.is_published()
-                cliente_queue.wait()
-                cliente_queue.release()
+                #cliente_queue.wait()
+                #cliente_queue.release()
+                #time.sleep(random.random()/2)
+                time.sleep(0.1)
 
 def define_motor_direction(transSeq, transicion, plazasSeq):
     transicion_len = len(transSeq)-1
@@ -76,15 +77,15 @@ def define_motor_direction(transSeq, transicion, plazasSeq):
     mapHorizontalSize = (len(macros_mapa.MAPA[0])-2)*2
     motor_direction = None
     
-    match plaza_position:
-        case 2:
-            motor_direction = '{"setpoint" : 0.5, "vel_x" : 0, "vel_y" :  -0.3, "vel_ang" : 0}\0'
-        case -2:
-            motor_direction = '{"setpoint" : 0.5, "vel_x" : 0, "vel_y" : 0.3, "vel_ang" : 0}\0'
-        case int(mapHorizontalSize):
-            motor_direction = '{"setpoint" : 0.5, "vel_x" : 0.3, "vel_y" : 0, "vel_ang" : 0}\0'
-        case _:
-            motor_direction = '{"setpoint" : 0.5, "vel_x" : -0.3, "vel_y" : 0, "vel_ang" : 0}\0'
+    # match plaza_position:
+    #     case 2:
+    #         motor_direction = '{"setpoint" : 0.5, "vel_x" : 0, "vel_y" :  -0.3, "vel_ang" : 0}\0'
+    #     case -2:
+    #         motor_direction = '{"setpoint" : 0.5, "vel_x" : 0, "vel_y" : 0.3, "vel_ang" : 0}\0'
+    #     case int(mapHorizontalSize):
+    #         motor_direction = '{"setpoint" : 0.5, "vel_x" : 0.3, "vel_y" : 0, "vel_ang" : 0}\0'
+    #     case _:
+    #         motor_direction = '{"setpoint" : 0.5, "vel_x" : -0.3, "vel_y" : 0, "vel_ang" : 0}\0'
 
     return motor_direction
 
@@ -102,11 +103,11 @@ def main():
     # create threads for each robot
     threads = []
     thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder(), mqttc, mqttc_queue))
-    # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
+    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
     threads.append(thread_ROBOT_A)
-    # threads.append(thread_ROBOT_B)
+    threads.append(thread_ROBOT_B)
     thread_ROBOT_A.start()
-    # thread_ROBOT_B.start()
+    thread_ROBOT_B.start()
 
     processVisualizer = multiprocessing.Process(target=viz.run())
     processVisualizer.start()

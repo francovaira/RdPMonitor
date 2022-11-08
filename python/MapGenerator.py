@@ -11,12 +11,9 @@ class MapDefinition:
         for i in range(self.__horizontalCells):
             self.__idMap[i] = [None for i in range(self.__verticalCells)]
 
-        self.__generateIDs(self.__idMap)
-
-    def __generateIDs(self, idMap):
         for i in range(self.__verticalCells-2): # indexes are -2 because of borders
             for j in range(self.__horizontalCells-2):
-                idMap[j+1][i+1] = 2*(j+i*(self.__horizontalCells-2))
+                self.__idMap[j+1][i+1] = 2*(j+i*(self.__horizontalCells-2))
                 # given that petri net structure is based on having one resource place and one occupation place for each cell,
                 # we need 2 places for each location in the map. The IDs are defined in such a way that even IDs always
                 # refer to an occupation place and the odd IDs to a resoruce place, as well as in the incidence matrix.
@@ -37,7 +34,6 @@ class MapGenerator:
 
     def __init__(self):
         self.__mapDefinitionRead = self.__fileMapDefinitionRead()
-
         if(self.__mapDefinitionRead == None):
             print("ERROR MAP GENERATOR - Unable to get map definition file")
             # FIXME aca generar el mapa segun la configuracion

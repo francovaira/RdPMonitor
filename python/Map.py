@@ -105,12 +105,7 @@ class Map:
                 elif(not self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OCCUPABLE):
                     print("ERROR map cell definition unknown")
 
-        # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
-        #for i in range(self.__verticalCells-2):
-        #    for j in range(self.__horizontalCells-2):
-        #        self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
-
-        # Associate map cells with RdP places # FIXME esto despues deberia venir desde el archivo de definicion del mapa
+        # Associate map cells with RdP places
         for i in range(self.__verticalCells-2):
            for j in range(self.__horizontalCells-2):
                #self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))

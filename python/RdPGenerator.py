@@ -1,6 +1,12 @@
+
+
 import macros_mapa
 
+RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure
+RDP_REGENERATE_IF_INCONSISTENT_DEFINITION   = True      # True to regenerate RdP if some of de RdP definition files are inconsistent
+
 class RdPGenerator:
+
     def __init__(self, mapDefinition):
         self.__mapDefinition = mapDefinition
         self.__incidenceRows = 2*((self.__mapDefinition.getHorizontalSize()-2) * (self.__mapDefinition.getVerticalSize()-2)) # place count
@@ -13,14 +19,37 @@ class RdPGenerator:
         for i in range(self.__incidenceRows):
             self.__incidence[i] = [0 for j in range(self.__incidenceColumns)]
 
-        self.calculateIncidence()
-        self.calculateInitialMark()
+        if(RDP_READ_FROM_FILE):
+            self.__incidence, self.__initialMark = self.__fileRdPDefinitionRead()
+            if(self.__incidence == None or self.__initialMark == None):
+                print("ERROR RDP GENERATOR - Unable to get RDP definition file - RDP WILL BE REGENERATED FROM MAP DEFINITION")
+
+                if(RDP_REGENERATE_IF_INCONSISTENT_DEFINITION):
+                    if(self.__generateRdP()):
+                        print(f"RDP GENERATOR - RDP REgenerated from map successfully\n")
+            else:
+                print("RDP FILE rdpDefinition.txt READ SUCCESSFULLY")
+        else:
+            if(self.__generateRdP()):
+                print(f"RDP GENERATOR - RDP generated from map successfully\n")
 
     def getIncidence(self):
         return self.__incidence
 
     def getInitialMark(self):
         return self.__initialMark
+
+    def __generateRdP(self):
+        self.calculateIncidence()
+        self.calculateInitialMark()
+
+        # check consistency of incidence and marking matrixes
+        if(not self.__checkConsistency(self.getIncidence(), self.getInitialMark())):
+            print(f"ERROR IN RDP GENERATOR - Inconsistent GENERATED RDP\n")
+            self.__incidence = None
+            self.__initialMark = None
+            return False
+        return True
 
     def calculateInitialMark(self):
         self.__initialMark = []
@@ -75,6 +104,57 @@ class RdPGenerator:
         incidence[placeOrigin+1][transitionIndex] = 1
         incidence[placeDestination][transitionIndex] = 1
         incidence[placeDestination+1][transitionIndex] = -1
+
+    def __checkConsistency(self, incidence, initialMark):
+
+        # FIXME hacer todo en un solo for
+
+        # check that initial marking count and incidence matrix row (place) count match
+        if(len(incidence) != len(initialMark)):
+            print("ERROR DE INCONSISTENCIA RDP - Marcado != Incidencia")
+            return False
+
+        # check that all rows are the same size
+        lastLength = 0
+        for i in range(len(incidence)):
+            if(lastLength != len(incidence[i]) and i!=0):
+                print("ERROR DE INCONSISTENCIA RDP - Largos de filas distintos")
+                return False
+            lastLength = len(incidence[i])
+
+        # check that all elements in incidende matrix are numbers
+        for i in range(len(incidence)):
+            for j in range(len(incidence[i])):
+                if(type(incidence[i][j]) != int or incidence[i][j]>10 or incidence[i][j]<-10): # FIXME hacer defines de las constantes
+                    print("ERROR DE INCONSISTENCIA RDP - Incidencia debe definirse como enteros entre (-10, 10)")
+                    return False
+
+        # check that all elements in marking matrix are numbers
+        for i in range(len(initialMark)):
+            if(type(initialMark[i]) != int or initialMark[i]<0):
+                print("ERROR DE INCONSISTENCIA RDP - Marcado Inicial debe definirse como enteros >= 0")
+                return False
+
+        return True
+
+    def __fileRdPDefinitionRead(self):
+        try:
+            rdpFile=open("rdpDefinition.txt","r") # FIXME hacer un define/config
+            rdpDefinitionRead=eval(rdpFile.read())
+            rdpFile.close()
+            
+            initialMarkFile=open("initial_calculated.txt","r") # FIXME hacer un define/config
+            initialMarkRead=eval(initialMarkFile.read())
+            initialMarkFile.close()
+        except:
+            print("EXCEPTION - Unable to read RdP file")
+            return None
+
+        if(not self.__checkConsistency(rdpDefinitionRead, initialMarkRead)):
+            rdpDefinitionRead = None
+            initialMarkRead = None
+
+        return rdpDefinitionRead, initialMarkRead
 
     def fileWrite(self, list2write, fileName):
         donorFile=open(fileName,"w")

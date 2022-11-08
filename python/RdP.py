@@ -1,5 +1,4 @@
 import time
-#import macros_mapa
 from decouple import config
 from RdPGenerator import RdPGenerator
 from Enums import MapCellOccupationStates
@@ -9,24 +8,13 @@ from Enums import MapCellOccupationStates
 class RdP:
 
     def __init__(self, map):
-        #self.__initialMark = macros_mapa.MARCADO # FIXME esto se obtendria ahora desde un archivo
-        self.__incidence, self.__initialMark = self.__fileRdPDefinitionRead()
-        if(self.__incidence == None or self.__initialMark == None):
-        #if(self.__incidence == None):
-            print("ERROR RDP GENERATOR - Unable to get RDP definition file")
-            # FIXME aca generar la red segun el mapa
-            rdpGen = RdPGenerator(map.getMapDefinition())
-            self.__incidence = rdpGen.getIncidence()
-            self.__initialMark = rdpGen.getInitialMark()
-        else:
-            # check consistency of incidence and marking matrixes
-            if(not self.__checkConsistency(self.__incidence, self.__initialMark)):
-                print(f"ERROR - Inconsistent RDP\n")
-                return
+        self.__rdpGen = RdPGenerator(map.getMapDefinition())
+        self.__incidence = self.__rdpGen.getIncidence()
+        self.__initialMark = self.__rdpGen.getInitialMark()
 
-        #rdpGen = RdPGenerator(map.getMapDefinition())
-        #self.__incidence = rdpGen.getIncidence()
-        #self.__initialMark = rdpGen.getInitialMark()
+        if(self.__incidence == None or self.__initialMark == None):
+            print("ERROR RDP CLASS - Unable to generate RdP")
+            return
 
         self.__map = map
         self.__matrizEstado = []
@@ -97,7 +85,6 @@ class RdP:
             destino = placeSequence[i+1]
 
             for j in range(self.getTransitionCount()):
-                #if(self.__incidence[origen][j] == -1 and self.__incidence[destino][j] == 1): # Explicacion: en el origen se "resta" un elemento porque el robot deja de estar aqui. Se "suma" 1 al destino para marcar que hay un robot
                 if(self.__incidence[origen][j] == -1 and self.__incidence[destino][j] == 1 and
                    self.__incidence[origen+1][j] == 1 and self.__incidence[destino+1][j] == -1): # Explicacion: en el origen se "resta" un elemento porque el robot deja de estar aqui. Se "suma" 1 al destino para marcar que hay un robot
                     transitionSeq.append(j)
@@ -110,58 +97,6 @@ class RdP:
             placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.__matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
             if(self.__map.updatePosition(placeID, placeNewState, robotID)):
                 print(f"ERROR while trying to modify Map from RdP - Cell {placeID} is not occupable")
-
-    def __checkConsistency(self, incidence, initialMark):
-
-        # check that initial marking count and incidence matrix row (place) count match
-        if(len(incidence) != len(initialMark)):
-            print("ERROR DE INCONSISTENCIA RDP - Marcado != Incidencia")
-            return False
-
-        # check that all rows are the same size
-        lastLength = 0
-        for i in range(len(incidence)):
-            if(lastLength != len(incidence[i]) and i!=0):
-                print("ERROR DE INCONSISTENCIA RDP - Largos de filas distintos")
-                return False
-            lastLength = len(incidence[i])
-
-        # check that all elements in incidende matrix are numbers
-        for i in range(len(incidence)):
-            for j in range(len(incidence[i])):
-                if(type(incidence[i][j]) != int or incidence[i][j]>10 or incidence[i][j]<-10): # FIXME hacer defines de las constantes
-                    print("ERROR DE INCONSISTENCIA RDP - Incidencia debe definirse como enteros entre (-10, 10)")
-                    return False
-
-        # check that all elements in marking matrix are numbers
-        for i in range(len(initialMark)):
-            if(type(initialMark[i]) != int or initialMark[i]<0):
-                print("ERROR DE INCONSISTENCIA RDP - Marcado Inicial debe definirse como enteros > 0")
-                return False
-
-        return True
-
-    def __fileRdPDefinitionRead(self):
-        # https://github.com/mrlaulearning/bloodDonors2DList/blob/master/bloodDonor.py
-        try:
-            rdpFile=open("rdpDefinition.txt","r") # FIXME hacer un define/config
-            rdpDefinitionRead=eval(rdpFile.read())
-            rdpFile.close()
-            
-            initialMarkFile=open("initial_calculated.txt","r") # FIXME hacer un define/config
-            initialMarkRead=eval(initialMarkFile.read())
-            initialMarkFile.close()
-        except:
-            print("EXCEPTION!!! - Unable to read RdP file")
-            return None
-
-        # FIXME check consistency
-        if(not self.__checkConsistency(rdpDefinitionRead, initialMarkRead)):
-            rdpDefinitionRead = None
-            initialMarkRead = None
-
-        return rdpDefinitionRead, initialMarkRead # FIXMEEE
-        #return None
 
     def printMarking(self):
         print("-------------------  MARCADO  -------------------");
