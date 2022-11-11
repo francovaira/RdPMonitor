@@ -4,11 +4,13 @@ import time
 
 class Monitor:
 
-    def __init__(self, petriNet):
+    def __init__(self, petriNet, pathFinder):
         self.__monitorLock = threading.Lock()
         self.__petriNet = petriNet
+        self.__pathFinder = pathFinder
         self.__conditions = []
         self.__directRdPAccessCondition = threading.Condition(self.__monitorLock)
+        self.__directPathFinderAccessCondition = threading.Condition(self.__monitorLock)
         self.__fireCount = 0
 
         # initialize conditions for transitions and their threads
@@ -48,6 +50,15 @@ class Monitor:
             if(not self.__petriNet.setRobotInCoordinate(coordinate, robotID) == 0):
                 print("ERROR INSIDE MONITOR unable to set robot in coordinate")
             self.__directRdPAccessCondition.notify_all()
+
+    def calculatePath(self, startX, startY, endX, endY):
+        with self.__directPathFinderAccessCondition:
+            pathCoordinates = self.__pathFinder.calculatePath(startX, startY, endX, endY) # FIXME deberia tener un lock para acceder uno por vez
+            if(pathCoordinates == None):
+                print("PATH FINDER ERROR - No path found for given coordinates")
+                pathCoordinates = []
+            self.__directPathFinderAccessCondition.notify_all()
+        return pathCoordinates
 
     def __fireCountIncrement(self):
         self.__fireCount = self.__fireCount+1

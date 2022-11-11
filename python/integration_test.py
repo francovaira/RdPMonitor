@@ -13,32 +13,37 @@ from Monitor import Monitor
 from Visualizer import Visualizer
 from Map import Map
 
-def thread_run(monitor, robotID, pathFinder, cliente, cliente_queue):
+#def thread_run(monitor, robotID, pathFinder, cliente, cliente_queue):
+def thread_run(monitor, robotID, cliente, cliente_queue):
 
     # FIXME hacer que el robot tenga una "posicion/coordenada actual"
 
     coordenadasPathFinder = []
     if(robotID == "ROB_A"):
-        coordenadasPathFinder = pathFinder.calculatePath(1,1,5,5) # FIXME deberia tener un lock para acceder uno por vez
-        if(coordenadasPathFinder == None):
-            print("PATH FINDER ERROR - No path found for given coordinates")
-            coordenadasSequence = [(1,1)]
-        else:
-            coordenadasSequence = coordenadasPathFinder
-            secondPart = pathFinder.calculatePath(5,5,1,1)
-            secondPart.pop(0)
-            coordenadasSequence.extend(secondPart)
+        #coordenadasPathFinder = pathFinder.calculatePath(1,1,5,5) # FIXME deberia tener un lock para acceder uno por vez
+        #if(coordenadasPathFinder == None):
+        #    print("PATH FINDER ERROR - No path found for given coordinates")
+        #    coordenadasSequence = [(1,1)]
+        coordenadasPathFinder = monitor.calculatePath(1,1,5,5) # FIXME deberia tener un lock para acceder uno por vez
+        #else:
+        coordenadasSequence = coordenadasPathFinder
+        #secondPart = pathFinder.calculatePath(5,5,1,1)
+        secondPart = monitor.calculatePath(5,5,1,1)
+        secondPart.pop(0)
+        coordenadasSequence.extend(secondPart)
     elif(robotID == "ROB_B"):
         #coordenadasSequence = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (5,1), (4,1), (3,1), (2,1), (1,1)]
-        coordenadasPathFinder = pathFinder.calculatePath(1,5,5,1) # FIXME deberia tener un lock para acceder uno por vez
-        if(coordenadasPathFinder == None):
-            print("PATH FINDER ERROR - No path found for given coordinates")
-            coordenadasSequence = [(1,1)]
-        else:
-            coordenadasSequence = coordenadasPathFinder
-            secondPart = pathFinder.calculatePath(5,1,1,5)
-            secondPart.pop(0)
-            coordenadasSequence.extend(secondPart)
+        #coordenadasPathFinder = pathFinder.calculatePath(1,5,5,1) # FIXME deberia tener un lock para acceder uno por vez
+        coordenadasPathFinder = monitor.calculatePath(1,5,5,1) # FIXME deberia tener un lock para acceder uno por vez
+        #if(coordenadasPathFinder == None):
+        #    print("PATH FINDER ERROR - No path found for given coordinates")
+        #    coordenadasSequence = [(1,1)]
+        #else:
+        coordenadasSequence = coordenadasPathFinder
+        #secondPart = pathFinder.calculatePath(5,1,1,5)
+        secondPart = monitor.calculatePath(5,1,1,5)
+        secondPart.pop(0)
+        coordenadasSequence.extend(secondPart)
 
     transSeq = monitor.getTransitionSequence(coordenadasSequence)
     monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
@@ -90,20 +95,20 @@ def define_motor_direction(transSeq, transicion, plazasSeq):
     return motor_direction
 
 def main():
-    map = Map()
 
+    map = Map()
     mapHorizontalSize = map.getMapDefinition().getHorizontalSize()
     mapVerticalSize = map.getMapDefinition().getVerticalSize()
 
     rdp = RdP(map)
     mqttc, mqttc_queue =  mqtt.main()
-    monitor = Monitor(rdp)
+    monitor = Monitor(rdp, map.getPathFinder())
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder(), mqttc, mqttc_queue))
-    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', mqttc, mqttc_queue))
+    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', mqttc, mqttc_queue))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
     thread_ROBOT_A.start()

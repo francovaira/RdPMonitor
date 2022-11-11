@@ -1,7 +1,7 @@
 import time
 from decouple import config
 from RdPGenerator import RdPGenerator
-from Enums import MapCellOccupationStates
+from Enums import MapCellOccupationStates, MapCellOccupationActions
 
 # FIXME refactorizar esta clase en una que sea la RDP sola y conectado tenga la interfaz para con el mapa y hacia el monitor
 
@@ -38,10 +38,12 @@ class RdP:
             for placeID in range(0, self.__placesCount):
                 self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + self.__incidence[placeID][transition]
 
+                # FIXME refactorizar, capaz meter todo en una sola funcion
                 # check which places changed marking since last iteration
-                if(self.__matrizEstado[placeID] != self.__matrizEstadoPrior[placeID]):
-                    self.__updateMap(placeID, robotID)
-                    self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
+                #if(self.__matrizEstado[placeID] != self.__matrizEstadoPrior[placeID]):
+                #    self.__updateMap(placeID, robotID)
+                #    self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
+                self.checkChangeAndUpdateMap(placeID, robotID)
             return 1
         return 0
 
@@ -53,8 +55,9 @@ class RdP:
 
         if(not self.__setOccupationInPlace(placeID) == 0):
             return -1
-
-        self.__updateMap(placeID, robotID)
+        self.checkChangeAndUpdateMap(placeID, robotID)
+        #self.__updateMap(placeID, robotID)
+        #self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
         return 0
 
     def __setOccupationInPlace(self, placeID):
@@ -64,10 +67,19 @@ class RdP:
             if(self.__matrizEstado[placeID + 1] > 0): # if there is room in the place - it checks the resource place
                 self.__matrizEstado[placeID + 1] = self.__matrizEstado[placeID + 1] - 1
                 self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + 1
-                self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
+                #self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
+                #FIXME esto tendria que actualizarse en otro lado para que no tenga el bug de que trata de remover un robot que aun no se agrego
                 return 0
             else:
                 return -1
+
+    def checkChangeAndUpdateMap(self, placeID, robotID):
+        if(placeID < 0 or placeID >= self.__placesCount or not placeID%2 == 0):
+            return -1
+
+        if(self.__matrizEstado[placeID] != self.__matrizEstadoPrior[placeID]):
+            self.__updateMap(placeID, robotID)
+            self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
 
     def getTransitionSequence(self, coordinatesSequence): # returns the transitions that must be fired to accomplish the coordinates sequence
         placeSequence = self.__map.getPlacesSequenceFromCoordinates(coordinatesSequence) # FIXME esta funcion capaz implementarla dentro de RdP.py
@@ -94,8 +106,21 @@ class RdP:
         if(placeID < 0 or placeID >= self.__placesCount or not placeID%2 == 0):
             return -1
         else:
-            placeNewState = MapCellOccupationStates.OCCUPIED_PLACE if self.__matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
-            if(self.__map.updatePosition(placeID, placeNewState, robotID)):
+            #placeOccupationAction = MapCellOccupationStates.OCCUPIED_PLACE if self.__matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE
+            #placeOccupationAction = MapCellOccupationStates.OCCUPIED_PLACE if self.__matrizEstado[placeID] != 0 else MapCellOccupationStates.FREE_PLACE 
+            if(self.__matrizEstado[placeID] > self.__matrizEstadoPrior[placeID]): # robot entered the cell
+                #placeOccupationAction = MapCellOccupationStates.OCCUPIED_PLACE
+                placeOccupationAction = MapCellOccupationActions.ENTER_CELL
+            elif(self.__matrizEstado[placeID] < self.__matrizEstadoPrior[placeID]): # robot left the cell
+                #placeOccupationAction = MapCellOccupationStates.FREE_PLACE
+                placeOccupationAction = MapCellOccupationActions.LEAVE_CELL
+                print(f"PLACE ID <{placeID}> / MATRIZ ESTADO <{self.__matrizEstado[placeID]}> / PRIOR <{self.__matrizEstadoPrior[placeID]}>")
+            else:
+                placeOccupationAction = MapCellOccupationActions.DO_NOTHING
+            #FIXME el bug de que no elimina bien los ID de una celda esta ACA. Se da porque cuando una celda tiene 2 robots y uno se va, la condicion de arriba se cumple, por lo
+            # que el estado que le pasa a la updatePosition es un occupied pero con el ID del robot que se esta yendo. Para solucionarlo se podria hacer que le pase
+            # una transicion de estado o ver como hacer para casos donde tengo mas de un robot en una celda y notificar que un robot se esta yendo
+            if(self.__map.updatePosition(placeID, placeOccupationAction, robotID)):
                 print(f"ERROR while trying to modify Map from RdP - Cell {placeID} is not occupable")
 
     def printMarking(self):
@@ -109,3 +134,4 @@ class RdP:
 
     def getTransitionCount(self):
         return self.__transitionCount
+

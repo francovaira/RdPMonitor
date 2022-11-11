@@ -2,7 +2,7 @@ import multiprocessing
 from multiprocessing import Manager
 from PathFinderIntegrated import PathFinder
 from MapGenerator import MapGenerator
-from Enums import MapCellOccupationStates, MapCellTypes
+from Enums import MapCellOccupationStates, MapCellOccupationActions, MapCellTypes
 import macros_mapa
 
 class MapCell:
@@ -54,11 +54,12 @@ class MapCell:
         return self.__occupationState
 
     def getOccupantsID(self):
-        return None if len(self.__robotsList) == 0 else self.__robotsList[0]
+        return self.__robotsList
 
     def addRobot(self, robotID):
         if(self.__isOccupable):
             if(any(elem == robotID for elem in self.__robotsList) or robotID == None or robotID == ""): # check for duplicates
+                print(f"ERROR IN MAP CLASS - The robot {robotID} is trying to add another copy of itself into a cell <{self.__placeID}>")
                 return
             else:
                 self.__robotsList.append(robotID)
@@ -68,6 +69,8 @@ class MapCell:
             return
         elif(any(elem == robotID for elem in self.__robotsList)): # check existence
             self.__robotsList.remove(robotID)
+        else:
+            print(f"ERROR IN MAP CLASS - Trying to remove a robot {robotID} from a cell <{self.__placeID}> failed")
 
 class Map:
 
@@ -120,16 +123,30 @@ class Map:
     def getPathFinder(self):
         return self.__pathFinder
 
-    def updatePosition(self, placeID, occupationState, robotID):
+    def updatePosition(self, placeID, occupationAction, robotID):
         posX, posY = self.__getMapCoordinateFromPlaceID(placeID)
         if(not self.__mapInSharedMemory[posX][posY].getIsOccupable()):
             return -1
 
-        self.__mapInSharedMemory[posX][posY].setOccupationState(occupationState)
-        if(occupationState == MapCellOccupationStates.FREE_PLACE):
-            self.__mapInSharedMemory[posX][posY].removeRobot(robotID)
-        elif(occupationState == MapCellOccupationStates.OCCUPIED_PLACE):
-            self.__mapInSharedMemory[posX][posY].addRobot(robotID)
+        #if(occupationAction == MapCellOccupationActions.LEAVE_CELL):
+            #self.__mapInSharedMemory[posX][posY].removeRobot(robotID)
+        #elif(occupationAction == MapCellOccupationActions.ENTER_CELL):
+            #self.__mapInSharedMemory[posX][posY].addRobot(robotID)
+
+        if(occupationAction != MapCellOccupationActions.DO_NOTHING):
+            if(occupationAction == MapCellOccupationActions.ENTER_CELL):
+                occupationState = MapCellOccupationStates.OCCUPIED_PLACE
+                self.__mapInSharedMemory[posX][posY].addRobot(robotID)
+            elif(occupationAction == MapCellOccupationActions.LEAVE_CELL):
+                self.__mapInSharedMemory[posX][posY].removeRobot(robotID)
+                if(len(self.__mapInSharedMemory[posX][posY].getOccupantsID())==0):
+                    occupationState = MapCellOccupationStates.FREE_PLACE
+                else:
+                    occupationState = MapCellOccupationStates.OCCUPIED_PLACE
+            elif(occupationAction == MapCellOccupationActions.RESERVE_CELL):
+                occupationState = MapCellOccupationStates.RESERVED_PLACE
+            self.__mapInSharedMemory[posX][posY].setOccupationState(occupationState)
+
         return 0
 
     def __getMapCoordinateFromPlaceID(self, placeID):

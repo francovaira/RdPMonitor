@@ -19,22 +19,33 @@ class VisualizerCell:
         self.update()
 
     def setRobotID(self, robotID):
-        if(robotID == None):
+        if(robotID == None or len(robotID)==0):
             self.__robotID = ""
         else:
-            self.__robotID = robotID
+            self.__robotID = robotID[0]
+            #print(f"SETTED ROBOT ID {robotID} IN CELL {self.__mapCell.getPlaceID()}")
+
+    def getRobotID(self):
+        return self.__robotID
 
     def update(self):
-        if(self.__mapCell.getType() == MapCellTypes.OBSTACLE):
-            self.__color = Colors.BLUE.value
-        elif(self.__mapCell.getType() == MapCellTypes.BORDER):
+        self.setRobotID(self.__mapCell.getOccupantsID())
+        cellType = self.__mapCell.getType()
+        if(cellType == MapCellTypes.OBSTACLE):
+            #self.__color = Colors.BLUE.value
+            self.__color = Colors.LIGHT_BLUE.value
+        elif(cellType == MapCellTypes.BORDER):
             self.__color = Colors.RED.value
-        elif(self.__mapCell.getType() == MapCellTypes.OCCUPABLE):
+        elif(cellType == MapCellTypes.OCCUPABLE):
             if(self.__mapCell.getOccupationState() == MapCellOccupationStates.OCCUPIED_PLACE):
-                self.__color = Colors.GREEN.value
+                #self.__color = Colors.GREEN.value
+                if(self.__robotID == "ROB_A"):
+                    self.__color = Colors.ROBOT_1.value
+                else:
+                    self.__color = Colors.ROBOT_2.value
             elif(self.__mapCell.getOccupationState() == MapCellOccupationStates.FREE_PLACE):
                 self.__color = Colors.GREY.value
-        self.setRobotID(self.__mapCell.getOccupantsID())
+        #self.setRobotID(self.__mapCell.getOccupantsID())
 
     def draw(self):
         pygame.draw.rect(self.__canvas, self.__color, (self.__mapCell.getPosX()*self.__width, self.__mapCell.getPosY()*self.__height, self.__width, self.__height), self.__borderWidth)
