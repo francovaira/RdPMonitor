@@ -2,8 +2,9 @@
 
 import macros_mapa
 
-RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure
+RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure, False will generate generic RdP
 RDP_REGENERATE_IF_INCONSISTENT_DEFINITION   = True      # True to regenerate RdP if some of de RdP definition files are inconsistent
+RDP_WRITE_CALCULATED_RDP_TO_FILE            = False     # True to save generated RdP (incidence and initial marking) into a file
 
 class RdPGenerator:
 
@@ -27,6 +28,9 @@ class RdPGenerator:
                 if(RDP_REGENERATE_IF_INCONSISTENT_DEFINITION):
                     if(self.__generateRdP()):
                         print(f"RDP GENERATOR - RDP REgenerated from map successfully\n")
+                else:
+                    print("PROGRAM WILL DO NOTHING! -- EXITING...")
+                    exit()
             else:
                 print("RDP FILE rdpDefinition.txt READ SUCCESSFULLY")
         else:
@@ -63,7 +67,8 @@ class RdPGenerator:
                     else:
                         self.__initialMark.append(0)
 
-        self.fileWrite(self.__initialMark, "initial_calculated.txt")
+        if(RDP_WRITE_CALCULATED_RDP_TO_FILE):
+            self.fileWrite(self.__initialMark, "initial_calculated.txt")
 
     def calculateIncidence(self):
         # given that petri net structure is based on having one resource place and one occupation place for each cell,
@@ -97,7 +102,8 @@ class RdPGenerator:
                     self.__setIncidencePlaceXGotoY(self.__incidence, idOccupationPlaceDestination, idOccupationPlaceOrigin, transitionIndex)
                     transitionIndex = transitionIndex + 1
 
-        self.fileWrite(self.__incidence, "rdp_calculated.txt")
+        if(RDP_WRITE_CALCULATED_RDP_TO_FILE):
+            self.fileWrite(self.__incidence, "rdp_calculated.txt")
 
     def __setIncidencePlaceXGotoY(self, incidence, placeOrigin, placeDestination, transitionIndex): # FIXME hace transitionIndex++ por cada movimiento
         incidence[placeOrigin][transitionIndex] = -1 # FIXME hacer con valor que venga del .env o algo

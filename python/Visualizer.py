@@ -23,7 +23,6 @@ class VisualizerCell:
             self.__robotID = ""
         else:
             self.__robotID = robotID[0]
-            #print(f"SETTED ROBOT ID {robotID} IN CELL {self.__mapCell.getPlaceID()}")
 
     def getRobotID(self):
         return self.__robotID

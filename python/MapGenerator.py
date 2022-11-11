@@ -80,3 +80,4 @@ class MapGenerator:
                     return False
 
         return True
+

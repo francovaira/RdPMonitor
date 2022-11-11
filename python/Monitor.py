@@ -47,7 +47,7 @@ class Monitor:
 
     def setRobotInCoordinate(self, coordinate, robotID):
         with self.__directRdPAccessCondition:
-            if(not self.__petriNet.setRobotInCoordinate(coordinate, robotID) == 0):
+            if(self.__petriNet.setRobotInCoordinate(coordinate, robotID)):
                 print("ERROR INSIDE MONITOR unable to set robot in coordinate")
             self.__directRdPAccessCondition.notify_all()
 
@@ -55,7 +55,7 @@ class Monitor:
         with self.__directPathFinderAccessCondition:
             pathCoordinates = self.__pathFinder.calculatePath(startX, startY, endX, endY) # FIXME deberia tener un lock para acceder uno por vez
             if(pathCoordinates == None):
-                print("PATH FINDER ERROR - No path found for given coordinates")
+                print("ERROR INSIDE MONITOR - No path found for given coordinates")
                 pathCoordinates = []
             self.__directPathFinderAccessCondition.notify_all()
         return pathCoordinates

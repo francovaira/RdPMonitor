@@ -13,34 +13,19 @@ from Monitor import Monitor
 from Visualizer import Visualizer
 from Map import Map
 
-#def thread_run(monitor, robotID, pathFinder, cliente, cliente_queue):
+
 def thread_run(monitor, robotID, cliente, cliente_queue):
 
     # FIXME hacer que el robot tenga una "posicion/coordenada actual"
 
-    coordenadasPathFinder = []
     if(robotID == "ROB_A"):
-        #coordenadasPathFinder = pathFinder.calculatePath(1,1,5,5) # FIXME deberia tener un lock para acceder uno por vez
-        #if(coordenadasPathFinder == None):
-        #    print("PATH FINDER ERROR - No path found for given coordinates")
-        #    coordenadasSequence = [(1,1)]
-        coordenadasPathFinder = monitor.calculatePath(1,1,5,5) # FIXME deberia tener un lock para acceder uno por vez
-        #else:
-        coordenadasSequence = coordenadasPathFinder
-        #secondPart = pathFinder.calculatePath(5,5,1,1)
+        coordenadasSequence = monitor.calculatePath(1,1,5,5)
         secondPart = monitor.calculatePath(5,5,1,1)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
     elif(robotID == "ROB_B"):
         #coordenadasSequence = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (5,1), (4,1), (3,1), (2,1), (1,1)]
-        #coordenadasPathFinder = pathFinder.calculatePath(1,5,5,1) # FIXME deberia tener un lock para acceder uno por vez
-        coordenadasPathFinder = monitor.calculatePath(1,5,5,1) # FIXME deberia tener un lock para acceder uno por vez
-        #if(coordenadasPathFinder == None):
-        #    print("PATH FINDER ERROR - No path found for given coordinates")
-        #    coordenadasSequence = [(1,1)]
-        #else:
-        coordenadasSequence = coordenadasPathFinder
-        #secondPart = pathFinder.calculatePath(5,1,1,5)
+        coordenadasSequence = monitor.calculatePath(1,5,5,1)
         secondPart = monitor.calculatePath(5,1,1,5)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)

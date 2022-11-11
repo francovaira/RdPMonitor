@@ -126,12 +126,8 @@ class Map:
     def updatePosition(self, placeID, occupationAction, robotID):
         posX, posY = self.__getMapCoordinateFromPlaceID(placeID)
         if(not self.__mapInSharedMemory[posX][posY].getIsOccupable()):
+            print(f"ERROR while trying to modify Map from RdP - Cell {placeID} is not occupable")
             return -1
-
-        #if(occupationAction == MapCellOccupationActions.LEAVE_CELL):
-            #self.__mapInSharedMemory[posX][posY].removeRobot(robotID)
-        #elif(occupationAction == MapCellOccupationActions.ENTER_CELL):
-            #self.__mapInSharedMemory[posX][posY].addRobot(robotID)
 
         if(occupationAction != MapCellOccupationActions.DO_NOTHING):
             if(occupationAction == MapCellOccupationActions.ENTER_CELL):
@@ -146,7 +142,6 @@ class Map:
             elif(occupationAction == MapCellOccupationActions.RESERVE_CELL):
                 occupationState = MapCellOccupationStates.RESERVED_PLACE
             self.__mapInSharedMemory[posX][posY].setOccupationState(occupationState)
-
         return 0
 
     def __getMapCoordinateFromPlaceID(self, placeID):
