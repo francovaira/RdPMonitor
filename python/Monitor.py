@@ -40,10 +40,8 @@ class Monitor:
     def getTransitionSequence(self, coordinatesSequence):
         with self.__directRdPAccessCondition:
             transitionSequence = self.__petriNet.getTransitionSequence(coordinatesSequence)
-            if(transitionSequence == None):
-                print("ERROR INSIDE MONITOR unable to get transition sequence")
-            self.__directRdPAccessCondition.notify_all()
-            return transitionSequence
+            self.__directRdPAccessCondition.notify_all() # FIXME checkear si el with ya lo hace o no
+        return transitionSequence
 
     def setRobotInCoordinate(self, coordinate, robotID):
         with self.__directRdPAccessCondition:
@@ -53,11 +51,8 @@ class Monitor:
 
     def calculatePath(self, startX, startY, endX, endY):
         with self.__directPathFinderAccessCondition:
-            pathCoordinates = self.__pathFinder.calculatePath(startX, startY, endX, endY) # FIXME deberia tener un lock para acceder uno por vez
-            if(pathCoordinates == None):
-                print("ERROR INSIDE MONITOR - No path found for given coordinates")
-                pathCoordinates = []
-            self.__directPathFinderAccessCondition.notify_all()
+            pathCoordinates = self.__pathFinder.calculatePath(startX, startY, endX, endY)
+            self.__directPathFinderAccessCondition.notify_all() # FIXME checkear si el with ya lo hace o no
         return pathCoordinates
 
     def __fireCountIncrement(self):

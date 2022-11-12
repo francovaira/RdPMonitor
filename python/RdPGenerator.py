@@ -3,8 +3,8 @@
 import macros_mapa
 
 RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure, False will generate generic RdP
-RDP_REGENERATE_IF_INCONSISTENT_DEFINITION   = True      # True to regenerate RdP if some of de RdP definition files are inconsistent
-RDP_WRITE_CALCULATED_RDP_TO_FILE            = False     # True to save generated RdP (incidence and initial marking) into a file
+RDP_REGENERATE_IF_READ_FROM_FILE_FAILED     = True      # True to regenerate RdP if some of de RdP definition files are missing or inconsistent
+RDP_WRITE_CALCULATED_RDP_TO_FILE            = True      # True to save generated RdP (incidence and initial marking) into a file
 
 class RdPGenerator:
 
@@ -15,23 +15,23 @@ class RdPGenerator:
                                      (self.__mapDefinition.getHorizontalSize()-2-1)*(self.__mapDefinition.getVerticalSize()-2)) # transition count
         self.__initialMarkSize = self.__incidenceRows
 
-        # create 2D array for the incidence matrix
-        self.__incidence = [0 for i in range(self.__incidenceRows)]
-        for i in range(self.__incidenceRows):
-            self.__incidence[i] = [0 for j in range(self.__incidenceColumns)]
+        self.__incidence = []
+        self.__initialMark = []
 
         if(RDP_READ_FROM_FILE):
-            self.__incidence, self.__initialMark = self.__fileRdPDefinitionRead()
-            if(self.__incidence == None or self.__initialMark == None):
+            incidenceRead, initialMarkRead = self.__fileRdPDefinitionRead()
+            if(len(incidenceRead) == 0 or len(initialMarkRead) == 0):
                 print("ERROR RDP GENERATOR - Unable to get RDP definition file - RDP WILL BE REGENERATED FROM MAP DEFINITION")
 
-                if(RDP_REGENERATE_IF_INCONSISTENT_DEFINITION):
+                if(RDP_REGENERATE_IF_READ_FROM_FILE_FAILED):
                     if(self.__generateRdP()):
                         print(f"RDP GENERATOR - RDP REgenerated from map successfully\n")
                 else:
                     print("PROGRAM WILL DO NOTHING! -- EXITING...")
                     exit()
             else:
+                self.__incidence = incidenceRead
+                self.__initialMark = initialMarkRead
                 print("RDP FILE rdpDefinition.txt READ SUCCESSFULLY")
         else:
             if(self.__generateRdP()):
@@ -50,8 +50,8 @@ class RdPGenerator:
         # check consistency of incidence and marking matrixes
         if(not self.__checkConsistency(self.getIncidence(), self.getInitialMark())):
             print(f"ERROR IN RDP GENERATOR - Inconsistent GENERATED RDP\n")
-            self.__incidence = None
-            self.__initialMark = None
+            self.__incidence = []
+            self.__initialMark = []
             return False
         return True
 
@@ -68,12 +68,17 @@ class RdPGenerator:
                         self.__initialMark.append(0)
 
         if(RDP_WRITE_CALCULATED_RDP_TO_FILE):
-            self.fileWrite(self.__initialMark, "initial_calculated.txt")
+            self.__fileWrite(self.__initialMark, "initial_calculated.txt")
 
     def calculateIncidence(self):
         # given that petri net structure is based on having one resource place and one occupation place for each cell,
         # we need 2 places for each location in the map. The IDs are defined in such a way that even IDs always
         # refer to an occupation place and the odd IDs to a resoruce place, as well as in the incidence matrix.
+
+        # create 2D array for the incidence matrix
+        self.__incidence = [0 for i in range(self.__incidenceRows)]
+        for i in range(self.__incidenceRows):
+            self.__incidence[i] = [0 for j in range(self.__incidenceColumns)]
 
         transitionIndex = 0
         # CREATE HORIZONTAL CONNECTIONS
@@ -103,7 +108,7 @@ class RdPGenerator:
                     transitionIndex = transitionIndex + 1
 
         if(RDP_WRITE_CALCULATED_RDP_TO_FILE):
-            self.fileWrite(self.__incidence, "rdp_calculated.txt")
+            self.__fileWrite(self.__incidence, "rdp_calculated.txt")
 
     def __setIncidencePlaceXGotoY(self, incidence, placeOrigin, placeDestination, transitionIndex): # FIXME hace transitionIndex++ por cada movimiento
         incidence[placeOrigin][transitionIndex] = -1 # FIXME hacer con valor que venga del .env o algo
@@ -154,16 +159,15 @@ class RdPGenerator:
             initialMarkFile.close()
         except:
             print("EXCEPTION - Unable to read RdP file")
-            return None
+            return [],[]
 
         if(not self.__checkConsistency(rdpDefinitionRead, initialMarkRead)):
-            rdpDefinitionRead = None
-            initialMarkRead = None
+            return [],[]
 
         return rdpDefinitionRead, initialMarkRead
 
-    def fileWrite(self, list2write, fileName):
-        donorFile=open(fileName,"w")
-        donorFile.write(str(list2write))
-        donorFile.close()
+    def __fileWrite(self, list2write, fileName):
+        writeFile=open(fileName,"w")
+        writeFile.write(str(list2write))
+        writeFile.close()
 

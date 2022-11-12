@@ -29,12 +29,25 @@ def thread_run(monitor, robotID, cliente, cliente_queue):
         secondPart = monitor.calculatePath(5,1,1,5)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
+    elif(robotID == "ROB_C"):
+        coordenadasSequence = monitor.calculatePath(3,1,5,5)
+        secondPart = monitor.calculatePath(5,5,3,1)
+        thirdPart = monitor.calculatePath(3,1,1,5)
+        fourthPart = monitor.calculatePath(1,5,3,1)
+        secondPart.pop(0)
+        thirdPart.pop(0)
+        fourthPart.pop(0)
+        coordenadasSequence.extend(secondPart)
+        coordenadasSequence.extend(thirdPart)
+        coordenadasSequence.extend(fourthPart)
 
     transSeq = monitor.getTransitionSequence(coordenadasSequence)
     monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
 
     print(f"COORDENADAS {robotID} {coordenadasSequence}")
     print(f"TRANSICIONES {robotID} {transSeq}")
+
+    time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
     while(1):
         # FIXME poner una cola para recibir trabajos y que otro hilo se los mande (simulando el hilo de comm)
@@ -94,10 +107,13 @@ def main():
     threads = []
     thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', mqttc, mqttc_queue))
     thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', mqttc, mqttc_queue))
+    thread_ROBOT_C = Thread(target=thread_run, args=(monitor, 'ROB_C', mqttc, mqttc_queue))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
+    threads.append(thread_ROBOT_C)
     thread_ROBOT_A.start()
     thread_ROBOT_B.start()
+    thread_ROBOT_C.start()
 
     processVisualizer = multiprocessing.Process(target=viz.run())
     processVisualizer.start()

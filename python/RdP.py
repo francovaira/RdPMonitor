@@ -38,7 +38,7 @@ class RdP:
             for placeID in range(0, self.__placesCount):
                 self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + self.__incidence[placeID][transition]
 
-                # check which places changed marking since last iteration
+                # check if place has changed marking since last iteration
                 self.__checkChangeAndUpdateMap(placeID, robotID)
             return 1
         return 0
@@ -58,13 +58,12 @@ class RdP:
     def __setOccupationInPlace(self, placeID):
         if(placeID < 0 or placeID >= self.__placesCount or not placeID%2 == 0):
             return -1
-        else:
-            if(self.__matrizEstado[placeID + 1] > 0): # if there is room in the place - it checks the resource place
-                self.__matrizEstado[placeID + 1] = self.__matrizEstado[placeID + 1] - 1
-                self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + 1
-                return 0
-            else:
-                return -1
+
+        if(self.__matrizEstado[placeID + 1] > 0): # if there is room in the place - it checks the resource place
+            self.__matrizEstado[placeID + 1] = self.__matrizEstado[placeID + 1] - 1
+            self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + 1
+            return 0
+        return -1
 
     def __checkChangeAndUpdateMap(self, placeID, robotID):
         if(placeID < 0 or placeID >= self.__placesCount or not placeID%2 == 0):
@@ -78,13 +77,13 @@ class RdP:
 
     def getTransitionSequence(self, coordinatesSequence): # returns the transitions that must be fired to accomplish the coordinates sequence
         placeSequence = self.__map.getPlacesSequenceFromCoordinates(coordinatesSequence) # FIXME esta funcion capaz implementarla dentro de RdP.py
-        if(placeSequence == None):
+        if(len(placeSequence) == 0):
+            print("ERROR - unable to get transition sequence")
             return None
 
         # FIXME agregar que checkee el largo del resultado para detectar discontinuidades en la secuencia - deberia haber X cantidad de transiciones para recorrer Y plazas
         transitionSeq = []
         for i in range(len(placeSequence)-1):
-            # FIXME check existence?
             origen = placeSequence[i]
             destino = placeSequence[i+1]
 

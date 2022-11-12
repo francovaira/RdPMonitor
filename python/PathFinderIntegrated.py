@@ -81,8 +81,8 @@ class PathFinder:
         end = self.__getCell(endX, endY)
 
         if(start == None or end == None or start.getIsObstacle() == True or end.getIsObstacle() == True):
-            print("Invalid coordinates")
-            return
+            print("ERROR PATH FINDER - Invalid coordinates")
+            return None
 
         for i in range(len(self.grid)):
             for j in range(len(self.grid[0])):
@@ -109,9 +109,9 @@ class PathFinder:
 
                 # FINISHED CALCULATING or max iterations reached
                 if(iterations >= maxIterations):
-                    print(' NOT DONE - max iterations reached for PathFinder')
+                    print("ERROR PATH FINDER - No path found for given coordinates (max iterations reached)")
                     finished = True
-                    return None
+                    return []
                 elif(current == end):
                     pathDistance = current.f
                     print(f"DONE - Distance: {pathDistance} // Iterations: {iterations}")

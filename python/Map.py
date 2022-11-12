@@ -59,8 +59,7 @@ class MapCell:
     def addRobot(self, robotID):
         if(self.__isOccupable):
             if(any(elem == robotID for elem in self.__robotsList) or robotID == None or robotID == ""): # check for duplicates
-                print(f"ERROR IN MAP CLASS - The robot {robotID} is trying to add another copy of itself into a cell <{self.__placeID}>")
-                return
+                print(f"ERROR IN MAP CLASS - The robot <{robotID}> is trying to add another copy of itself into a cell <{self.__placeID}>")
             else:
                 self.__robotsList.append(robotID)
 

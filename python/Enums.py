@@ -30,4 +30,5 @@ class Colors(Enum):
 
     ROBOT_1 = (255, 120, 20)
     ROBOT_2 = (100, 255, 20)
+    ROBOT_3 = (20, 200, 230)
 
