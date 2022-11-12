@@ -99,15 +99,15 @@ def main():
     mapVerticalSize = map.getMapDefinition().getVerticalSize()
 
     rdp = RdP(map)
-    mqttc, mqttc_queue =  mqtt.main()
-    monitor = Monitor(rdp, map.getPathFinder())
-    viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
+    mqttc, mqttc_robot_queue =  mqtt.main()
+    monitor = Monitor(rdp)
+    viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, 
+                    map.getMapInSharedMemory(), mqtt.getMqttcEvent(), mqtt.getMqttcQueue())
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', mqttc, mqttc_queue))
-    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', mqttc, mqttc_queue))
-    thread_ROBOT_C = Thread(target=thread_run, args=(monitor, 'ROB_C', mqttc, mqttc_queue))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder(), mqttc, mqttc_robot_queue))
+    # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
     threads.append(thread_ROBOT_C)
