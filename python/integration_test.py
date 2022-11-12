@@ -124,9 +124,8 @@ def main():
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', mqttc, mqttc_queue))
-    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', mqttc, mqttc_queue))
-    thread_ROBOT_C = Thread(target=thread_run, args=(monitor, 'ROB_C', mqttc, mqttc_queue))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder(), mqttc, mqttc_robot_queue))
+    # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
     threads.append(thread_ROBOT_C)
