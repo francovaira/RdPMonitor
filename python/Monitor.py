@@ -22,7 +22,7 @@ class Monitor:
         with self.__conditions[transition]:
             k = self.__petriNet.solicitudDisparo(transition)
             while(k == 0):
-                #print(f"{time.time()} [{robotID}] ### No sensibilizada {transition} -- esperando...")
+                print(f"{time.time()} [{robotID}] ### No sensibilizada {transition} -- esperando...")
                 self.__conditions[transition].wait() # espera que otro hilo lo despierte
                 k = self.__petriNet.solicitudDisparo(transition)
 
@@ -32,6 +32,9 @@ class Monitor:
             print(f"{time.time()} [{robotID}] ### Si sensibilizada, disparo: {transition} __ CANT DISPAROS {self.__fireCount}")
             #self.__petriNet.printMarking()
 
+        # print(f"{time.time()} [{robotID}] ### Transitions Count: {self.__petriNet.getTransitionCount()}")
+        print(self.__petriNet.getMatrizEstado())
+        # time.sleep(45)
         # notify for other conditions and potential waiting threads
         for i in range(0, self.__petriNet.getTransitionCount()):
             with self.__conditions[i]:

@@ -7,7 +7,7 @@ import json
 import traceback
 import logging
 
-mqttc_condition = threading.Condition()
+# mqttc_condition = threading.Condition()
 mqttc_event = threading.Event()
 mqttc_ping_event = threading.Event()
 mqttc_queue = queue.Queue()
@@ -17,10 +17,11 @@ def on_connect(mqttc, obj, flags, rc):
     print("rc: " + str(rc))
 
 def on_message(mqttc, obj, msg):
+    print(mqttc._client_id)
     print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
-    mqttc_condition.acquire()
-    mqttc_condition.notify()
-    mqttc_condition.release()
+    # mqttc_condition.acquire()
+    # mqttc_condition.notify()
+    # mqttc_condition.release()
 
 def on_publish(mqttc, obj, mid):
     print("mid: " + str(mid) + "aa")
@@ -79,14 +80,13 @@ def getMqttcEvent():
 def getMqttcQueue():
     return mqttc_queue
 
-def main():
-    mqttc = mqtt.Client()
+def create_client(robot_id):
+    mqttc = mqtt.Client(client_id=robot_id)
     mqttc.on_message = on_message
     mqttc.on_connect = on_connect
     mqttc.on_publish = on_publish
     mqttc.on_subscribe = on_subscribe
     mqttc.on_disconnect = on_disconnect
-
 
     # Uncomment to enable debug messages
     # mqttc.on_log = on_log
@@ -94,11 +94,8 @@ def main():
     try:
         mqttc.connect("localhost", 1883, 60)
         mqttc.loop_start()
-        mqttc.subscribe("/topic/robot", 2)
+        mqttc.subscribe(robot_id, 2)
     except:
         print("No se pudo conectar al broker.")
 
-    thread_ping = threading.Thread(target=thread_run)
-    thread_ping.start()
-
-    return mqttc, mqttc_condition
+    return mqttc

@@ -5,6 +5,7 @@ import time
 from Enums import Colors, MapCellOccupationStates, MapCellTypes
 import pygame_menu
 from Map import Map
+import numpy as np
 
 # VERRRR DOCUUU https://pygame.readthedocs.io/en/latest/2_draw/draw.html
 
@@ -79,7 +80,8 @@ class Visualizer:
         # # self.__mqttcQueue = mqttcQueue
         self.__robotID = ""
 
-        self.__canvas.fill(Colors.BACKGROUND.value) # set background color
+        # Set background color
+        self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
 
         self.__horizontalCells = horizontalCells
@@ -87,37 +89,18 @@ class Visualizer:
         self.__cellWidth = canvasHorizontalSizePixels // (self.__horizontalCells*2)
         self.__cellHeight = canvasHorizontalSizePixels // (self.__horizontalCells*2)
 
-        # create 2D array for the grid
-        self.__grid = [0 for i in range(self.__horizontalCells)]
-        for i in range(self.__horizontalCells):
-            self.__grid[i] = [0 for i in range(self.__verticalCells)]
-
         # Create cells for the grid
+        self.__grid = np.zeros((self.__horizontalCells, self.__verticalCells), dtype=object)
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
                 self.__grid[i][j] = VisualizerCell(self.__canvas, self.__mapInSharedMemory[i][j], self.__cellWidth, self.__cellHeight, self.__robotID)
 
-        font = pygame.font.SysFont(None, 25)
-        img = font.render("ValEnTiN", True, Colors.WHITE.value)
-        self.__canvas.blit(img, ((self.__canvasHorizontalSizePixels//2)-45, (self.__canvasVerticalSizePixels//2)))
+        self._create_menu(pygame.display.get_surface())
+
         pygame.display.update()
-        time.sleep(0.5)
-        # self._menu: 'pygame_menu.Menu'
+        pygame.display.flip()
 
-        def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
-            """
-            Set the background color of buttons if entered.
-            """
-            if w.readonly:
-                return
-            w.set_background_color((98, 103, 106))
-
-        def button_onmouseleave(w: 'pygame_menu.widgets.Widget', _) -> None:
-            """
-            Set the background color of buttons if leaved.
-            """
-            w.set_background_color((75, 79, 81))
-
+    def _create_menu(self, surface, ):
         theme = pygame_menu.Theme(
             background_color=pygame_menu.themes.TRANSPARENT_COLOR,
             title=False,
@@ -138,13 +121,27 @@ class Visualizer:
 
         self._menu.add.button(
             'Run Solver',
-            self._run_solver,
+            _run_solver(),
             button_id='run_solver',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
             margin=(0, 75),
             shadow_width=10,
         )
+
+        def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
+            """
+            Set the background color of buttons if entered.
+            """
+            if w.readonly:
+                return
+            w.set_background_color((98, 103, 106))
+
+        def button_onmouseleave(w: 'pygame_menu.widgets.Widget', _) -> None:
+            """
+            Set the background color of buttons if leaved.
+            """
+            w.set_background_color((75, 79, 81))
 
         for btn in self._menu.get_widgets(['run_solver']):
             btn.set_onmouseover(button_onmouseover)
@@ -153,25 +150,13 @@ class Visualizer:
                 btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
             btn.set_background_color((75, 79, 81))
 
-        self._menu.draw(pygame.display.get_surface())
-        pygame.display.update()
-        pygame.display.flip()
+        self._menu.draw(surface)
 
     # def setRobotID(self, robotID):
     #     if(robotID == None):
     #         self.__robotID = ""
     #     else:
     #         self.__robotID = robotID
-
-    def _run_solver(self) -> None:
-        """
-        Run the solver.
-        
-        """
-        print('asd')
-        # self.__mqttcEvent.set()
-        # self.setRobotID(self.__mqttcQueue.get())
-        # print('ROBOT_ID:' + self.__robotID + ' - ' + str(len(self.__robotID)))
 
     def run(self):
         while self.__running:
@@ -200,8 +185,6 @@ class Visualizer:
                 self.__grid[i][j].draw()
         pygame.display.update()
 
-
-
 def main():
     map = Map()
     mapHorizontalSize = map.getMapDefinition().getHorizontalSize()
@@ -210,6 +193,17 @@ def main():
     viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     viz.run()
+
+def _run_solver() -> None:
+    """
+    Run the solver.
+
+    """
+    print("Run the solver")
+    # manager.run_solver_callback()
+    # self.__mqttcEvent.set()
+    # self.setRobotID(self.__mqttcQueue.get())
+    # print('ROBOT_ID:' + self.__robotID + ' - ' + str(len(self.__robotID)))
 
 if __name__ == "__main__":
     main()

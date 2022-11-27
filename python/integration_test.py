@@ -6,30 +6,30 @@ import time
 import numpy
 import random
 from decouple import config
-import mqqt_client as mqtt
+import MQTTClient as mqtt
 import macros_mapa
 from RdP import RdP
 from Monitor import Monitor
 from Visualizer import Visualizer
 from Map import Map
+from Robot import Robot
 
-
-def thread_run(monitor, robotID, cliente, cliente_queue):
+def thread_run(monitor, robot):
 
     # FIXME hacer que el robot tenga una "posicion/coordenada actual"
 
-    if(robotID == "ROB_A"):
+    if(robot.getRobotID() == "ROB_A"):
         coordenadasSequence = monitor.calculatePath(1,1,5,5)
         secondPart = monitor.calculatePath(5,5,1,1)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
-    elif(robotID == "ROB_B"):
+    elif(robot.getRobotID() == "ROB_B"):
         #coordenadasSequence = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (5,1), (4,1), (3,1), (2,1), (1,1)]
         coordenadasSequence = monitor.calculatePath(1,5,5,1)
         secondPart = monitor.calculatePath(5,1,1,5)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
-    elif(robotID == "ROB_C"):
+    elif(robot.getRobotID() == "ROB_C"):
         coordenadasSequence = monitor.calculatePath(3,1,5,5)
         secondPart = monitor.calculatePath(5,5,3,1)
         thirdPart = monitor.calculatePath(3,1,1,5)
@@ -42,10 +42,10 @@ def thread_run(monitor, robotID, cliente, cliente_queue):
         coordenadasSequence.extend(fourthPart)
 
     transSeq = monitor.getTransitionSequence(coordenadasSequence)
-    monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
+    monitor.setRobotInCoordinate(coordenadasSequence[0], robot.getRobotID())
 
-    print(f"COORDENADAS {robotID} {coordenadasSequence}")
-    print(f"TRANSICIONES {robotID} {transSeq}")
+    print(f"COORDENADAS {robot.getRobotID()} {coordenadasSequence}")
+    print(f"TRANSICIONES {robot.getRobotID()} {transSeq}")
 
     time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
@@ -56,7 +56,7 @@ def thread_run(monitor, robotID, cliente, cliente_queue):
                 # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 # intenta disparar el monitor
                 #cliente_queue.acquire()
-                monitor.monitorDisparar(transicion, robotID)
+                monitor.monitorDisparar(transicion, robot.getRobotID())
                 # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
                 #msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
                 #msg.wait_for_publish()
@@ -99,21 +99,21 @@ def main():
     mapVerticalSize = map.getMapDefinition().getVerticalSize()
 
     rdp = RdP(map)
-    mqttc, mqttc_robot_queue =  mqtt.main()
-    monitor = Monitor(rdp)
-    viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, 
-                    map.getMapInSharedMemory(), mqtt.getMqttcEvent(), mqtt.getMqttcQueue())
+    # mqttc, mqttc_robot_queue =  mqtt.main()
+    monitor = Monitor(rdp, map.getPathFinder())
+    viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder(), mqttc, mqttc_robot_queue))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, Robot('ROB_A')))
+    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, Robot('ROB_B')))
     # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
-    threads.append(thread_ROBOT_C)
+    # threads.append(thread_ROBOT_C)
     thread_ROBOT_A.start()
     thread_ROBOT_B.start()
-    thread_ROBOT_C.start()
+    # thread_ROBOT_C.start()
 
     processVisualizer = multiprocessing.Process(target=viz.run())
     processVisualizer.start()
