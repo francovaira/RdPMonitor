@@ -2,6 +2,7 @@ import time
 from decouple import config
 from RdPGenerator import RdPGenerator
 from Enums import MapCellOccupationStates, MapCellOccupationActions
+import numpy as np
 
 # FIXME refactorizar esta clase en una que sea la RDP sola y conectado tenga la interfaz para con el mapa y hacia el monitor
 
@@ -141,3 +142,6 @@ class RdP:
     def getTransitionCount(self):
         return self.__transitionCount
 
+    def getMatrizEstado(self):
+        incidencia = np.array(self.__rdpGen.getIncidence())
+        return incidencia.sum(axis=0)
