@@ -1,0 +1,151 @@
+import threading
+from threading import Semaphore
+import random
+
+
+class TransitionMonitorQueue:
+
+    def __init__(self):
+        self.__threadsRequesting = []
+        self.__hasRequests = False
+        self.__semaphore = threading.Semaphore(value = 0) # initial value = 0 / if a thread requests this semaphore it wil remain waiting until the monitor puts a value in it.
+        #self.__semaphore = threading.BoundedSemaphore()
+        #self.__semaphore.acquire()
+
+    def request(self, threadID):
+        if(any(elem == threadID for elem in self.__threadsRequesting) or threadID == None or threadID == ""): # check for duplicates
+            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or empty thread ID") # creo que no necesariamente es un error
+            pass
+        else:
+            self.__threadsRequesting.append(threadID)
+            self.__hasRequests = True
+
+    def releaseRequest(self, threadID):
+        if(threadID == None or threadID == ""):
+            return
+        elif(any(elem == threadID for elem in self.__threadsRequesting)): # check existence
+            self.__threadsRequesting.remove(threadID)
+
+            if(len(self.__threadsRequesting) <= 0):
+                self.__hasRequests = False
+            else:
+                self.__hasRequests = True
+        else:
+            print(f"ERROR IN MONITOR - The thread <{threadID}> tried to release the request but it was not a requesting member.")
+
+    def getSemaphore(self):
+        return self.__semaphore
+
+    def hasRequests(self):
+        return self.__hasRequests
+
+
+class Policy:
+    #def __init__(self):
+    #    self.asfasdf = 5
+
+    def resolve(self, candidates):
+        return random.choice(candidates)
+
+class MonitorWithQueues:
+
+    def __init__(self, petriNet):
+        self.__petriNet = petriNet
+        self.__monitorLock = threading.Lock()
+        self.__directRdPAccessCondition = threading.Condition(self.__monitorLock)
+        self.__policy = Policy()
+        self.__fireCount = 0
+
+        # create 1 queue for each RdP transition
+        self.__transitionQueues = []
+        for i in range(self.__petriNet.getTransitionCount()):
+            self.__transitionQueues.append(TransitionMonitorQueue())
+
+    def monitorDisparar(self, transition, threadID):
+        self.__monitorLock.acquire()
+
+        try:
+            k = True
+            while(k == True):
+                #self.__transitionQueues[transition].request(threadID)
+                #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
+
+                # 0) intenta disparar de una
+                k = self.__petriNet.redDisparar(transition, threadID)
+                if(k): # si pudo disparar, ...
+                    self.__fireCountIncrement()
+
+                    # 1) obtener las sensibilizadas luego del cambio de estado
+                    print(f"==== THREAD {threadID} || PUDE DISPARAR LA TRANSICION {transition} // CANT DISPAROS {self.__fireCount}")
+
+                    sensibilizadas = self.__petriNet.getSensibilizadas() # devuelve algo como [12, 4, 83, 67, ...]
+                    print(f"==== THREAD {threadID} || SENSIBILIZADAS DESPUES DEL DISPARO MONITOR - {sensibilizadas} // CANT DISPAROS {self.__fireCount}")
+                    if(len(sensibilizadas) > 0):
+
+                        # 2) matchear sensibilizadas con colas de transiciones
+                        transitionCandidates = self.__getTransitionCandidates(sensibilizadas)
+                        print(f"==== THREAD {threadID} || TRANSICIONES CANDIDATOS MONITOR - {transitionCandidates} // CANT DISPAROS {self.__fireCount}")
+
+                        # 3) si hay sensibilizadas con requests preguntar a la politica que transicion
+                        if(len(transitionCandidates) > 0):
+                            transitionDecision = self.__policy.resolve(transitionCandidates) # aca ver que hay que pasarle a la politica para que resuelva
+                            print(f"==== THREAD {threadID} || SOLUCION POLITICA MONITOR - {transitionDecision} // CANT DISPAROS {self.__fireCount}")
+
+                            # 4) se determino que debe ser la Tj, se pone un token en el semaforo de la transicion
+                            self.__transitionQueues[transitionDecision].getSemaphore().release()
+
+                            # 5) me desencolo de la transicion porque ya dispare y me voy del monitor
+                            self.__transitionQueues[transitionDecision].releaseRequest(threadID)
+                            print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transitionDecision}")
+                        else:
+                            # se va del monitor por no haber ninguna transicion con requests
+                            k = False
+                    else:
+                        # se va del monitor por no haber ninguna transicion sensibilizada
+                        k = False
+                else:
+                    # put myself as thread into according queue
+                    # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
+                    print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
+                    self.__transitionQueues[transition].request(threadID)
+                    self.__transitionQueues[transition].getSemaphore().acquire()
+
+                    # FIXME: al hacer el acquire del semaforo se bloquea todo, ver como se puede hacer para que continue
+
+        # FIXMEE verificar que las colas 
+
+
+        finally:
+            self.__monitorLock.release()
+
+
+    # FIXMEEEE hacer el acquire de un lock con try y finally
+    # some_lock.acquire()
+    # try:
+    #     # do something...
+    # finally:
+    #     some_lock.release()
+
+
+    def __getTransitionCandidates(self, sensibilizadas):
+        transitionCandidates = []
+        for i in range(len(sensibilizadas)):
+            if(self.__transitionQueues[sensibilizadas[i]].hasRequests()):
+                transitionCandidates.append(sensibilizadas[i])
+        return transitionCandidates
+
+
+    def getTransitionSequence(self, coordinatesSequence):
+        with self.__directRdPAccessCondition:
+            transitionSequence = self.__petriNet.getTransitionSequence(coordinatesSequence)
+            self.__directRdPAccessCondition.notify_all() # FIXME checkear si el with ya lo hace o no
+        return transitionSequence
+
+    def setRobotInCoordinate(self, coordinate, robotID):
+        with self.__directRdPAccessCondition:
+            if(self.__petriNet.setRobotInCoordinate(coordinate, robotID)):
+                print("ERROR INSIDE MONITOR unable to set robot in coordinate")
+            self.__directRdPAccessCondition.notify_all()
+
+    def __fireCountIncrement(self):
+        self.__fireCount = self.__fireCount+1
