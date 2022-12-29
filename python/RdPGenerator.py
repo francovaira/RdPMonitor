@@ -63,7 +63,7 @@ class RdPGenerator:
                 if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros_mapa.MAP_BORDER):
                     self.__initialMark.append(0) # occupation = 0
                     if(self.__mapDefinition.getMapStructure()[i+1][j+1] == macros_mapa.MAP_OCCUPABLE):
-                        self.__initialMark.append(2)
+                        self.__initialMark.append(1)
                     else:
                         self.__initialMark.append(0)
 

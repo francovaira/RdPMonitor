@@ -8,9 +8,9 @@ class TransitionMonitorQueue:
     def __init__(self):
         self.__threadsRequesting = []
         self.__hasRequests = False
-        self.__semaphore = threading.Semaphore(value = 0) # initial value = 0 / if a thread requests this semaphore it wil remain waiting until the monitor puts a value in it.
-        #self.__semaphore = threading.BoundedSemaphore()
-        #self.__semaphore.acquire()
+        #self.__semaphore = threading.Semaphore(value = 0) # initial value = 0 / if a thread requests this semaphore it wil remain waiting until the monitor puts a value in it.
+        self.__semaphore = threading.BoundedSemaphore()
+        self.__semaphore.acquire()
 
     def request(self, threadID):
         if(any(elem == threadID for elem in self.__threadsRequesting) or threadID == None or threadID == ""): # check for duplicates
@@ -66,6 +66,8 @@ class MonitorWithQueues:
 
         try:
             k = True
+            self.__transitionQueues[transition].request(threadID)
+            print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
             while(k == True):
                 #self.__transitionQueues[transition].request(threadID)
                 #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
@@ -93,22 +95,30 @@ class MonitorWithQueues:
 
                             # 4) se determino que debe ser la Tj, se pone un token en el semaforo de la transicion
                             self.__transitionQueues[transitionDecision].getSemaphore().release()
+                            k=False # se va del monitor por haber disparado
 
                             # 5) me desencolo de la transicion porque ya dispare y me voy del monitor
-                            self.__transitionQueues[transitionDecision].releaseRequest(threadID)
-                            print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transitionDecision}")
+                            #self.__transitionQueues[transitionDecision].releaseRequest(threadID)
+                            #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transitionDecision}")
                         else:
                             # se va del monitor por no haber ninguna transicion con requests
                             k = False
                     else:
                         # se va del monitor por no haber ninguna transicion sensibilizada
                         k = False
+
+                    # 5) me desencolo de la transicion porque ya dispare y me voy del monitor
+                    self.__transitionQueues[transition].releaseRequest(threadID)
+                    print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}\n")
                 else:
                     # put myself as thread into according queue
                     # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
                     print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
-                    self.__transitionQueues[transition].request(threadID)
-                    self.__transitionQueues[transition].getSemaphore().acquire()
+                    #self.__transitionQueues[transition].request(threadID)
+                    self.__monitorLock.release()
+                    self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
+                    k=True
+                    self.__monitorLock.acquire()
 
                     # FIXME: al hacer el acquire del semaforo se bloquea todo, ver como se puede hacer para que continue
 
