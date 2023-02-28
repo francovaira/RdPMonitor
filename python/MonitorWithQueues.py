@@ -14,7 +14,7 @@ class TransitionMonitorQueue:
 
     def request(self, threadID):
         if(any(elem == threadID for elem in self.__threadsRequesting) or threadID == None or threadID == ""): # check for duplicates
-            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or empty thread ID") # creo que no necesariamente es un error
+            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID") # creo que no necesariamente es un error
             pass
         else:
             self.__threadsRequesting.append(threadID)
@@ -121,9 +121,6 @@ class MonitorWithQueues:
                     self.__monitorLock.acquire()
 
                     # FIXME: al hacer el acquire del semaforo se bloquea todo, ver como se puede hacer para que continue
-
-        # FIXMEE verificar que las colas 
-
 
         finally:
             self.__monitorLock.release()
