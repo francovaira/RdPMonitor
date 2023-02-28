@@ -10,36 +10,35 @@ import mqqt_client as mqtt
 import macros_mapa
 from RdP import RdP
 from Monitor import Monitor
+from MonitorWithQueues import MonitorWithQueues
 from Visualizer import Visualizer
 from Map import Map
 
 
 def thread_run(monitor, robotID, cliente, cliente_queue):
 
-    # FIXME hacer que el robot tenga una "posicion/coordenada actual"
-
     if(robotID == "ROB_A"):
-        coordenadasSequence = monitor.calculatePath(1,1,5,5)
-        secondPart = monitor.calculatePath(5,5,1,1)
+        coordenadasSequence = monitor.calculatePath(3,1,3,3)
+        secondPart = monitor.calculatePath(3,3,3,1)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
     elif(robotID == "ROB_B"):
         #coordenadasSequence = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (5,1), (4,1), (3,1), (2,1), (1,1)]
-        coordenadasSequence = monitor.calculatePath(1,5,5,1)
-        secondPart = monitor.calculatePath(5,1,1,5)
+        coordenadasSequence = monitor.calculatePath(1,3,5,3)
+        secondPart = monitor.calculatePath(5,3,1,3)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
     elif(robotID == "ROB_C"):
-        coordenadasSequence = monitor.calculatePath(3,1,5,5)
-        secondPart = monitor.calculatePath(5,5,3,1)
-        thirdPart = monitor.calculatePath(3,1,1,5)
-        fourthPart = monitor.calculatePath(1,5,3,1)
+        coordenadasSequence = monitor.calculatePath(3,3,3,4)
+        secondPart = monitor.calculatePath(3,4,3,3)
+        #thirdPart = monitor.calculatePath(3,1,3,2)
+        #fourthPart = monitor.calculatePath(3,2,3,1)
         secondPart.pop(0)
-        thirdPart.pop(0)
-        fourthPart.pop(0)
+        #thirdPart.pop(0)
+        #fourthPart.pop(0)
         coordenadasSequence.extend(secondPart)
-        coordenadasSequence.extend(thirdPart)
-        coordenadasSequence.extend(fourthPart)
+        #coordenadasSequence.extend(thirdPart)
+        #coordenadasSequence.extend(fourthPart)
 
     transSeq = monitor.getTransitionSequence(coordenadasSequence)
     monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
@@ -49,22 +48,36 @@ def thread_run(monitor, robotID, cliente, cliente_queue):
 
     time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
+    # while(1):
+    #     # FIXME poner una cola para recibir trabajos y que otro hilo se los mande (simulando el hilo de comm)
+    #     for transicion in transSeq:
+    #         if(transicion != int(config('NULL_TRANSITION'))):
+    #             # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
+    #             # intenta disparar el monitor
+    #             #cliente_queue.acquire()
+    #             monitor.monitorDisparar(transicion, robotID)
+    #             # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
+    #             #msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
+    #             #msg.wait_for_publish()
+    #             # msg.is_published()
+    #             #cliente_queue.wait()
+    #             #cliente_queue.release()
+    #             #time.sleep(random.random()/2)
+    #             time.sleep(0.1)
+
+    a = 0
+
     while(1):
-        # FIXME poner una cola para recibir trabajos y que otro hilo se los mande (simulando el hilo de comm)
         for transicion in transSeq:
             if(transicion != int(config('NULL_TRANSITION'))):
                 # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-                # intenta disparar el monitor
-                #cliente_queue.acquire()
                 monitor.monitorDisparar(transicion, robotID)
-                # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
-                #msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
-                #msg.wait_for_publish()
-                # msg.is_published()
-                #cliente_queue.wait()
-                #cliente_queue.release()
-                #time.sleep(random.random()/2)
-                time.sleep(0.1)
+                time.sleep(0.2*(random.random()+1))
+
+                if(robotID == "ROB_C"):
+                    a = a + 1
+                    if(a % 2 == 0):
+                        time.sleep(2)
 
 def define_motor_direction(transSeq, transicion, plazasSeq):
     transicion_len = len(transSeq)-1
@@ -100,7 +113,9 @@ def main():
 
     rdp = RdP(map)
     mqttc, mqttc_queue =  mqtt.main()
-    monitor = Monitor(rdp, map.getPathFinder())
+    # monitor = Monitor(rdp, map.getPathFinder())
+    monitor = MonitorWithQueues(rdp, map.getPathFinder())
+
     viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
