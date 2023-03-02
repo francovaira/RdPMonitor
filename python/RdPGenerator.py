@@ -5,6 +5,7 @@ import macros_mapa
 RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure, False will generate generic RdP
 RDP_REGENERATE_IF_READ_FROM_FILE_FAILED     = True      # True to regenerate RdP if some of de RdP definition files are missing or inconsistent
 RDP_WRITE_CALCULATED_RDP_TO_FILE            = True      # True to save generated RdP (incidence and initial marking) into a file
+RDP_INITIAL_MARK_PLACES                     = 1         # Number of initial "free spaces" for each occupable place in the map
 
 class RdPGenerator:
 
@@ -63,7 +64,7 @@ class RdPGenerator:
                 if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros_mapa.MAP_BORDER):
                     self.__initialMark.append(0) # occupation = 0
                     if(self.__mapDefinition.getMapStructure()[i+1][j+1] == macros_mapa.MAP_OCCUPABLE):
-                        self.__initialMark.append(1)
+                        self.__initialMark.append(RDP_INITIAL_MARK_PLACES)
                     else:
                         self.__initialMark.append(0)
 

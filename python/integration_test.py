@@ -14,6 +14,9 @@ from MonitorWithQueues import MonitorWithQueues
 from Visualizer import Visualizer
 from Map import Map
 
+# muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
+# about yield = time.sleep(0) https://stackoverflow.com/a/790246
+
 
 def thread_run(monitor, robotID, cliente, cliente_queue):
 
@@ -72,12 +75,13 @@ def thread_run(monitor, robotID, cliente, cliente_queue):
             if(transicion != int(config('NULL_TRANSITION'))):
                 # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
                 monitor.monitorDisparar(transicion, robotID)
-                time.sleep(0.2*(random.random()+1))
+                #time.sleep(0.2*(random.random()+1))
+                #time.sleep(0.01)
 
-                if(robotID == "ROB_C"):
-                    a = a + 1
-                    if(a % 2 == 0):
-                        time.sleep(2)
+                # if(robotID == "ROB_C"):
+                #     #a = a + 1
+                #     if(a % 2 == 0):
+                #         time.sleep(2)
 
 def define_motor_direction(transSeq, transicion, plazasSeq):
     transicion_len = len(transSeq)-1

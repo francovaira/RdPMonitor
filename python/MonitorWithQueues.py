@@ -14,7 +14,7 @@ class TransitionMonitorQueue:
 
     def request(self, threadID):
         if(any(elem == threadID for elem in self.__threadsRequesting) or threadID == None or threadID == ""): # check for duplicates
-            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID") # creo que no necesariamente es un error
+            print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID") # creo que no necesariamente es un error
             pass
         else:
             self.__threadsRequesting.append(threadID)
@@ -78,10 +78,12 @@ class MonitorWithQueues:
                 k = self.__petriNet.redDisparar(transition, threadID)
                 if(k): # si pudo disparar, ...
                     self.__fireCountIncrement()
-
-                    # 1) obtener las sensibilizadas luego del cambio de estado
                     print(f"==== THREAD {threadID} || PUDE DISPARAR LA TRANSICION {transition} // CANT DISPAROS {self.__fireCount}")
 
+                    self.__transitionQueues[transition].releaseRequest(threadID)
+                    print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}")
+
+                    # 1) obtener las sensibilizadas luego del cambio de estado
                     sensibilizadas = self.__petriNet.getSensibilizadas() # devuelve algo como [12, 4, 83, 67, ...]
                     print(f"==== THREAD {threadID} || SENSIBILIZADAS DESPUES DEL DISPARO MONITOR - {sensibilizadas} // CANT DISPAROS {self.__fireCount}")
                     if(len(sensibilizadas) > 0):
@@ -110,8 +112,9 @@ class MonitorWithQueues:
                         k = False
 
                     # 5) me desencolo de la transicion porque ya dispare y me voy del monitor
-                    self.__transitionQueues[transition].releaseRequest(threadID)
-                    print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}\n")
+                    #self.__transitionQueues[transition].releaseRequest(threadID)
+                    #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}\n")
+                    print(f"\n")
                 else:
                     # put myself as thread into according queue
                     # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
@@ -122,10 +125,9 @@ class MonitorWithQueues:
                     k=True
                     self.__monitorLock.acquire()
 
-                    # FIXME: al hacer el acquire del semaforo se bloquea todo, ver como se puede hacer para que continue
-
         finally:
             self.__monitorLock.release()
+            return # aparentemente este return es mucho muy importante para que los hilos cedan el lugar a otros hilos
 
 
     # FIXMEEEE hacer el acquire de un lock con try y finally
