@@ -1,6 +1,9 @@
 import threading
+import time
 from threading import Semaphore
 import random
+
+ITERATION_COUNT = 3 * 1000
 
 
 class TransitionMonitorQueue:
@@ -57,19 +60,35 @@ class MonitorWithQueues:
         self.__directPathFinderAccessCondition = threading.Condition(self.__monitorLock)
         self.__policy = Policy()
         self.__fireCount = 0
+        #self.__accumLog = ""
 
         # create 1 queue for each RdP transition
         self.__transitionQueues = []
         for i in range(self.__petriNet.getTransitionCount()):
             self.__transitionQueues.append(TransitionMonitorQueue())
 
+    def getAccumLog(self):
+        return self.__accumLog
+
+    def __fileWrite(self, list2write, fileName):
+        writeFile=open(fileName,"w")
+        writeFile.write(str(list2write))
+        writeFile.close()
+
     def monitorDisparar(self, transition, threadID):
+
+        # if(self.__fireCount >= ITERATION_COUNT):
+        #     self.__fileWrite(self.__accumLog, "LOG_OUTPUT.txt")
+        #     exit()
+
         self.__monitorLock.acquire()
 
         try:
             k = True
             self.__transitionQueues[transition].request(threadID)
             print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
+            #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},REQ_TRANSITION<{transition}>,{self.__fireCount}\n"
+
             while(k == True):
                 #self.__transitionQueues[transition].request(threadID)
                 #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
@@ -79,23 +98,28 @@ class MonitorWithQueues:
                 if(k): # si pudo disparar, ...
                     self.__fireCountIncrement()
                     print(f"==== THREAD {threadID} || PUDE DISPARAR LA TRANSICION {transition} // CANT DISPAROS {self.__fireCount}")
+                    #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},FIRED_TRANSITN<{transition}>,{self.__fireCount}\n"
 
                     self.__transitionQueues[transition].releaseRequest(threadID)
                     print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}")
+                    #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},UNREQ_TRANSITN<{transition}>,{self.__fireCount}\n"
 
                     # 1) obtener las sensibilizadas luego del cambio de estado
                     sensibilizadas = self.__petriNet.getSensibilizadas() # devuelve algo como [12, 4, 83, 67, ...]
                     print(f"==== THREAD {threadID} || SENSIBILIZADAS DESPUES DEL DISPARO MONITOR - {sensibilizadas} // CANT DISPAROS {self.__fireCount}")
+                    #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},SENSI_TRANSITN<sensibilizadas>,{self.__fireCount}\n"
                     if(len(sensibilizadas) > 0):
 
                         # 2) matchear sensibilizadas con colas de transiciones
                         transitionCandidates = self.__getTransitionCandidates(sensibilizadas)
                         print(f"==== THREAD {threadID} || TRANSICIONES CANDIDATOS MONITOR - {transitionCandidates} // CANT DISPAROS {self.__fireCount}")
+                        #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},CANDI_TRANSITN<{transitionCandidates}>,{self.__fireCount}\n"
 
                         # 3) si hay sensibilizadas con requests preguntar a la politica que transicion
                         if(len(transitionCandidates) > 0):
                             transitionDecision = self.__policy.resolve(transitionCandidates) # aca ver que hay que pasarle a la politica para que resuelva
                             print(f"==== THREAD {threadID} || SOLUCION POLITICA MONITOR - {transitionDecision} // CANT DISPAROS {self.__fireCount}")
+                            #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},POLIC_TRANSITN<{transitionDecision}>,{self.__fireCount}\n"
 
                             # 4) se determino que debe ser la Tj, se pone un token en el semaforo de la transicion
                             self.__transitionQueues[transitionDecision].getSemaphore().release()
@@ -115,19 +139,21 @@ class MonitorWithQueues:
                     #self.__transitionQueues[transition].releaseRequest(threadID)
                     #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}\n")
                     print(f"\n")
+                    #self.__accumLog = self.__accumLog + "\n"
                 else:
                     # put myself as thread into according queue
                     # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
                     print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
+                    #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},NSENS_TRANSITN<{transition}>,{self.__fireCount}\n"
                     #self.__transitionQueues[transition].request(threadID)
                     self.__monitorLock.release()
                     self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
-                    k=True
                     self.__monitorLock.acquire()
+                    k=True
 
         finally:
             self.__monitorLock.release()
-            return # aparentemente este return es mucho muy importante para que los hilos cedan el lugar a otros hilos
+            #return # aparentemente este return es mucho muy importante para que los hilos cedan el lugar a otros hilos
 
 
     # FIXMEEEE hacer el acquire de un lock con try y finally
