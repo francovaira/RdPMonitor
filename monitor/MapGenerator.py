@@ -44,7 +44,7 @@ class MapGenerator:
         return self.__mapDefinition
 
     def __fileMapDefinitionRead(self):
-        mapFile=open("mapDefinition.txt","r") # FIXME hacer un define/config
+        mapFile=open("maps/mapDefinition.txt","r") # FIXME hacer un define/config
         mapDefinitionRead=eval(mapFile.read())
         mapFile.close()
 

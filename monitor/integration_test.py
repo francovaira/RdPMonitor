@@ -1,9 +1,7 @@
 import multiprocessing
 from multiprocessing import Process
-import threading
 from threading import Thread
 import time
-import numpy
 import random
 from decouple import config
 import mqqt_client as mqtt
@@ -18,7 +16,7 @@ from Map import Map
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
 
 
-def thread_run(monitor, robotID, cliente, cliente_queue):
+def thread_run(monitor, robotID):
 
     if(robotID == "ROB_A"):
         coordenadasSequence = monitor.calculatePath(3,1,3,3)
@@ -124,14 +122,14 @@ def main():
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A', map.getPathFinder(), mqttc, mqttc_robot_queue))
-    # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
+    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A'))
+    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B'))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
-    threads.append(thread_ROBOT_C)
+    # threads.append(thread_ROBOT_C)
     thread_ROBOT_A.start()
     thread_ROBOT_B.start()
-    thread_ROBOT_C.start()
+    # thread_ROBOT_C.start()
 
     processVisualizer = multiprocessing.Process(target=viz.run())
     processVisualizer.start()
