@@ -26,12 +26,14 @@ def thread_run(monitor, robotID):
         secondPart = monitor.calculatePath(3,3,3,1)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
+        # transSeq = [0, 3, 4]
     elif(robotID == "ROB_B"):
         #coordenadasSequence = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (5,1), (4,1), (3,1), (2,1), (1,1)]
         coordenadasSequence = monitor.calculatePath(1,3,5,3)
         secondPart = monitor.calculatePath(5,3,1,3)
         secondPart.pop(0)
         coordenadasSequence.extend(secondPart)
+        # transSeq = [1, 2, 5]
     elif(robotID == "ROB_C"):
         coordenadasSequence = monitor.calculatePath(3,3,3,4)
         secondPart = monitor.calculatePath(3,4,3,3)
@@ -43,6 +45,7 @@ def thread_run(monitor, robotID):
         coordenadasSequence.extend(secondPart)
         #coordenadasSequence.extend(thirdPart)
         #coordenadasSequence.extend(fourthPart)
+        # transSeq = [1, 2, 5]
 
     transSeq = monitor.getTransitionSequence(coordenadasSequence)
     monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
@@ -132,7 +135,7 @@ def main():
     # monitor = MonitorWithQueues(rdp, map.getPathFinder())
     monitor = MonitorWithQueuesAndPriorityQueue(rdp, map.getPathFinder())
 
-    viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
+    #viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
     threads = []

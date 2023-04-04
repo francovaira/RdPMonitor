@@ -1,9 +1,9 @@
 
-
+import os
 import macros_mapa
 
 RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure, False will generate generic RdP
-RDP_REGENERATE_IF_READ_FROM_FILE_FAILED     = True      # True to regenerate RdP if some of de RdP definition files are missing or inconsistent
+RDP_REGENERATE_IF_READ_FROM_FILE_FAILED     = False     # True to regenerate RdP if some of de RdP definition files are missing or inconsistent
 RDP_WRITE_CALCULATED_RDP_TO_FILE            = True      # True to save generated RdP (incidence and initial marking) into a file
 RDP_INITIAL_MARK_PLACES                     = 1         # Number of initial "free spaces" for each occupable place in the map
 
@@ -151,15 +151,20 @@ class RdPGenerator:
 
     def __fileRdPDefinitionRead(self):
         try:
-            rdpFile=open("rdpDefinition.txt","r") # FIXME hacer un define/config
+            absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
+
+            rdpFilePath = os.path.join(absolutePath, "petri_nets", "rdpDefinition.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            rdpFile=open(rdpFilePath,"r")
             rdpDefinitionRead=eval(rdpFile.read())
             rdpFile.close()
-            
-            initialMarkFile=open("initial_calculated.txt","r") # FIXME hacer un define/config
+
+            initialMarkFilePath = os.path.join(absolutePath, "petri_nets", "initial_calculated.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            initialMarkFile=open(initialMarkFilePath,"r")
             initialMarkRead=eval(initialMarkFile.read())
             initialMarkFile.close()
-        except:
-            print("EXCEPTION - Unable to read RdP file")
+        except Exception as e:
+            print(str(e))
+            print("EXCEPTION - Unable to read RdP definition from file")
             return [],[]
 
         if(not self.__checkConsistency(rdpDefinitionRead, initialMarkRead)):
@@ -167,8 +172,14 @@ class RdPGenerator:
 
         return rdpDefinitionRead, initialMarkRead
 
-    def __fileWrite(self, list2write, fileName):
-        writeFile=open(fileName,"w")
-        writeFile.write(str(list2write))
-        writeFile.close()
+    def __fileWrite(self, list2write, filename):
+        try:
+            absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
+            writeFilePath = os.path.join(absolutePath, "petri_nets", f"{filename}") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            writeFile=open(writeFilePath,"w")
+            writeFile.write(str(list2write))
+            writeFile.close()
+        except Exception as e:
+                print(str(e))
+                print(f"EXCEPTION - Unable to write RdP definition file <{filename}>")
 
