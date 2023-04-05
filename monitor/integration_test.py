@@ -28,7 +28,6 @@ def thread_run(monitor, robotID):
         coordenadasSequence.extend(secondPart)
         # transSeq = [0, 3, 4]
     elif(robotID == "ROB_B"):
-        #coordenadasSequence = [(1,1), (2,1), (3,1), (4,1), (5,1), (6,1), (5,1), (4,1), (3,1), (2,1), (1,1)]
         coordenadasSequence = monitor.calculatePath(1,3,5,3)
         secondPart = monitor.calculatePath(5,3,1,3)
         secondPart.pop(0)
@@ -37,14 +36,8 @@ def thread_run(monitor, robotID):
     elif(robotID == "ROB_C"):
         coordenadasSequence = monitor.calculatePath(3,3,3,4)
         secondPart = monitor.calculatePath(3,4,3,3)
-        #thirdPart = monitor.calculatePath(3,1,3,2)
-        #fourthPart = monitor.calculatePath(3,2,3,1)
         secondPart.pop(0)
-        #thirdPart.pop(0)
-        #fourthPart.pop(0)
         coordenadasSequence.extend(secondPart)
-        #coordenadasSequence.extend(thirdPart)
-        #coordenadasSequence.extend(fourthPart)
         # transSeq = [1, 2, 5]
 
     transSeq = monitor.getTransitionSequence(coordenadasSequence)
@@ -71,21 +64,6 @@ def thread_run(monitor, robotID):
     #             #cliente_queue.release()
     #             #time.sleep(random.random()/2)
     #             time.sleep(0.1)
-
-    a = 0
-
-    # while(1):
-    #     for transicion in transSeq:
-    #         if(transicion != int(config('NULL_TRANSITION'))):
-    #             # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-    #             monitor.monitorDisparar(transicion, robotID)
-    #             #time.sleep(0.2*(random.random()+1))
-    #             #time.sleep(0.01)
-
-    #             # if(robotID == "ROB_C"):
-    #             #     #a = a + 1
-    #             #     if(a % 2 == 0):
-    #             #         time.sleep(2)
 
     transition_index = 0
     while(1):
@@ -131,11 +109,9 @@ def main():
 
     rdp = RdP(map)
     #mqttc, mqttc_queue =  mqtt.main()
-    # monitor = Monitor(rdp, map.getPathFinder())
-    # monitor = MonitorWithQueues(rdp, map.getPathFinder())
     monitor = MonitorWithQueuesAndPriorityQueue(rdp, map.getPathFinder())
 
-    #viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
+    viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
     threads = []
@@ -149,13 +125,13 @@ def main():
     thread_ROBOT_B.start()
     thread_ROBOT_C.start()
 
-    #processVisualizer = multiprocessing.Process(target=viz.run())
+    processVisualizer = multiprocessing.Process(target=viz.run())
     #processVisualizer.start()
 
     # wait for the threads to complete
     for thread in threads:
         thread.join()
-    #processVisualizer.join()
+    processVisualizer.join()
 
 
 if __name__ == "__main__":

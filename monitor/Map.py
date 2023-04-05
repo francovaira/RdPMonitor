@@ -110,7 +110,6 @@ class Map:
         # Associate map cells with RdP places
         for i in range(self.__verticalCells-2):
            for j in range(self.__horizontalCells-2):
-               #self.__mapInSharedMemory[j+1][i+1].setPlaceID(2*(j+(i*(self.__horizontalCells-2))))
                self.__mapInSharedMemory[j+1][i+1].setPlaceID(self.__mapDefinition.getMapID()[j+1][i+1])
 
     def getMapDefinition(self):

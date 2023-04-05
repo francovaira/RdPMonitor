@@ -11,7 +11,6 @@ class TransitionMonitorQueue:
     def __init__(self):
         self.__threadsRequesting = []
         self.__hasRequests = False
-        #self.__semaphore = threading.Semaphore(value = 0) # initial value = 0 / if a thread requests this semaphore it wil remain waiting until the monitor puts a value in it.
         self.__semaphore = threading.BoundedSemaphore()
         self.__semaphore.acquire()
 
@@ -87,40 +86,6 @@ class MonitorWithQueuesAndPriorityQueue:
             print("Leaving...")
             exit()
 
-        # with self.__monitorEntranceLock:
-        #     if(self.__priorityThread == threadID):
-        #         self.__monitorLock.acquire()
-        #         self.__priorityThread = ""
-        #         print(f"==== THREAD {threadID} || LA PRIORIDAD SOY YO, ENTRO Y CLEAR EL PRIORITY THREAD // CANT DISPAROS {self.__fireCount}")
-        #     elif(self.__priorityThread == ""):
-        #         self.__monitorLock.acquire()
-        #         print(f"==== THREAD {threadID} || NO HAY NADIE EN PRIORIDAD, ENTRO // CANT DISPAROS {self.__fireCount}")
-        #     else:
-        #         print(f"==== THREAD {threadID} || HAY UN HILO DE PRIORIDAD ({self.__priorityThread}) Y NO SOY YO, ME VOY // CANT DISPAROS {self.__fireCount}")
-        #         return
-
-        # with self.__monitorEntranceLock:
-        #     if(self.__priorityThread == ""):
-        #         self.__monitorLock.acquire()
-        #         # si lo pudo adquirir, checkeo si hay alguien en la cola
-        #         print(f"==== THREAD {threadID} || PUDE ADQUIRIR EL LOCK, VERIFICO SI HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-        #         if(self.__priorityThread != "" and self.__priorityThread != threadID):
-        #             self.__monitorLock.release()
-        #             print(f"==== THREAD {threadID} || LIBERO EL LOCK, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-        #             return
-
-        #     # si llega hasta aca es porque [no hay hilo prioritario, no adquirio el lock] ó [pudo adquirir el lock y es el hilo prioritario] hay nadie en prioridad o porque es el hilo prioritario
-        #     if(self.__priorityThread == ""):
-        #         self.__monitorLock.release()
-        #         print(f"==== THREAD {threadID} || LIBERO EL LOCK DE ENTRADA, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-        #         return
-        #     else:
-        #         print(f"==== THREAD {threadID} || LA PRIORIDAD SOY YO, ENTRO Y CLEAR EL PRIORITY THREAD // CANT DISPAROS {self.__fireCount}")
-        #     #elif(self.__priorityThread == ""):
-        #     #    #self.__monitorLock.release()
-        #     #    print(f"==== THREAD {threadID} || LIBERO EL LOCK DE ENTRADA, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-        #     #    return
-
         with self.__monitorEntranceLock:
             if(self.__priorityThread != "" and self.__priorityThread != threadID):
                 #print(f"==== THREAD {threadID} || LIBERO EL LOCK DE ENTRADA, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
@@ -131,11 +96,6 @@ class MonitorWithQueuesAndPriorityQueue:
                     self.__monitorLock.release()
                     #print(f"==== THREAD {threadID} || LIBERO EL LOCK, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
                     return False
-                # elif(self.__priorityThread == threadID):
-                #     print(f"==== THREAD {threadID} || LA PRIORIDAD SOY YO, ENTRO Y CLEAR EL PRIORITY THREAD // CANT DISPAROS {self.__fireCount}")
-                #     self.__priorityThread = ""
-
-        #self.__monitorLock.acquire()
 
         try:
             k = True
@@ -143,7 +103,8 @@ class MonitorWithQueuesAndPriorityQueue:
             #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
             #self.__accumLog = self.__accumLog + f"{threadID},'1',"
             self.__accumLog = self.__accumLog + f"{time.time()},{threadID},1\n"
-            # REQ_TRANSITION = 1    
+            # REQ_TRANSITION = 1
+
             while(k == True):
                 #self.__transitionQueues[transition].request(threadID)
                 #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
@@ -215,10 +176,6 @@ class MonitorWithQueuesAndPriorityQueue:
                     #self.__accumLog = self.__accumLog
                     #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},num\n"
 
-                    # if(self.__priorityThread == threadID):
-                    #     print(f"==== THREAD {threadID} || LA PRIORIDAD SOY YO, YA DISPARE Y CLEAR EL PRIORITY THREAD // CANT DISPAROS {self.__fireCount}")
-                    #     self.__priorityThread = ""
-
                     return True
                 else:
                     # put myself as thread into according queue
@@ -227,7 +184,6 @@ class MonitorWithQueuesAndPriorityQueue:
                     #self.__accumLog = self.__accumLog + f"{threadID},'20',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},20\n"
                     # NSENS_TRANSITION = 20
-                    #self.__transitionQueues[transition].request(threadID)
                     self.__monitorLock.release()
                     self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                     self.__monitorLock.acquire()
@@ -235,15 +191,6 @@ class MonitorWithQueuesAndPriorityQueue:
 
         finally:
             self.__monitorLock.release()
-            #return # aparentemente este return es mucho muy importante para que los hilos cedan el lugar a otros hilos
-
-
-    # FIXMEEEE hacer el acquire de un lock con try y finally
-    # some_lock.acquire()
-    # try:
-    #     # do something...
-    # finally:
-    #     some_lock.release()
 
 
     def __getTransitionCandidates(self, sensibilizadas):

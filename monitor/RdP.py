@@ -35,19 +35,10 @@ class RdP:
 
     def getSensibilizadas(self):
         sensibilizadas = []
-
-        # for transitionIndex in range(0, self.__transitionCount):
-        #     for placeIndex in range(0, self.__placesCount):
-        #         if(placeIndex%2 == 0 and self.__matrizEstado[placeIndex] > 0 and self.__incidence[placeIndex][transitionIndex] < 0 and self.__matrizEstado[placeIndex] + self.__incidence[placeIndex][transitionIndex] >= 0):
-        #             sensibilizadas.append(transitionIndex)
-        # return sensibilizadas
-
         for transitionIndex in range(0, self.__transitionCount):
             if(self.solicitudDisparo(transitionIndex) > 0):
                 sensibilizadas.append(transitionIndex)
         return sensibilizadas
-
-
 
     def redDisparar(self, transition, robotID):
         if(self.solicitudDisparo(transition)):
