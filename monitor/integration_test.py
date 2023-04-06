@@ -9,70 +9,52 @@ from decouple import config
 import mqqt_client as mqtt
 import macros_mapa
 from RdP import RdP
-from Monitor import Monitor
-from MonitorWithQueues import MonitorWithQueues
 from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
 from Visualizer import Visualizer
+from RobotThreadExecutor import RobotThreadExecutor
+from RobotThreadExecutor import Path
 from Map import Map
 
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
 
 
-def thread_run(monitor, robotID):
+def thread_run(robotID, monitor):
+
+    robotThreadExecutor = RobotThreadExecutor(robotID, monitor)
 
     if(robotID == "ROB_A"):
-        coordenadasSequence = monitor.calculatePath(3,1,3,3)
-        secondPart = monitor.calculatePath(3,3,3,1)
-        secondPart.pop(0)
-        coordenadasSequence.extend(secondPart)
-        # transSeq = [0, 3, 4]
-    elif(robotID == "ROB_B"):
-        coordenadasSequence = monitor.calculatePath(1,3,5,3)
-        secondPart = monitor.calculatePath(5,3,1,3)
-        secondPart.pop(0)
-        coordenadasSequence.extend(secondPart)
-        # transSeq = [1, 2, 5]
-    elif(robotID == "ROB_C"):
-        coordenadasSequence = monitor.calculatePath(3,3,3,4)
-        secondPart = monitor.calculatePath(3,4,3,3)
-        secondPart.pop(0)
-        coordenadasSequence.extend(secondPart)
-        # transSeq = [1, 2, 5]
-
-    transSeq = monitor.getTransitionSequence(coordenadasSequence)
-    monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
-
-    print(f"COORDENADAS {robotID} {coordenadasSequence}")
-    print(f"TRANSICIONES {robotID} {transSeq}")
+        path = Path(3,1,3,3)
+        robotThreadExecutor.addPath(path)
+        path = Path(3,3,5,5)
+        robotThreadExecutor.addPath(path)
+        path = Path(5,5,5,1)
+        robotThreadExecutor.addPath(path)
+        robotThreadExecutor.startPaths()
+    if(robotID == "ROB_B"):
+        path = Path(1,3,1,1)
+        robotThreadExecutor.addPath(path)
+        path = Path(1,1,2,5)
+        robotThreadExecutor.addPath(path)
+        path = Path(2,5,1,1)
+        robotThreadExecutor.addPath(path)
+        robotThreadExecutor.startPaths()
+    if(robotID == "ROB_C"):
+        path = Path(5,5,3,1)
+        robotThreadExecutor.addPath(path)
+        path = Path(3,1,3,5)
+        robotThreadExecutor.addPath(path)
+        path = Path(3,5,3,1)
+        robotThreadExecutor.addPath(path)
+        robotThreadExecutor.startPaths()
 
     time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
-    # while(1):
-    #     # FIXME poner una cola para recibir trabajos y que otro hilo se los mande (simulando el hilo de comm)
-    #     for transicion in transSeq:
-    #         if(transicion != int(config('NULL_TRANSITION'))):
-    #             # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-    #             # intenta disparar el monitor
-    #             #cliente_queue.acquire()
-    #             monitor.monitorDisparar(transicion, robotID)
-    #             # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
-    #             #msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
-    #             #msg.wait_for_publish()
-    #             # msg.is_published()
-    #             #cliente_queue.wait()
-    #             #cliente_queue.release()
-    #             #time.sleep(random.random()/2)
-    #             time.sleep(0.1)
-
-    transition_index = 0
-    while(1):
-        transicion = transSeq[transition_index]
-        if(transicion != int(config('NULL_TRANSITION'))):
-            # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-            if(monitor.monitorDisparar(transicion, robotID)): # si pudo disparar, busco la siguiente transicion
-                transition_index = (transition_index + 1) % len(transSeq)
-                #time.sleep(2)
+    running = True
+    while(running):
+        running = robotThreadExecutor.run()
+        time.sleep(1)
+    print(f"THREAD {robotID} STALL")
 
 
 def define_motor_direction(transSeq, transicion, plazasSeq):
@@ -115,9 +97,9 @@ def main():
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A'))
-    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B'))
-    thread_ROBOT_C = Thread(target=thread_run, args=(monitor, 'ROB_C'))
+    thread_ROBOT_A = Thread(target=thread_run, args=('ROB_A', monitor))
+    thread_ROBOT_B = Thread(target=thread_run, args=('ROB_B', monitor))
+    thread_ROBOT_C = Thread(target=thread_run, args=('ROB_C', monitor))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
     threads.append(thread_ROBOT_C)
@@ -126,7 +108,7 @@ def main():
     thread_ROBOT_C.start()
 
     processVisualizer = multiprocessing.Process(target=viz.run())
-    #processVisualizer.start()
+    processVisualizer.start()
 
     # wait for the threads to complete
     for thread in threads:
