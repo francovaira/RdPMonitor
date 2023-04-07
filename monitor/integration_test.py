@@ -13,6 +13,7 @@ from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
 from Visualizer import Visualizer
 from RobotThreadExecutor import RobotThreadExecutor
 from RobotThreadExecutor import Path
+from RobotThreadExecutor import Job
 from Map import Map
 
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
@@ -22,31 +23,44 @@ from Map import Map
 def thread_run(robotID, monitor):
 
     robotThreadExecutor = RobotThreadExecutor(robotID, monitor)
+    job = Job()
 
     if(robotID == "ROB_A"):
         path = Path(3,1,3,3)
-        robotThreadExecutor.addPath(path)
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
         path = Path(3,3,5,5)
-        robotThreadExecutor.addPath(path)
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
         path = Path(5,5,5,1)
-        robotThreadExecutor.addPath(path)
-        robotThreadExecutor.startPaths()
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
+        #robotThreadExecutor.startPaths()
     if(robotID == "ROB_B"):
         path = Path(1,3,1,1)
-        robotThreadExecutor.addPath(path)
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
         path = Path(1,1,2,5)
-        robotThreadExecutor.addPath(path)
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
         path = Path(2,5,1,1)
-        robotThreadExecutor.addPath(path)
-        robotThreadExecutor.startPaths()
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
+        #robotThreadExecutor.startPaths()
     if(robotID == "ROB_C"):
         path = Path(5,5,3,1)
-        robotThreadExecutor.addPath(path)
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
         path = Path(3,1,3,5)
-        robotThreadExecutor.addPath(path)
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
         path = Path(3,5,3,1)
-        robotThreadExecutor.addPath(path)
-        robotThreadExecutor.startPaths()
+        #robotThreadExecutor.addPath(path)
+        job.addPath(path)
+        #robotThreadExecutor.startPaths()
+
+    robotThreadExecutor.addJob(job)
+    robotThreadExecutor.startPaths()
 
     time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
