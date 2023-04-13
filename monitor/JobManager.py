@@ -51,8 +51,11 @@ class Job:
     def getPaths(self):
         return self.__paths
 
-    def getTransitionsSequence(self):
+    def getTransitionsPathSequence(self):
         return self.__transitionsPathSequence
+
+    def getCoordinatesPathSequence(self):
+        return self.__coordinatesPathSequence
 
     def getTransitionIndex(self):
         return self.__transitionIndex

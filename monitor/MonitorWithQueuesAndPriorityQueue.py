@@ -1,10 +1,17 @@
 import threading
 import time
 from threading import Semaphore
+from enum import Enum
 import random
 
 ITERATION_COUNT = 3 * 10000
 
+TIMEOUT_THREAD_WAITING = 10
+
+class MonitorReturnStatus(Enum):
+    SUCCESSFUL_FIRING = 0
+    UNABLE_TO_FIRE = 1
+    TIMEOUT_WAITING_BLOCKED = 2
 
 class TransitionMonitorQueue:
 
@@ -16,7 +23,7 @@ class TransitionMonitorQueue:
 
     def request(self, threadID):
         if(any(elem == threadID for elem in self.__threadsRequesting) or threadID == None or threadID == ""): # check for duplicates
-            print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID") # creo que no necesariamente es un error
+            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID") # creo que no necesariamente es un error
             pass
         else:
             self.__threadsRequesting.append(threadID)
@@ -89,13 +96,15 @@ class MonitorWithQueuesAndPriorityQueue:
         with self.__monitorEntranceLock:
             if(self.__priorityThread != "" and self.__priorityThread != threadID):
                 #print(f"==== THREAD {threadID} || LIBERO EL LOCK DE ENTRADA, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-                return False
+                #return False
+                return MonitorReturnStatus.UNABLE_TO_FIRE
             else:
                 self.__monitorLock.acquire()
                 if(self.__priorityThread != "" and self.__priorityThread != threadID):
                     self.__monitorLock.release()
                     #print(f"==== THREAD {threadID} || LIBERO EL LOCK, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-                    return False
+                    #return False
+                    return MonitorReturnStatus.UNABLE_TO_FIRE
 
         try:
             k = True
@@ -176,18 +185,26 @@ class MonitorWithQueuesAndPriorityQueue:
                     #self.__accumLog = self.__accumLog
                     #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},num\n"
 
-                    return True
+                    #return True
+                    return MonitorReturnStatus.SUCCESSFUL_FIRING
                 else:
                     # put myself as thread into according queue
                     # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
-                    #print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
+                    print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
                     #self.__accumLog = self.__accumLog + f"{threadID},'20',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},20\n"
                     # NSENS_TRANSITION = 20
+
+                    priorTime = time.time()
                     self.__monitorLock.release()
-                    self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
+                    self.__transitionQueues[transition].getSemaphore().acquire(blocking=True, timeout=TIMEOUT_THREAD_WAITING)
                     self.__monitorLock.acquire()
-                    k=True
+
+                    #print(time.time() - priorTime)
+                    if(time.time() - priorTime >= TIMEOUT_THREAD_WAITING):
+                        return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
+                    else:
+                        k=True
 
         finally:
             self.__monitorLock.release()

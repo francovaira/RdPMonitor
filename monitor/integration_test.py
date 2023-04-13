@@ -78,13 +78,13 @@ def threadSendJobs(jobManager):
     #if(robotID == "ROB_A"):
     path = Path(3,1,3,2)
     jobA.addPath(path)
-    path = Path(3,2,5,5)
+    path = Path(3,2,4,5)
     jobA.addPath(path)
     path = Path(5,5,5,1)
     jobA.addPath(path)
     jobManager.sendJobToRobot('ROB_A', jobA)
 
-    time.sleep(5)
+    #time.sleep(5)
 
     jobB = Job()
     #if(robotID == "ROB_B"):
@@ -96,7 +96,7 @@ def threadSendJobs(jobManager):
     jobB.addPath(path)
     jobManager.sendJobToRobot('ROB_B', jobB)
 
-    time.sleep(20)
+    #time.sleep(20)
 
     jobC = Job()
     #if(robotID == "ROB_C"):

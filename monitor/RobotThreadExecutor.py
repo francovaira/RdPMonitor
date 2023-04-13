@@ -1,3 +1,4 @@
+from MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
 from JobManager import Job
 
 class RobotThreadExecutor:
@@ -25,7 +26,7 @@ class RobotThreadExecutor:
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
             self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
-        print(f"STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
+        print(f"{self.__robotID} || STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
 
     def __getCoorinatesSequence(self, paths):
         coordinatesSequence = []
@@ -44,7 +45,7 @@ class RobotThreadExecutor:
     def run(self):
 
         currentJob = self.__jobs[0]
-        transitionsSequence = currentJob.getTransitionsSequence()
+        transitionsSequence = currentJob.getTransitionsPathSequence()
         transitionIndex = currentJob.getTransitionIndex()
 
         if(not len(transitionsSequence)):
@@ -56,11 +57,15 @@ class RobotThreadExecutor:
             return False
 
         transitionToExecute = transitionsSequence[transitionIndex]
-        if(self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)): # si pudo disparar, busco la siguiente transicion
+        monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
+        if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
             nextTransitionIndex = transitionIndex + 1
             currentJob.setTransitionIndex(nextTransitionIndex)
 
             if(nextTransitionIndex>= len(transitionsSequence)):
                 print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
                 return False
+        elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
+            print(f"{self.__robotID} || I MUST RECALCULATEEEEE -- ME QUEDE EN LA POSICION {currentJob.getCoordinatesPathSequence()[transitionIndex]}")
+            print(f"{self.__robotID} || ME QUEDA RECORRER {currentJob.getCoordinatesPathSequence()[transitionIndex+1:]}")
         return True
