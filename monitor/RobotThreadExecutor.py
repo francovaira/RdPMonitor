@@ -66,6 +66,27 @@ class RobotThreadExecutor:
                 print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
                 return False
         elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
-            print(f"{self.__robotID} || I MUST RECALCULATEEEEE -- ME QUEDE EN LA POSICION {currentJob.getCoordinatesPathSequence()[transitionIndex]}")
-            print(f"{self.__robotID} || ME QUEDA RECORRER {currentJob.getCoordinatesPathSequence()[transitionIndex+1:]}")
+            blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
+            remainingPathCoordinates = currentJob.getCoordinatesPathSequence()[transitionIndex+1:]
+            print(f"{self.__robotID} || I MUST RECALCULATEEEEE -- ME QUEDE EN LA POSICION {blockedPosition} || ME QUEDE EN LA TRANSICION {transitionToExecute}")
+            print(f"{self.__robotID} || ME QUEDA RECORRER {remainingPathCoordinates}")
+
+            initPos = blockedPosition
+            endPos = remainingPathCoordinates[0]
+            dynamicOccupiedCells = []
+            dynamicOccupiedCells.append(remainingPathCoordinates[0])
+            print(f"{self.__robotID} || VOY A RECALCULARRRR // INIT POS = {initPos} // END POS = {endPos} // CELLS MARKED OCCUPIED = {dynamicOccupiedCells}")
+            coordSeq = self.__monitor.calculateDynamicPath(initPos[0], initPos[1], endPos[0], endPos[1], dynamicOccupiedCells)
+            newTransitionsSequence = self.__monitor.getTransitionSequence(coordSeq)
+            print(f"{self.__robotID} || RETRAYECTORIADO = {coordSeq} -- CORRESPOND TO TRANSITIONS <{newTransitionsSequence}>\n\n--------------------------------\n")
+            
+            recalculatedTransitionSequence = transitionsSequence[transitionIndex:]
+            recalculatedTransitionSequence.pop(0)
+            newTransitionsSequence.extend(recalculatedTransitionSequence)
+            print(f"{self.__robotID} || NUEVO CALCULO DE LAS TRANSICIONES = {newTransitionsSequence}\n\n--------------------------------\n")
+            currentJob.setTransitionsPathSequence(newTransitionsSequence)
+            currentJob.setTransitionIndex(0)
+
+
+
         return True

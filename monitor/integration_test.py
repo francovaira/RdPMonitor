@@ -21,6 +21,8 @@ from Map import Map
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
 
+# IMPORTANTEEEEEE       -- se puede hacer con la misma RDP la cuestion de definir ciertas celdas para que entre un solo robot no mas,
+#                          agregando una plaza conectada a las transiciones de entrada de esas plazas
 
 def thread_run(robotID, jobQueue, monitor):
 
@@ -92,7 +94,7 @@ def threadSendJobs(jobManager):
     jobB.addPath(path)
     path = Path(1,1,2,5)
     jobB.addPath(path)
-    path = Path(2,5,1,1)
+    path = Path(2,5,1,5)
     jobB.addPath(path)
     jobManager.sendJobToRobot('ROB_B', jobB)
 
