@@ -373,7 +373,7 @@ class MonitorWithQueuesAndPriorityQueue:
                     threadInListEndPos = threadBlockedInList.transitionTranslated[1]
                     newThreadBlockedInitPos = newThreadBlocked.transitionTranslated[0]
                     newThreadBlockedEndPos = newThreadBlocked.transitionTranslated[1]
-                    if(threadABlockedInitPos == newThreadBlockedEndPos and newThreadBlockedInitPos and threadABlockedEndPos):
+                    if(threadABlockedInitPos == newThreadBlockedEndPos and newThreadBlockedInitPos == threadABlockedEndPos):
                         # conflicto
                         print(f"CONFLICTO DETECTADOOOOAMNKVFEWKVW --- ENTRE <{newThreadBlocked.threadID}> YYY {threadBlockedInList.threadID}\n\n")
                         return True
@@ -388,7 +388,7 @@ class MonitorWithQueuesAndPriorityQueue:
                     threadBlockedAEndPos = threadBlockedA.transitionTranslated[1]
                     threadBlockedBInitPos = threadBlockedB.transitionTranslated[0]
                     threadBlockedBEndPos = threadBlockedB.transitionTranslated[1]
-                    if(threadBlockedAInitPos == threadBlockedBEndPos and threadBlockedBInitPos and threadBlockedAEndPos):
+                    if(threadBlockedAInitPos == threadBlockedBEndPos and threadBlockedBInitPos == threadBlockedAEndPos):
                         # conflicto
                         print(f"CONFLICTO DETECTADOOOOAMNKVFEWKVW --- ENTRE <{threadBlockedB.threadID}> YYY {threadBlockedA.threadID}\n\n")
                         return (True, threadBlockedA, threadBlockedB)
