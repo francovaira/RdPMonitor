@@ -144,14 +144,14 @@ class MonitorWithQueuesAndPriorityQueue:
                         #print(f"==== THREAD {threadID} || LA PRIORIDAD SOY YO, YA DISPARE Y CLEAR EL PRIORITY THREAD // CANT DISPAROS {self.__fireCount}")
                         self.__priorityThread = ""
 
-                    if(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si ya dispare y estaba en la cola de bloqueados, me voy
-                        for thrBlocked in self.__threadsInConflict:
-                            self.__transitionQueues[thrBlocked.transition].releaseRequest(thrBlocked.threadID)
+                    if(self.__threadBlockedExistsInList(threadID, self.__blockedThreadsQueue)): # si ya dispare y estaba en la cola de bloqueados, me voy
+                        #for thrBlocked in self.__threadsInConflict:
+                        #    self.__transitionQueues[thrBlocked.transition].releaseRequest(thrBlocked.threadID)
+                        for thrBlocked in self.__blockedThreadsQueue:
+                            if(thrBlocked.threadID == threadID):
+                                self.__blockedThreadsQueue.remove(thrBlocked)
+                                print(f"{threadID} || ME BORRE DE LOS BLOQUEADOSSSSS")
                         self.__threadsInConflict = []
-                        # for threadBlockedInList in self.__blockedThreadsQueue:
-                        #     if(threadBlockedInList.threadID == threadID):
-                        #         self.__blockedThreadsQueue.remove(threadBlockedInList)
-                        #         print(f"{threadID} || ME BORRE DE LOS BLOQUEADOSSSSS")
 
 
                     self.__fireCountIncrement()
@@ -320,6 +320,12 @@ class MonitorWithQueuesAndPriorityQueue:
                         newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
                         self.__blockedThreadsQueue.append(newThreadBlocked)
                         print(f"{threadID} || ME AGREGUE A LA COLA DE BLOQUEADOS || {newThreadBlocked.transitionTranslated}")
+                    elif(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si me desperte y resulta que debo recalcular
+                        for threadBlockedInList in self.__threadsInConflict:
+                            if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
+                                print(f"{threadID} || EN EL PRINCIPIOOOO --- ME VOY A RECALCULARRRR")
+                                self.__transitionQueues[transition].releaseRequest(threadID)
+                                return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
 
                     isConflict, threadInConflictA, threadInConflictB = self.__checkConflictA(self.__blockedThreadsQueue)
                     if(isConflict == True):
@@ -328,34 +334,49 @@ class MonitorWithQueuesAndPriorityQueue:
 
                         threadDecision = self.__pathRecalculationPolicy.resolve(self.__threadsInConflict) # decide que thread debe recalcular
                         print(f"{threadID} || LA POLITICA DECIDIOOOO {threadDecision.threadID}")
-                        if(threadDecision.threadID != threadID): # si la politica decidio otro robot, deberia despertar al hilo que se bloqueo -- ese hilo seria el que no debe recalcular
-                            self.__priorityThread = threadDecision.threadID # FIXMEEEE esto hace falta?
-                            self.__transitionQueues[threadDecision.transition].getSemaphore().release()
-                            threadDecision.mustRecalculatePath = True
-                            print(f"{threadID} || LE PUSE UN TOKEN AL SEMAFORO DEL THREAD {threadDecision.threadID}")
-                            #return MonitorReturnStatus.UNABLE_TO_FIRE
 
+                        threadDecision.mustRecalculatePath = True
+                        if(threadDecision.threadID == threadID): # si la politica decidio por mi que debo recalcular
+                            if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
+                                self.__priorityThread = ""
+                            self.__transitionQueues[transition].releaseRequest(threadID)
+                            return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
+                        else:
+                            self.__transitionQueues[threadDecision.transition].getSemaphore().release() # puedo asumir que el robot por el que decidio la politica esta bloqueado en algun acquire para la transicion que queria. debo ponerle un token para que se despierte
                             self.__monitorLock.release()
                             self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                             self.__monitorLock.acquire()
                             k=True
 
-                        else: # si la politica decidio por mi, debo recalcular
-                            if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
-                                self.__priorityThread = ""
-                            self.__transitionQueues[threadDecision.transition].releaseRequest(threadID)
-                            return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
+
+                        # if(threadDecision.threadID != threadID): # si la politica decidio otro robot, deberia despertar al hilo que se bloqueo -- ese hilo seria el que no debe recalcular
+                        #     self.__priorityThread = threadDecision.threadID # FIXMEEEE esto hace falta?
+                        #     #self.__transitionQueues[threadDecision.transition].getSemaphore().release()
+                        #     threadDecision.mustRecalculatePath = True
+                        #     # print(f"{threadID} || LE PUSE UN TOKEN AL SEMAFORO DEL THREAD {threadDecision.threadID}")
+                        #     # #return MonitorReturnStatus.UNABLE_TO_FIRE
+
+                        #     self.__monitorLock.release()
+                        #     self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
+                        #     self.__monitorLock.acquire()
+                        #     k=True
+
+                        # else: # si la politica decidio por mi, debo recalcular
+                        #     if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
+                        #         self.__priorityThread = ""
+                        #     self.__transitionQueues[threadDecision.transition].releaseRequest(threadID)
+                        #     return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
                     else:
                         self.__monitorLock.release()
                         self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                         self.__monitorLock.acquire()
                         k=True
 
-                        if(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si me desperte y resulta que debo recalcular
-                            for threadBlockedInList in self.__threadsInConflict:
-                                if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
-                                    print(f"{threadID} || ME VOY A RECALCULARRRR")
-                                    return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
+                        # if(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si me desperte y resulta que debo recalcular
+                        #     for threadBlockedInList in self.__threadsInConflict:
+                        #         if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
+                        #             print(f"{threadID} || ME VOY A RECALCULARRRR")
+                        #             return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
 
                     #self.__monitorLock.release()
                     #self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)

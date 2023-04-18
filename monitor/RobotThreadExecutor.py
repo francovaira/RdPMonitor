@@ -52,10 +52,6 @@ class RobotThreadExecutor:
             print("ERROR - Transition sequence empty - must initialize paths")
             exit()
 
-        if(transitionIndex >= len(transitionsSequence)):
-            print(f"SEQUENCE FINISHED -- HERE AT THE BEGINNING @{self.__robotID}")
-            return False
-
         transitionToExecute = transitionsSequence[transitionIndex]
         monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
         if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
@@ -79,14 +75,18 @@ class RobotThreadExecutor:
             coordSeq = self.__monitor.calculateDynamicPath(initPos[0], initPos[1], endPos[0], endPos[1], dynamicOccupiedCells)
             newTransitionsSequence = self.__monitor.getTransitionSequence(coordSeq)
             print(f"{self.__robotID} || RETRAYECTORIADO = {coordSeq} -- CORRESPOND TO TRANSITIONS <{newTransitionsSequence}>\n\n--------------------------------\n")
-            
-            recalculatedTransitionSequence = transitionsSequence[transitionIndex:]
-            recalculatedTransitionSequence.pop(0)
-            newTransitionsSequence.extend(recalculatedTransitionSequence)
-            print(f"{self.__robotID} || NUEVO CALCULO DE LAS TRANSICIONES = {newTransitionsSequence}\n\n--------------------------------\n")
-            currentJob.setTransitionsPathSequence(newTransitionsSequence)
-            currentJob.setTransitionIndex(0)
 
+            transitionsSequence.pop(transitionIndex)
+            transitionsSequence[transitionIndex:transitionIndex] = newTransitionsSequence # inserts elements from index
+            print(f"{self.__robotID} || NUEVO CALCULO DE LAS TRANSICIONES = {newTransitionsSequence} || EL TOTAL SERIA = {transitionsSequence}")
+            currentJob.setTransitionsPathSequence(transitionsSequence)
+
+            coordinatesPathSequence = currentJob.getCoordinatesPathSequence()
+            coordinatesPathSequence.pop(transitionIndex)
+            coordSeq.pop() # remove last element of list, the last element is the arrive position, which is already in the remaining of the sequence
+            coordinatesPathSequence[transitionIndex:transitionIndex] = coordSeq # inserts elements from index
+            print(f"{self.__robotID} || NUEVO CALCULO DE LAS COORDENADAS = {coordSeq} || EL TOTAL SERIA = {coordinatesPathSequence}\n\n--------------------------------\n")
+            currentJob.setCoordinatesPathSequence(coordinatesPathSequence)
 
 
         return True
