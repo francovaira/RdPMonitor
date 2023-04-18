@@ -43,7 +43,8 @@ def thread_run(robotID, jobQueue, monitor):
         running = True
         while(running):
             running = robotThreadExecutor.run()
-            time.sleep(1)
+            #time.sleep(0.5)
+            time.sleep(random.random())
 
         print(f"THREAD {robotID} STALL")
 

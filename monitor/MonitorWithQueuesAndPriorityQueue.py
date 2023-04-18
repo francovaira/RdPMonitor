@@ -151,7 +151,7 @@ class MonitorWithQueuesAndPriorityQueue:
                             if(thrBlocked.threadID == threadID):
                                 self.__blockedThreadsQueue.remove(thrBlocked)
                                 print(f"{threadID} || ME BORRE DE LOS BLOQUEADOSSSSS")
-                        self.__threadsInConflict = []
+                        #self.__threadsInConflict = []
 
 
                     self.__fireCountIncrement()
@@ -325,6 +325,7 @@ class MonitorWithQueuesAndPriorityQueue:
                             if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
                                 print(f"{threadID} || EN EL PRINCIPIOOOO --- ME VOY A RECALCULARRRR")
                                 self.__transitionQueues[transition].releaseRequest(threadID)
+                                self.__threadsInConflict = []
                                 return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
 
                     isConflict, threadInConflictA, threadInConflictB = self.__checkConflictA(self.__blockedThreadsQueue)
@@ -340,6 +341,7 @@ class MonitorWithQueuesAndPriorityQueue:
                             if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
                                 self.__priorityThread = ""
                             self.__transitionQueues[transition].releaseRequest(threadID)
+                            self.__threadsInConflict = []
                             return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
                         else:
                             self.__transitionQueues[threadDecision.transition].getSemaphore().release() # puedo asumir que el robot por el que decidio la politica esta bloqueado en algun acquire para la transicion que queria. debo ponerle un token para que se despierte
