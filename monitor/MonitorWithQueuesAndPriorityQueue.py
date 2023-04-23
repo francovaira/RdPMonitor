@@ -23,7 +23,7 @@ class TransitionMonitorQueue:
 
     def request(self, threadID):
         if(any(elem == threadID for elem in self.__threadsRequesting) or threadID == None or threadID == ""): # check for duplicates
-            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID") # creo que no necesariamente es un error
+            #print(f"ERROR IN MONITOR - The thread <{threadID}> is trying to request the transition again or has an empty thread ID")
             pass
         else:
             self.__threadsRequesting.append(threadID)
@@ -133,9 +133,6 @@ class MonitorWithQueuesAndPriorityQueue:
             # REQ_TRANSITION = 1
 
             while(k == True):
-                #self.__transitionQueues[transition].request(threadID)
-                #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
-
                 # 0) intenta disparar de una
                 k = self.__petriNet.redDisparar(transition, threadID)
                 if(k): # si pudo disparar, ...
@@ -145,20 +142,17 @@ class MonitorWithQueuesAndPriorityQueue:
                         self.__priorityThread = ""
 
                     if(self.__threadBlockedExistsInList(threadID, self.__blockedThreadsQueue)): # si ya dispare y estaba en la cola de bloqueados, me voy
-                        #for thrBlocked in self.__threadsInConflict:
-                        #    self.__transitionQueues[thrBlocked.transition].releaseRequest(thrBlocked.threadID)
                         for thrBlocked in self.__blockedThreadsQueue:
                             if(thrBlocked.threadID == threadID):
                                 self.__blockedThreadsQueue.remove(thrBlocked)
                                 print(f"{threadID} || ME BORRE DE LOS BLOQUEADOSSSSS")
-                        #self.__threadsInConflict = []
-
 
                     self.__fireCountIncrement()
                     #print(f"==== THREAD {threadID} || PUDE DISPARAR LA TRANSICION {transition} // CANT DISPAROS {self.__fireCount}")
                     #self.__accumLog = self.__accumLog + f"{threadID},'2',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},2\n"
                     # FIRED_TRANSITION = 2
+                    # 0.5) me desencolo de la transicion porque ya dispare
                     self.__transitionQueues[transition].releaseRequest(threadID)
                     #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}")
                     #self.__accumLog = self.__accumLog + f"{threadID},'3',"
@@ -186,32 +180,21 @@ class MonitorWithQueuesAndPriorityQueue:
                             self.__accumLog = self.__accumLog + f"{time.time()},{threadID},10\n"
                             #POLIC_TRANSITION = 10
 
-                            if(self.__priorityThread != ""):
-                                #print(f"==== THREAD {threadID} || WARNING!!!! OVERRIDING PRIORITY THREAD WITH {self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]} // CANT DISPAROS {self.__fireCount}")
-                                pass
+                            # if(self.__priorityThread != ""):
+                            #     #print(f"==== THREAD {threadID} || WARNING!!!! OVERRIDING PRIORITY THREAD WITH {self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]} // CANT DISPAROS {self.__fireCount}")
+                            #     pass
                             self.__priorityThread = self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]
                             print(f"==== THREAD {threadID} || SETTING PRIORITY THREAD TO {self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]} // CANT DISPAROS {self.__fireCount}")
 
                             # 4) se determino que debe ser la Tj, se pone un token en el semaforo de la transicion
                             self.__transitionQueues[transitionDecision].getSemaphore().release()
                             k=False # se va del monitor por haber disparado
-
-                            # 5) me desencolo de la transicion porque ya dispare y me voy del monitor
-                            #self.__transitionQueues[transitionDecision].releaseRequest(threadID)
-                            #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transitionDecision}")
                         else:
                             # se va del monitor por no haber ninguna transicion con requests
                             k = False
                     else:
                         # se va del monitor por no haber ninguna transicion sensibilizada
                         k = False
-
-                    # 5) me desencolo de la transicion porque ya dispare y me voy del monitor
-                    #self.__transitionQueues[transition].releaseRequest(threadID)
-                    #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}\n")
-                    #print(f"\n")
-                    #self.__accumLog = self.__accumLog
-                    #self.__accumLog = self.__accumLog + f"{time.time()},{threadID},num\n"
 
                     #return True
                     return MonitorReturnStatus.SUCCESSFUL_FIRING
@@ -226,95 +209,6 @@ class MonitorWithQueuesAndPriorityQueue:
                     # decide por politica quien recalcula -- el que recalcula se le cambian las transiciones, sale del monitor y se va a recalcular y pelear por otras transiciones (no deberia bloquearse en la transicion actual, tiene que obtener una nueva por haber recalculado)
                     # el que no recalcula debe bloquearse hasta que el que recalcula se mueva -- en definitiva haria el acquire
 
-                    # ESTO DE ACA ABAJO MASO FUNCA, TIENE PROBLEMAS CON LA CONCURRENCIA
-                    # for obj in self.__blockedThreadsQueue:
-                    #     if(obj.threadID == threadID):
-                    #         # an object with the given name exists in the list
-                    #         if(len(self.__blockedThreadsQueue) > 1):
-                    #             # comparo dentro de la lista si hay alguien que coincida mi equivalenciaInitXY con su equivalenciaEndXY y tambien viceversa -> si hay, es conflicto
-                    #             for threadBlocked in self.__blockedThreadsQueue:
-                    #                 if(threadBlocked != obj):
-                    #                     newThreadBlockedInitPos = obj.transitionTranslated[0]
-                    #                     newThreadBlockedEndPos = obj.transitionTranslated[1]
-                    #                     threadBlockedInitPos = threadBlocked.transitionTranslated[0]
-                    #                     threadBlockedEndPos = threadBlocked.transitionTranslated[1]
-                    #                     if(newThreadBlockedInitPos == threadBlockedEndPos and newThreadBlockedEndPos == threadBlockedInitPos):
-                    #                         # conflicto
-                    #                         print(f"{threadID} || CONFLICTO DETECTADOOOO APENAS ENTREEEE AMNKVFEWKVW --- ENTRE <{obj.threadID}> YYY {threadBlocked.threadID}\n\n")
-
-                    #                         self.__blockedThreadsQueue = []
-
-                    #                         # decide por politica quien recalcula
-                    #                         if(threadID == "ROB_C"): # esto seria la politica
-                    #                             return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
-                    #         break
-                    # else:
-                    #     # the loop completed without finding an object with the given name, the object does not exist in the list
-                    #     newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
-                    #     self.__blockedThreadsQueue.append(newThreadBlocked)
-                    #     print(f"{threadID} || ME AGREGUE A LA COLA DE BLOQUEADOS || {newThreadBlocked.transitionTranslated}")
-
-                    #     # comparo dentro de la lista si hay alguien que coincida mi equivalenciaInitXY con su equivalenciaEndXY y tambien viceversa -> si hay, es conflicto
-                    #     for threadBlocked in self.__blockedThreadsQueue:
-                    #         if(threadBlocked != newThreadBlocked):
-                    #             newThreadBlockedInitPos = newThreadBlocked.transitionTranslated[0]
-                    #             newThreadBlockedEndPos = newThreadBlocked.transitionTranslated[1]
-                    #             threadBlockedInitPos = threadBlocked.transitionTranslated[0]
-                    #             threadBlockedEndPos = threadBlocked.transitionTranslated[1]
-                    #             if(newThreadBlockedInitPos == threadBlockedEndPos and newThreadBlockedEndPos == threadBlockedInitPos):
-                    #                 # conflicto
-                    #                 print(f"CONFLICTO DETECTADOOOOAMNKVFEWKVW --- ENTRE <{newThreadBlocked.threadID}> YYY {threadBlocked.threadID}\n\n")
-
-                    #                 # decide por politica quien recalcula
-                    #                 if(threadID == "ROB_C"): # esto seria la politica
-                    #                     self.__blockedThreadsQueue = []
-                    #                     return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
-                    #                 else:
-                    #                     for obj in self.__blockedThreadsQueue:
-                    #                         if(obj.threadID == "ROB_C"):
-                    #                             # an object with the given name exists in the list
-                    #                             self.__transitionQueues[obj.transition].getSemaphore().release()
-
-
-                    # me pongo en la cola de bloqueados con la info [transicion, equivalenciaInitXY, equivalenciaEndXY]
-                    # if(len(self.__blockedThreadsQueue) > 0 and not any(elem.threadID == threadID for elem in self.__blockedThreadsQueue)): # check si ya esta agregado el robot
-                    #     print("asdasds")
-                    #     pass
-                    # else:
-                    #     newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
-                    #     self.__blockedThreadsQueue.append(newThreadBlocked)
-                    #     print(f"{threadID} || ME AGREGUE A LA COLA DE BLOQUEADOS || {newThreadBlocked.transitionTranslated}")
-
-                    #     # comparo dentro de la lista si hay alguien que coincida mi equivalenciaInitXY con su equivalenciaEndXY y tambien viceversa -> si hay, es conflicto
-                    #     for threadBlocked in self.__blockedThreadsQueue:
-                    #         if(threadBlocked != newThreadBlocked):
-                    #             newthreadBlockedInitPos = newthreadBlocked.transitionTranslated[0]
-                    #             newthreadBlockedEndPos = newthreadBlocked.transitionTranslated[1]
-                    #             threadBlockedInitPos = threadBlocked.transitionTranslated[0]
-                    #             threadBlockedEndPos = threadBlocked.transitionTranslated[1]
-                    #             if(newthreadBlockedInitPos == threadBlockedEndPos and newthreadBlockedEndPos == threadBlockedInitPos):
-                    #                 # conflicto
-                    #                 print(f"CONFLICTO DETECTADOOOOAMNKVFEWKVW --- ENTRE <{newThreadBlocked.threadID}> YYY {threadBlocked.threadID}\n\n")
-
-                    # if(not self.__threadBlockedExistsInList(threadID, self.__blockedThreadsQueue)):
-                    #     # the loop completed without finding an object with the given name, the object does not exist in the list
-                    #     newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
-                    #     self.__blockedThreadsQueue.append(newThreadBlocked)
-                    #     print(f"{threadID} || ME AGREGUE A LA COLA DE BLOQUEADOS || {newThreadBlocked.transitionTranslated}")
-
-                    # if(self.__checkConflict(newThreadBlocked, self.__blockedThreadsQueue) == True):
-                    #     threadDecision = self.__pathRecalculationPolicy.resolve(self.__blockedThreadsQueue) # decide que thread debe recalcular
-                    #     if(threadDecision != threadID): # si la politica decidio otro robot, deberia despertar al hilo que se bloqueo -- ese hilo seria el que no debe recalcular
-                    #         self.__priorityThread = threadDecision.threadID # FIXMEEEE esto hace falta?
-                    #         self.__transitionQueues[threadDecision.transition].getSemaphore().release()
-                    #         print(f"{threadID} || LE PUSE UN TOKEN AL SEMAFORO DEL THREAD {threadDecision.threadID}")
-                    #     else: # si la politica decidio por mi, debo recalcular
-                    #         if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
-                    #             self.__priorityThread = ""
-
-                    #         return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
-
-
                     if(not self.__threadBlockedExistsInList(threadID, self.__blockedThreadsQueue)):
                         # the loop completed without finding an object with the given name, the object does not exist in the list
                         newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
@@ -328,7 +222,7 @@ class MonitorWithQueuesAndPriorityQueue:
                                 self.__threadsInConflict = []
                                 return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
 
-                    isConflict, threadInConflictA, threadInConflictB = self.__checkConflictA(self.__blockedThreadsQueue)
+                    isConflict, threadInConflictA, threadInConflictB = self.__checkConflict(self.__blockedThreadsQueue)
                     if(isConflict == True):
                         self.__threadsInConflict.append(threadInConflictA)
                         self.__threadsInConflict.append(threadInConflictB)
@@ -341,7 +235,7 @@ class MonitorWithQueuesAndPriorityQueue:
                             if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
                                 self.__priorityThread = ""
                             self.__transitionQueues[transition].releaseRequest(threadID)
-                            self.__threadsInConflict = []
+                            self.__threadsInConflict = [] # conflict "solved"
                             return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
                         else:
                             self.__transitionQueues[threadDecision.transition].getSemaphore().release() # puedo asumir que el robot por el que decidio la politica esta bloqueado en algun acquire para la transicion que queria. debo ponerle un token para que se despierte
@@ -349,36 +243,11 @@ class MonitorWithQueuesAndPriorityQueue:
                             self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                             self.__monitorLock.acquire()
                             k=True
-
-
-                        # if(threadDecision.threadID != threadID): # si la politica decidio otro robot, deberia despertar al hilo que se bloqueo -- ese hilo seria el que no debe recalcular
-                        #     self.__priorityThread = threadDecision.threadID # FIXMEEEE esto hace falta?
-                        #     #self.__transitionQueues[threadDecision.transition].getSemaphore().release()
-                        #     threadDecision.mustRecalculatePath = True
-                        #     # print(f"{threadID} || LE PUSE UN TOKEN AL SEMAFORO DEL THREAD {threadDecision.threadID}")
-                        #     # #return MonitorReturnStatus.UNABLE_TO_FIRE
-
-                        #     self.__monitorLock.release()
-                        #     self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
-                        #     self.__monitorLock.acquire()
-                        #     k=True
-
-                        # else: # si la politica decidio por mi, debo recalcular
-                        #     if(self.__priorityThread == threadID): # me debo sacar de la lista de prioridad si estoy
-                        #         self.__priorityThread = ""
-                        #     self.__transitionQueues[threadDecision.transition].releaseRequest(threadID)
-                        #     return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
                     else:
                         self.__monitorLock.release()
                         self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                         self.__monitorLock.acquire()
                         k=True
-
-                        # if(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si me desperte y resulta que debo recalcular
-                        #     for threadBlockedInList in self.__threadsInConflict:
-                        #         if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
-                        #             print(f"{threadID} || ME VOY A RECALCULARRRR")
-                        #             return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
 
                     #self.__monitorLock.release()
                     #self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
@@ -388,21 +257,7 @@ class MonitorWithQueuesAndPriorityQueue:
         finally:
             self.__monitorLock.release()
 
-    # comparo dentro de la lista si hay alguien que coincida mi equivalenciaInitXY con su equivalenciaEndXY y tambien viceversa -> si hay, es conflicto
-    def __checkConflict(self, newThreadBlocked, threadBlockedList):
-        for threadBlockedInList in threadBlockedList:
-                if(threadBlockedInList != newThreadBlocked):
-                    threadInListInitPos = threadBlockedInList.transitionTranslated[0]
-                    threadInListEndPos = threadBlockedInList.transitionTranslated[1]
-                    newThreadBlockedInitPos = newThreadBlocked.transitionTranslated[0]
-                    newThreadBlockedEndPos = newThreadBlocked.transitionTranslated[1]
-                    if(threadABlockedInitPos == newThreadBlockedEndPos and newThreadBlockedInitPos == threadABlockedEndPos):
-                        # conflicto
-                        print(f"CONFLICTO DETECTADOOOOAMNKVFEWKVW --- ENTRE <{newThreadBlocked.threadID}> YYY {threadBlockedInList.threadID}\n\n")
-                        return True
-        return False
-
-    def __checkConflictA(self, threadBlockedList):
+    def __checkConflict(self, threadBlockedList):
         # FIXME esto se podria optimizar haciendo que solo recorra como una matriz diagonal
         for threadBlockedA in threadBlockedList:
             for threadBlockedB in threadBlockedList:
@@ -420,18 +275,15 @@ class MonitorWithQueuesAndPriorityQueue:
     def __threadBlockedExistsInList(self, threadID, threadBlockedList):
         for threadBlocked in threadBlockedList:
             if(threadBlocked.threadID == threadID):
-                # an object with the given name exists in the list
                 return True
         else:
             # the loop completed without finding an object with the given name, the object does not exist in the list
             return False
 
+    # warning: this function is not thread-safe, depends on the monitor to be used in a thread safe way
     def __getTransitionTranslation(self, transition):
-        #with self.__directRdPAccessCondition:
         translation = self.__petriNet.getTransitionTranslation(transition)
-        self.__directRdPAccessCondition.notify_all()
         return translation
-
 
     def __getTransitionCandidates(self, sensibilizadas):
         transitionCandidates = []
@@ -439,7 +291,6 @@ class MonitorWithQueuesAndPriorityQueue:
             if(self.__transitionQueues[sensibilizadas[i]].hasRequests()):
                 transitionCandidates.append(sensibilizadas[i])
         return transitionCandidates
-
 
     def getTransitionSequence(self, coordinatesSequence):
         with self.__directRdPAccessCondition:
