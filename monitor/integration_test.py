@@ -2,6 +2,7 @@ import multiprocessing
 from multiprocessing import Process
 import threading
 from threading import Thread
+import queue
 import time
 import numpy
 import random
@@ -9,70 +10,43 @@ from decouple import config
 import mqqt_client as mqtt
 import macros_mapa
 from RdP import RdP
-from Monitor import Monitor
-from MonitorWithQueues import MonitorWithQueues
 from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
 from Visualizer import Visualizer
+from RobotThreadExecutor import RobotThreadExecutor
+from JobManager import Path
+from JobManager import Job
+from JobManager import JobManager
 from Map import Map
 
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
 
+# IMPORTANTEEEEEE       -- se puede hacer con la misma RDP la cuestion de definir ciertas celdas para que entre un solo robot no mas,
+#                          agregando una plaza conectada a las transiciones de entrada de esas plazas
 
-def thread_run(monitor, robotID):
+def thread_run(robotID, jobQueue, monitor):
 
-    if(robotID == "ROB_A"):
-        coordenadasSequence = monitor.calculatePath(3,1,3,3)
-        secondPart = monitor.calculatePath(3,3,3,1)
-        secondPart.pop(0)
-        coordenadasSequence.extend(secondPart)
-        # transSeq = [0, 3, 4]
-    elif(robotID == "ROB_B"):
-        coordenadasSequence = monitor.calculatePath(1,3,5,3)
-        secondPart = monitor.calculatePath(5,3,1,3)
-        secondPart.pop(0)
-        coordenadasSequence.extend(secondPart)
-        # transSeq = [1, 2, 5]
-    elif(robotID == "ROB_C"):
-        coordenadasSequence = monitor.calculatePath(3,3,3,4)
-        secondPart = monitor.calculatePath(3,4,3,3)
-        secondPart.pop(0)
-        coordenadasSequence.extend(secondPart)
-        # transSeq = [1, 2, 5]
-
-    transSeq = monitor.getTransitionSequence(coordenadasSequence)
-    monitor.setRobotInCoordinate(coordenadasSequence[0], robotID)
-
-    print(f"COORDENADAS {robotID} {coordenadasSequence}")
-    print(f"TRANSICIONES {robotID} {transSeq}")
+    robotThreadExecutor = RobotThreadExecutor(robotID, monitor)
 
     time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
-    # while(1):
-    #     # FIXME poner una cola para recibir trabajos y que otro hilo se los mande (simulando el hilo de comm)
-    #     for transicion in transSeq:
-    #         if(transicion != int(config('NULL_TRANSITION'))):
-    #             # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-    #             # intenta disparar el monitor
-    #             #cliente_queue.acquire()
-    #             monitor.monitorDisparar(transicion, robotID)
-    #             # motor_direction = define_motor_direction(transSeq, transicion, plazasSeq)
-    #             #msg = cliente.publish("/topic/qos0", "motor_direction", qos=2)
-    #             #msg.wait_for_publish()
-    #             # msg.is_published()
-    #             #cliente_queue.wait()
-    #             #cliente_queue.release()
-    #             #time.sleep(random.random()/2)
-    #             time.sleep(0.1)
-
-    transition_index = 0
     while(1):
-        transicion = transSeq[transition_index]
-        if(transicion != int(config('NULL_TRANSITION'))):
-            # print(f"{time.time()} [{id}] ### Intentando disparar transicion {transicion}")
-            if(monitor.monitorDisparar(transicion, robotID)): # si pudo disparar, busco la siguiente transicion
-                transition_index = (transition_index + 1) % len(transSeq)
-                #time.sleep(2)
+        print(f"{robotID} || me voy a bloquear")
+        nextJob = jobQueue.get() # se bloquea hasta que se ponga un elemento
+
+        if(not type(nextJob) == Job):
+            continue
+
+        robotThreadExecutor.addJob(nextJob)
+        robotThreadExecutor.startPaths()
+
+        running = True
+        while(running):
+            running = robotThreadExecutor.run()
+            #time.sleep(0.5)
+            time.sleep(random.random())
+
+        print(f"THREAD {robotID} STALL")
 
 
 def define_motor_direction(transSeq, transicion, plazasSeq):
@@ -101,6 +75,51 @@ def define_motor_direction(transSeq, transicion, plazasSeq):
 
     return motor_direction
 
+# este hilo simula como se irian generando los jobs y enviando a cada robot
+def threadSendJobs(jobManager):
+    jobA = Job()
+    # path = Path(3,1,3,2)
+    # jobA.addPath(path)
+    # path = Path(3,2,4,5)
+    # jobA.addPath(path)
+    # path = Path(4,5,5,2)
+    # jobA.addPath(path)
+    path = Path(1,1,5,5)
+    jobA.addPath(path)
+    path = Path(5,5,1,1)
+    jobA.addPath(path)
+    jobManager.sendJobToRobot('ROB_A', jobA)
+
+    #time.sleep(5)
+
+    jobB = Job()
+    # path = Path(1,3,5,1)
+    # jobB.addPath(path)
+    # path = Path(5,1,2,5)
+    # jobB.addPath(path)
+    # path = Path(2,5,1,5)
+    # jobB.addPath(path)
+    path = Path(5,1,1,5)
+    jobB.addPath(path)
+    path = Path(1,5,5,1)
+    jobB.addPath(path)
+    jobManager.sendJobToRobot('ROB_B', jobB)
+
+    #time.sleep(20)
+
+    jobC = Job()
+    # path = Path(1,2,5,2)
+    # jobC.addPath(path)
+    # path = Path(5,2,2,5)
+    # jobC.addPath(path)
+    # path = Path(2,5,3,1)
+    # jobC.addPath(path)
+    path = Path(3,1,5,5)
+    jobC.addPath(path)
+    path = Path(5,5,3,1)
+    jobC.addPath(path)
+    jobManager.sendJobToRobot('ROB_C', jobC)
+
 def main():
 
     map = Map()
@@ -115,9 +134,12 @@ def main():
 
     # create threads for each robot
     threads = []
-    thread_ROBOT_A = Thread(target=thread_run, args=(monitor, 'ROB_A'))
-    thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B'))
-    thread_ROBOT_C = Thread(target=thread_run, args=(monitor, 'ROB_C'))
+    jobQueueRobA = queue.Queue()
+    jobQueueRobB = queue.Queue()
+    jobQueueRobC = queue.Queue()
+    thread_ROBOT_A = Thread(target=thread_run, args=('ROB_A', jobQueueRobA, monitor))
+    thread_ROBOT_B = Thread(target=thread_run, args=('ROB_B', jobQueueRobB, monitor))
+    thread_ROBOT_C = Thread(target=thread_run, args=('ROB_C', jobQueueRobC, monitor))
     threads.append(thread_ROBOT_A)
     threads.append(thread_ROBOT_B)
     threads.append(thread_ROBOT_C)
@@ -125,12 +147,23 @@ def main():
     thread_ROBOT_B.start()
     thread_ROBOT_C.start()
 
+    jobManager = JobManager()
+    jobManager.addRobotJobQueue('ROB_A', jobQueueRobA)
+    jobManager.addRobotJobQueue('ROB_B', jobQueueRobB)
+    jobManager.addRobotJobQueue('ROB_C', jobQueueRobC)
+
+    threadSendTrbjo = Thread(target=threadSendJobs, args=(jobManager,))
+    threadSendTrbjo.start()
+
+
+    # cualquier cosa que se ponga despues de esto no se va a ejecutar aunque los hilos terminen
     processVisualizer = multiprocessing.Process(target=viz.run())
-    #processVisualizer.start()
+    processVisualizer.start()
 
     # wait for the threads to complete
     for thread in threads:
         thread.join()
+    threadSendTrbjo.join()
     processVisualizer.join()
 
 
