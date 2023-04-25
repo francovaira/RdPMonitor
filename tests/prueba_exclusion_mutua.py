@@ -1,38 +1,36 @@
 import pandas as pd
 import os
   
-# reading given csv file  and creating dataframe
-websites = pd.read_csv("./LOG_OUTPUT.txt", header = None)
-  
-# # adding column headings
-websites.columns = ['Timestamp', 'Robot_ID', 'Message_ID']
+def transitions(robot_id):
+    # reading given csv file  and creating dataframe
+    websites = pd.read_csv("./LOG_OUTPUT.txt", header = None)
+    
+    # # adding column headings
+    websites.columns = ['Timestamp', 'Robot_ID', 'Message_ID']
 
-websites.sort_values('Timestamp', ascending=True)
+    websites.sort_values('Timestamp', ascending=True)
 
-websites = websites.drop(['Timestamp'], axis=1)
+    websites = websites.drop(['Timestamp'], axis=1)
 
-# # store dataframe into csv file
-websites.to_csv('./timestamps.csv', index = None)
+    # # store dataframe into csv file
+    websites.to_csv('./timestamps.csv', index = None)
 
-with open('timestamps.csv', 'r') as f_in:
+    with open('timestamps.csv', 'r') as f_in:
 
 
-    data = f_in.read().replace('\n', ',')
-    transition_fired_a = data.count('ROB_A,1,ROB_A,2,ROB_A,3,ROB_A,4,ROB_A,5')
-    transition_fired_b = data.count('ROB_B,1,ROB_B,2,ROB_B,3,ROB_B,4,ROB_B,5')
-    transition_fired_c = data.count('ROB_C,1,ROB_C,2,ROB_C,3,ROB_C,4,ROB_C,5')
+        data = f_in.read().replace('\n', ',')
+        transition_fired = data.count(f"{robot_id},1,{robot_id},2,{robot_id},3,{robot_id},4,{robot_id},5")
+        count_fired_after_policy = data.count(f"10,{robot_id},2,{robot_id},3,{robot_id},4,{robot_id},5")
+        count_encoladas = data.count(f"{robot_id},20")
 
-    count_fired_after_policy_a =data.count('10,ROB_A,2,ROB_A,3,ROB_A,4,ROB_A,5')
-    count_fired_after_policy_b =data.count('10,ROB_B,2,ROB_B,3,ROB_B,4,ROB_B,5')
-    count_fired_after_policy_c =data.count('10,ROB_C,2,ROB_C,3,ROB_C,4,ROB_C,5')
+        # print('A', 'Fired: ', transition_fired_a, 'Blocked: ', count_encoladas_a, "Fired after blocker: ", count_fired_after_policy_a, 'Total Fired: ', (transition_fired_a+count_fired_after_policy_a))
+        # print('B', 'Fired: ', transition_fired_b, 'Blocked: ', count_encoladas_b, "Fired after blocker: ", count_fired_after_policy_b, 'Total Fired: ', (transition_fired_b+count_fired_after_policy_b))
+        # print('C', 'Fired: ', transition_fired_c, 'Blocked: ', count_encoladas_c, "Fired after blocker: ", count_fired_after_policy_c, 'Total Fired: ', (transition_fired_c+count_fired_after_policy_c))
 
-    count_encoladas_a = data.count('ROB_A,20')
-    count_encoladas_b = data.count('ROB_B,20')
-    count_encoladas_c = data.count('ROB_C,20')
+    #Delete tmp file
+    os.remove('timestamps.csv')
 
-    print('A', 'Fired: ', transition_fired_a, 'Blocked: ', count_encoladas_a, "Fired after blocker: ", count_fired_after_policy_a, 'Total Fired: ', (transition_fired_a+count_fired_after_policy_a))
-    print('B', 'Fired: ', transition_fired_b, 'Blocked: ', count_encoladas_b, "Fired after blocker: ", count_fired_after_policy_b, 'Total Fired: ', (transition_fired_b+count_fired_after_policy_b))
-    print('C', 'Fired: ', transition_fired_c, 'Blocked: ', count_encoladas_c, "Fired after blocker: ", count_fired_after_policy_c, 'Total Fired: ', (transition_fired_c+count_fired_after_policy_c))
+    return transition_fired, count_fired_after_policy, count_encoladas 
 
-#Delete tmp file
-os.remove('timestamps.csv')
+transition_fired, count_fired_after_policy, count_encoladas = transitions('ROB_C')
+print(f"{transition_fired+count_fired_after_policy}, {count_fired_after_policy}, {count_encoladas}")
