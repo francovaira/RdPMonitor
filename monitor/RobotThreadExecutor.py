@@ -60,6 +60,7 @@ class RobotThreadExecutor:
 
             if(nextTransitionIndex>= len(transitionsSequence)):
                 print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
+                self.__jobs = []
                 return False
         elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
             blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]

@@ -82,7 +82,8 @@ class MonitorWithQueuesAndPriorityQueue:
         self.__monitorLock = threading.Lock()
         self.__monitorEntranceLock = threading.Lock()
         self.__directRdPAccessCondition = threading.Condition(self.__monitorLock)
-        self.__directPathFinderAccessCondition = threading.Condition(self.__monitorLock)
+        #self.__directPathFinderAccessCondition = threading.Condition(self.__monitorLock)
+        self.__directPathFinderAccessCondition = threading.Condition(threading.Lock())
         self.__policy = Policy()
         self.__pathRecalculationPolicy = PathRecalculationPolicy()
         self.__threadsInConflict = []
@@ -214,6 +215,12 @@ class MonitorWithQueuesAndPriorityQueue:
                         newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
                         self.__blockedThreadsQueue.append(newThreadBlocked)
                         print(f"{threadID} || ME AGREGUE A LA COLA DE BLOQUEADOS || {newThreadBlocked.transitionTranslated}")
+
+                        strin = "LISTA DE BLOQUEADOS || "
+                        for thrBlocked in self.__blockedThreadsQueue:
+                            strin = strin + f"{thrBlocked.threadID} - {thrBlocked.transition} - {thrBlocked.transitionTranslated} || "
+                        print(strin)
+
                     elif(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si me desperte y resulta que debo recalcular
                         for threadBlockedInList in self.__threadsInConflict:
                             if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
