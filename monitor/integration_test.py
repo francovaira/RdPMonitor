@@ -11,7 +11,7 @@ import mqqt_client as mqtt
 import macros_mapa
 from RdP import RdP
 from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
-from Visualizer import Visualizer
+from views.Visualizer import Visualizer
 from RobotThreadExecutor import RobotThreadExecutor
 from JobManager import Path
 from JobManager import Job
@@ -169,3 +169,6 @@ class Setup:
             thread.join()
         threadSendTrbjo.join()
         processVisualizer.join()
+
+if __name__ == "__main__":
+    Setup()
