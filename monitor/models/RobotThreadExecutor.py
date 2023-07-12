@@ -1,5 +1,5 @@
-from MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
-from JobManager import Job
+from .MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
+from .JobManager import Job
 
 class RobotThreadExecutor:
     def __init__(self, robotID, monitor):

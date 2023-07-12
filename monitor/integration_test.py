@@ -9,14 +9,14 @@ import random
 from decouple import config
 import mqqt_client as mqtt
 import macros_mapa
-from RdP import RdP
-from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
 from views.Visualizer import Visualizer
-from RobotThreadExecutor import RobotThreadExecutor
-from JobManager import Path
-from JobManager import Job
-from JobManager import JobManager
-from Map import Map
+from models.RdP import RdP
+from models.MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
+from models.RobotThreadExecutor import RobotThreadExecutor
+from models.JobManager import Path
+from models.JobManager import Job
+from models.JobManager import JobManager
+from models.Map import Map
 
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246

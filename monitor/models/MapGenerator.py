@@ -46,10 +46,13 @@ class MapGenerator:
 
     def __fileMapDefinitionRead(self):
         try:
-            absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
-            mapFilePath = os.path.join(absolutePath, "maps", "mapDefinition.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
-            mapFile=open(mapFilePath,"r")
-            mapDefinitionRead=eval(mapFile.read())
+            # get the absolute path of the directory the script is in
+            absolutePath = os.path.dirname(os.path.realpath(__file__))
+            absolutePath = os.path.split(absolutePath)
+            # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            mapFilePath = os.path.join(absolutePath[0], "maps", "mapDefinition.txt")
+            mapFile = open(mapFilePath,"r")
+            mapDefinitionRead = eval(mapFile.read())
             mapFile.close()
         except Exception as e:
             print(str(e))

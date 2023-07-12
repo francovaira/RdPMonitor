@@ -1,6 +1,6 @@
 import time
 from decouple import config
-from RdPGenerator import RdPGenerator
+from .RdPGenerator import RdPGenerator
 from Enums import MapCellOccupationStates, MapCellOccupationActions
 import numpy as np
 

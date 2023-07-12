@@ -151,14 +151,16 @@ class RdPGenerator:
 
     def __fileRdPDefinitionRead(self):
         try:
-            absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
-
-            rdpFilePath = os.path.join(absolutePath, "petri_nets", "rdpDefinition.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
-            rdpFile=open(rdpFilePath,"r")
-            rdpDefinitionRead=eval(rdpFile.read())
+            # get the absolute path of the directory the script is in
+            absolutePath = os.path.dirname(os.path.realpath(__file__))
+            absolutePath = os.path.split(absolutePath)
+            # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            rdpFilePath = os.path.join(absolutePath[0], "petri_nets", "rdpDefinition.txt")
+            rdpFile = open(rdpFilePath,"r")
+            rdpDefinitionRead = eval(rdpFile.read())
             rdpFile.close()
-
-            initialMarkFilePath = os.path.join(absolutePath, "petri_nets", "initial_calculated.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            initialMarkFilePath = os.path.join(absolutePath[0], "petri_nets", "initial_calculated.txt")
             initialMarkFile=open(initialMarkFilePath,"r")
             initialMarkRead=eval(initialMarkFile.read())
             initialMarkFile.close()
@@ -175,8 +177,9 @@ class RdPGenerator:
     def __fileWrite(self, list2write, filename):
         try:
             absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
-            writeFilePath = os.path.join(absolutePath, "petri_nets", f"{filename}") # construct the path to the file in the subdirectory # FIXME hacer un define/config
-            writeFile=open(writeFilePath,"w")
+            absolutePath = os.path.split(absolutePath)
+            writeFilePath = os.path.join(absolutePath[0], "petri_nets", f"{filename}") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            writeFile = open(writeFilePath,"w")
             writeFile.write(str(list2write))
             writeFile.close()
         except Exception as e:
