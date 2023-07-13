@@ -7,7 +7,7 @@ import time
 import numpy
 import random
 from decouple import config
-import mqqt_client as mqtt
+import MQTTClient as mqtt
 import macros_mapa
 from RdP import RdP
 from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue

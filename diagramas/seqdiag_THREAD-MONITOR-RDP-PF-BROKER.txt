@@ -1,0 +1,31 @@
+title This is a title
+
+
+MQTTBroker->Thread A: newJob(start, destination)
+Thread A->PathFinder: calculatePath(start destination)
+Thread A<--PathFinder: return calculatedPath()
+
+Thread A->Monitor: getTransitionSequence(calculatedPath)
+Thread A<--Monitor: return transitionSequence
+
+loop while sequenceNotFinished
+	Thread A->Monitor:monitorDisparar(nextTransition)
+	Monitor->Lock:acquire(nextTransition)
+    Monitor<--Lock:return lockAcquired
+    alt lockAcquired == true
+    	Monitor->RdP:solicitudDisparo(nextTransition)
+        Monitor<--RdP:return k
+        loop while k == 0
+        	Monitor->Thread A:wait()
+            Monitor<--Thread A:wake up
+            Monitor->RdP:solicitudDisparo(nextTransition)
+        	Monitor<--RdP:return k
+        end
+        Monitor->RdP:redDisparar()
+   		Monitor->RdP:printMarcado()
+        Monitor->Monitor:notifyAll()
+        Monitor->Lock:release()
+        Monitor<--Lock:
+	end
+   Thread A<--Monitor:
+end

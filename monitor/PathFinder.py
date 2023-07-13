@@ -1,5 +1,7 @@
+from decouple import config
+import macros_mapa
 
-class Cell:
+class PathFinderCell:
     def __init__(self, posX, posY):
         self.i = posX
         self.j = posY
@@ -7,74 +9,143 @@ class Cell:
         self.g = 0
         self.h = 0
         self.neighbors = []
+        self.dynamicNeighbors = []
         self.previous = None
-        self.obs = False
+        self.isObstacle = False
+        self.isDynamicObstacle = False
         self.closed = False
         self.value = 1
+
+    def setIsObstacle(self, isObstacle):
+        self.isObstacle = isObstacle
+
+    def setIsDynamicObstacle(self, isDynamicObstacle):
+        self.isDynamicObstacle = isDynamicObstacle
+        print(f"PUDE SETEAR LA CELDA ({self.i},{self.j}) COMO OCUPADA DINAMICAMENTE")
+
+    def getIsObstacle(self):
+        return self.isObstacle
+
+    def getIsDynamicObstacle(self):
+        return self.isDynamicObstacle
 
     def addNeighbors(self, grid, rows, cols):
         i = self.i
         j = self.j
-        if i < cols-1 and grid[self.i + 1][j].obs == False:
+        if i < cols-1 and grid[self.i + 1][j].isObstacle == False:
             self.neighbors.append(grid[self.i + 1][j])
-        if i > 0 and grid[self.i - 1][j].obs == False:
+        if i > 0 and grid[self.i - 1][j].isObstacle == False:
             self.neighbors.append(grid[self.i - 1][j])
-        if j < rows-1 and grid[self.i][j + 1].obs == False:
+        if j < rows-1 and grid[self.i][j + 1].isObstacle == False:
             self.neighbors.append(grid[self.i][j + 1])
-        if j > 0 and grid[self.i][j - 1].obs == False:
+        if j > 0 and grid[self.i][j - 1].isObstacle == False:
             self.neighbors.append(grid[self.i][j - 1])
+        self.dynamicNeighbors = self.neighbors
+
+    def addDynamicNeighbors(self, grid, rows, cols):
+        i = self.i
+        j = self.j
+        self.dynamicNeighbors = []
+        if(i < cols-1 and grid[self.i + 1][j].isObstacle == False and grid[self.i + 1][j].isDynamicObstacle == False):
+            self.dynamicNeighbors.append(grid[self.i + 1][j])
+        if(i > 0 and grid[self.i - 1][j].isObstacle == False and grid[self.i - 1][j].isDynamicObstacle == False):
+            self.dynamicNeighbors.append(grid[self.i - 1][j])
+        if(j < rows-1 and grid[self.i][j + 1].isObstacle == False and grid[self.i][j + 1].isDynamicObstacle == False):
+            self.dynamicNeighbors.append(grid[self.i][j + 1])
+        if(j > 0 and grid[self.i][j - 1].isObstacle == False and grid[self.i][j - 1].isDynamicObstacle == False):
+            self.dynamicNeighbors.append(grid[self.i][j - 1])
+        print(f"SETEADOS LOS DYNAMIC NEIGHBORS ------")
+
+    def reset(self):
+        self.f = 0
+        self.g = 0
+        self.h = 0
+        self.previous = None
+        self.closed = False
+        self.dynamicNeighbors = self.neighbors
 
 class PathFinder:
-    def __init__(self, rows, cols):
-        self.rows = rows
-        self.cols = cols
-        self.grid = [0 for i in range(cols)]
+
+    def __init__(self, mapDefinition):
+        self.__mapDefinition = mapDefinition
+        self.rows = self.__mapDefinition.getHorizontalSize()
+        self.cols = self.__mapDefinition.getVerticalSize()
+        self.grid = [0 for i in range(self.cols)]
 
         # create 2d array that represents the map
-        for i in range(cols):
-            self.grid[i] = [0 for i in range(rows)]
+        for i in range(self.cols):
+            self.grid[i] = [0 for i in range(self.rows)]
 
         # Initialize grid with cells
-        for i in range(cols):
-            for j in range(rows):
-                self.grid[i][j] = Cell(i, j)
+        for i in range(self.cols):
+            for j in range(self.rows):
+                self.grid[i][j] = PathFinderCell(i, j)
 
-        # Mark map borders as obstacles
-        for i in range(0,rows):
-            self.grid[0][i].obs = True
-            self.grid[cols-1][i].obs = True
-        for i in range(0,cols):
-            self.grid[i][rows-1].obs = True
-            self.grid[i][0].obs = True
+        # Initialize cells with map definition
+        for i in range(self.cols):
+            for j in range(self.rows):
+                if( self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_BORDER or
+                    self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OBSTACLE  ):
+                    self.grid[i][j].setIsObstacle(True)
+                elif(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OCCUPABLE):
+                    self.grid[i][j].setIsObstacle(False)
+                else:
+                    print("ERROR map cell definition unknown")
 
         # Initialize neighbors for each cell
-        for i in range(cols):
-            for j in range(rows):
+        for i in range(self.cols):
+            for j in range(self.rows):
                 self.grid[i][j].addNeighbors(self.grid, self.rows, self.cols)
 
-    def calculatePath(self, startX, startY, endX, endY):
+
+    # cellsCoordinatesMarkedAsOccupied es una lista de coordenadas de tipo (x,y)
+    def calculateDynamicPath(self, startX, startY, endX, endY, cellsCoordinatesMarkedAsOccupied):
         finished = False
         iterations = 0
+        maxIterations = int(config('PATH_FINDER_MAX_ITERATIONS'))
 
         start = self.__getCell(startX, startY)
         end = self.__getCell(endX, endY)
 
-        # FIXME checkear que si el inicio o el final estan en un obstaculo, no calcular la trayectoria
+        if(start == None or end == None or start.getIsObstacle() == True or end.getIsObstacle() == True): # FIXME este checkeo no aplica para cuando es dinamico -- VERRR
+            print("ERROR PATH FINDER - Invalid coordinates")
+            return None
 
-        if(start == None or end == None):
-            print("Invalid coordinates")
-            return
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                self.grid[i][j].reset()
+
+        neighborsToRestore = []
+        if(len(cellsCoordinatesMarkedAsOccupied) > 0):
+            # set dynamic occupied cells
+            for coordinateOccupiedCell in cellsCoordinatesMarkedAsOccupied:
+                dynamicOccupiedCell = self.__getCell(coordinateOccupiedCell[0], coordinateOccupiedCell[1])
+                if(dynamicOccupiedCell == None):
+                    print(f"ERROR - NO PUDO OBTENER CELDA DINAMICA PARA MARCAR OCUPADA")
+                    continue
+                # dynamicOccupiedCell.setIsDynamicObstacle(True)
+                start.neighbors.remove(dynamicOccupiedCell)
+                neighborsToRestore.append(dynamicOccupiedCell)
+
+            # calculate dynamic neighbors
+            # for i in range(self.cols):
+            #     for j in range(self.rows):
+            #         self.grid[i][j].addDynamicNeighbors(self.grid, self.rows, self.cols)
 
         openSet = []
         closedSet = []
-
         openSet.append(start)
 
         while(not finished):
 
             iterations = iterations + 1
+            if(iterations >= maxIterations):
+                print("ERROR PATH FINDER - No path found for given coordinates (max iterations reached)")
+                finished = True
+                start.neighbors.append(neighborsToRestore[0])
+                return []
 
-            if len(openSet) > 0:
+            if(len(openSet) > 0):
                 lowestIndex = 0
                 for i in range(len(openSet)):
                     if openSet[i].f < openSet[lowestIndex].f:
@@ -85,25 +156,102 @@ class PathFinder:
                 closedSet.append(current)
                 current.closed = True
 
-                # FINISHED CALCULATING
-                if current == end:
-                    print('done', current.f)
+                # FINISHED CALCULATING or max iterations reached
+                # if(iterations >= maxIterations):
+                #     print("ERROR PATH FINDER - No path found for given coordinates (max iterations reached)")
+                #     finished = True
+                #     return []
+                #elif(current == end):
+                if(current == end):
                     pathDistance = current.f
+                    print(f"DONE - Distance: {pathDistance} // Iterations: {iterations}")
 
                     seqParams = []
-                    seqParams = self.__getSequenceParameters(current)
-                    print(seqParams)
-                    print(f"Iterations {iterations}")
+                    seqParams = self.__getSequenceCoordinates(current)
+                    #print(seqParams)
                     finished = True
-                    break
+                    start.neighbors.append(neighborsToRestore[0])
+                    return seqParams
+
+                dynamicNeighbors = current.dynamicNeighbors
+                for i in range(len(dynamicNeighbors)):
+                    neighbor = dynamicNeighbors[i]
+                    if(neighbor not in closedSet):
+                        tempG = current.g + current.value
+                        if(neighbor in openSet):
+                            if(neighbor.g > tempG):
+                                neighbor.g = tempG
+                        else:
+                            neighbor.g = tempG
+                            openSet.append(neighbor)
+                            #if(neighbor.i == cellsCoordinatesMarkedAsOccupied[0][0] and neighbor.j == cellsCoordinatesMarkedAsOccupied[0][1]):
+                            #    print(f"WARNING!! -- SETTING AS NEIGHBOR ({cellsCoordinatesMarkedAsOccupied[0][0]},{cellsCoordinatesMarkedAsOccupied[0][1]})")
+
+                    neighbor.h = self.__heuristic(neighbor, end)
+                    neighbor.f = neighbor.g + neighbor.h
+
+                    if(neighbor.previous == None):
+                        neighbor.previous = current
+
+
+
+    def calculatePath(self, startX, startY, endX, endY):
+        finished = False
+        iterations = 0
+        maxIterations = int(config('PATH_FINDER_MAX_ITERATIONS'))
+
+        start = self.__getCell(startX, startY)
+        end = self.__getCell(endX, endY)
+
+        if(start == None or end == None or start.getIsObstacle() == True or end.getIsObstacle() == True):
+            print("ERROR PATH FINDER - Invalid coordinates")
+            return None
+
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                self.grid[i][j].reset()
+
+        openSet = []
+        closedSet = []
+        openSet.append(start)
+
+        while(not finished):
+
+            iterations = iterations + 1
+
+            if(len(openSet) > 0):
+                lowestIndex = 0
+                for i in range(len(openSet)):
+                    if openSet[i].f < openSet[lowestIndex].f:
+                        lowestIndex = i
+
+                current = openSet[lowestIndex]
+                openSet.pop(lowestIndex)
+                closedSet.append(current)
+                current.closed = True
+
+                # FINISHED CALCULATING or max iterations reached
+                if(iterations >= maxIterations):
+                    print("ERROR PATH FINDER - No path found for given coordinates (max iterations reached)")
+                    finished = True
+                    return []
+                elif(current == end):
+                    pathDistance = current.f
+                    print(f"DONE - Distance: {pathDistance} // Iterations: {iterations}")
+
+                    seqParams = []
+                    seqParams = self.__getSequenceCoordinates(current)
+                    #print(seqParams)
+                    finished = True
+                    return seqParams
 
                 neighbors = current.neighbors
                 for i in range(len(neighbors)):
                     neighbor = neighbors[i]
-                    if neighbor not in closedSet:
+                    if(neighbor not in closedSet):
                         tempG = current.g + current.value
-                        if neighbor in openSet:
-                            if neighbor.g > tempG:
+                        if(neighbor in openSet):
+                            if(neighbor.g > tempG):
                                 neighbor.g = tempG
                         else:
                             neighbor.g = tempG
@@ -112,7 +260,7 @@ class PathFinder:
                     neighbor.h = self.__heuristic(neighbor, end)
                     neighbor.f = neighbor.g + neighbor.h
 
-                    if neighbor.previous == None:
+                    if(neighbor.previous == None):
                         neighbor.previous = current
 
     def __getCell(self, x, y):
@@ -124,6 +272,27 @@ class PathFinder:
     def __heuristic(self, n, e):
         d = abs(n.i - e.i) + abs(n.j - e.j)
         return d
+
+    # returns a list of (X,Y) coordinates to move along the map
+    def __getSequenceCoordinates(self, cellSequence):
+        currentCell = cellSequence
+        reversedCellSequence = []
+        orderedCellSequence = []
+        coordinatesPathSequence = []
+
+        # get ordered sequence from cell sequence pointers
+        for i in range(round(cellSequence.f)):
+            reversedCellSequence.append(currentCell)
+            if(currentCell.previous != None):
+                currentCell = currentCell.previous
+        reversedCellSequence.append(currentCell)
+
+        #print("#### SECUENCIA ------------------")
+        for i in reversed(reversedCellSequence):
+            orderedCellSequence.append(i)
+            coordinatesPathSequence.append((i.i, i.j))
+            #print(f"X:{i.i} Y:{i.j}")
+        return coordinatesPathSequence
 
     # returns a list of speeds and distances for the robot to drive along the path
     def __getSequenceParameters(self, cellSequence):
@@ -140,13 +309,13 @@ class PathFinder:
                 currentCell = currentCell.previous
         reversedCellSequence.append(currentCell)
 
-        print("#### SECUENCIA ------------------")
+        #print("#### SECUENCIA ------------------")
         for i in reversed(reversedCellSequence):
             orderedCellSequence.append(i)
-            print(f"X:{i.i} Y:{i.j}")
+            #print(f"X:{i.i} Y:{i.j}")
 
-        print(f"START ({orderedCellSequence[0].i},{orderedCellSequence[0].j})")
-        print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
+        #print(f"START ({orderedCellSequence[0].i},{orderedCellSequence[0].j})")
+        #print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
         print()
 
         direction = 0 # 0 = upwards / 1 = right / 2 = downwards / 3 = left
