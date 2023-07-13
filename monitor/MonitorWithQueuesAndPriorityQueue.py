@@ -82,7 +82,6 @@ class MonitorWithQueuesAndPriorityQueue:
         self.__monitorLock = threading.Lock()
         self.__monitorEntranceLock = threading.Lock()
         self.__directRdPAccessCondition = threading.Condition(self.__monitorLock)
-        #self.__directPathFinderAccessCondition = threading.Condition(self.__monitorLock)
         self.__directPathFinderAccessCondition = threading.Condition(threading.Lock())
         self.__policy = Policy()
         self.__pathRecalculationPolicy = PathRecalculationPolicy()
@@ -115,23 +114,19 @@ class MonitorWithQueuesAndPriorityQueue:
         with self.__monitorEntranceLock:
             if(self.__priorityThread != "" and self.__priorityThread != threadID):
                 #print(f"==== THREAD {threadID} || LIBERO EL LOCK DE ENTRADA, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-                #return False
                 return MonitorReturnStatus.UNABLE_TO_FIRE
             else:
                 self.__monitorLock.acquire()
                 if(self.__priorityThread != "" and self.__priorityThread != threadID):
                     self.__monitorLock.release()
                     #print(f"==== THREAD {threadID} || LIBERO EL LOCK, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
-                    #return False
                     return MonitorReturnStatus.UNABLE_TO_FIRE
 
         try:
             k = True
             self.__transitionQueues[transition].request(threadID)
             #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
-            #self.__accumLog = self.__accumLog + f"{threadID},'1',"
             self.__accumLog = self.__accumLog + f"{time.time()},{threadID},1\n"
-            # REQ_TRANSITION = 1
 
             while(k == True):
                 # 0) intenta disparar de una
@@ -150,40 +145,31 @@ class MonitorWithQueuesAndPriorityQueue:
 
                     self.__fireCountIncrement()
                     #print(f"==== THREAD {threadID} || PUDE DISPARAR LA TRANSICION {transition} // CANT DISPAROS {self.__fireCount}")
-                    #self.__accumLog = self.__accumLog + f"{threadID},'2',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},2\n"
-                    # FIRED_TRANSITION = 2
+
                     # 0.5) me desencolo de la transicion porque ya dispare
                     self.__transitionQueues[transition].releaseRequest(threadID)
                     #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}")
-                    #self.__accumLog = self.__accumLog + f"{threadID},'3',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},3\n"
-                    # UNREQ_TRANSITION = 3
+
                     # 1) obtener las sensibilizadas luego del cambio de estado
                     sensibilizadas = self.__petriNet.getSensibilizadas() # devuelve algo como [12, 4, 83, 67, ...]
                     #print(f"==== THREAD {threadID} || SENSIBILIZADAS DESPUES DEL DISPARO MONITOR - {sensibilizadas} // CANT DISPAROS {self.__fireCount}")
-                    #self.__accumLog = self.__accumLog + f"{threadID},'4',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},4\n"
-                    # SENSI_TRANSITION = 4
+
                     if(len(sensibilizadas) > 0):
 
                         # 2) matchear sensibilizadas con colas de transiciones
                         transitionCandidates = self.__getTransitionCandidates(sensibilizadas)
                         #print(f"==== THREAD {threadID} || TRANSICIONES CANDIDATOS MONITOR - {transitionCandidates} // CANT DISPAROS {self.__fireCount}")
-                        #self.__accumLog = self.__accumLog + f"{threadID},'5',"
                         self.__accumLog = self.__accumLog + f"{time.time()},{threadID},5\n"
-                        # CANDI_TRANSITION = 5
+
                         # 3) si hay sensibilizadas con requests preguntar a la politica que transicion
                         if(len(transitionCandidates) > 0):
                             transitionDecision = self.__policy.resolve(transitionCandidates) # aca ver que hay que pasarle a la politica para que resuelva
                             #print(f"==== THREAD {threadID} || SOLUCION POLITICA MONITOR - {transitionDecision} // CANT DISPAROS {self.__fireCount}")
-                            #self.__accumLog = self.__accumLog + f"{threadID},'10',"
                             self.__accumLog = self.__accumLog + f"{time.time()},{threadID},10\n"
-                            #POLIC_TRANSITION = 10
 
-                            # if(self.__priorityThread != ""):
-                            #     #print(f"==== THREAD {threadID} || WARNING!!!! OVERRIDING PRIORITY THREAD WITH {self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]} // CANT DISPAROS {self.__fireCount}")
-                            #     pass
                             self.__priorityThread = self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]
                             print(f"==== THREAD {threadID} || SETTING PRIORITY THREAD TO {self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]} // CANT DISPAROS {self.__fireCount}")
 
@@ -203,9 +189,7 @@ class MonitorWithQueuesAndPriorityQueue:
                     # put myself as thread into according queue
                     # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
                     print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
-                    #self.__accumLog = self.__accumLog + f"{threadID},'20',"
                     self.__accumLog = self.__accumLog + f"{time.time()},{threadID},20\n"
-                    # NSENS_TRANSITION = 20
 
                     # decide por politica quien recalcula -- el que recalcula se le cambian las transiciones, sale del monitor y se va a recalcular y pelear por otras transiciones (no deberia bloquearse en la transicion actual, tiene que obtener una nueva por haber recalculado)
                     # el que no recalcula debe bloquearse hasta que el que recalcula se mueva -- en definitiva haria el acquire
@@ -256,11 +240,6 @@ class MonitorWithQueuesAndPriorityQueue:
                         self.__monitorLock.acquire()
                         k=True
 
-                    #self.__monitorLock.release()
-                    #self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
-                    #self.__monitorLock.acquire()
-                    #k=True
-
         finally:
             self.__monitorLock.release()
 
@@ -275,7 +254,7 @@ class MonitorWithQueuesAndPriorityQueue:
                     threadBlockedBEndPos = threadBlockedB.transitionTranslated[1]
                     if(threadBlockedAInitPos == threadBlockedBEndPos and threadBlockedBInitPos == threadBlockedAEndPos):
                         # conflicto
-                        print(f"CONFLICTO DETECTADOOOOAMNKVFEWKVW --- ENTRE <{threadBlockedB.threadID}> YYY {threadBlockedA.threadID}\n\n")
+                        print(f"CONFLICTO DETECTADOOOO --- ENTRE <{threadBlockedB.threadID}> YYY {threadBlockedA.threadID}\n\n")
                         return (True, threadBlockedA, threadBlockedB)
         return (False, None, None)
 

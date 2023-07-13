@@ -22,7 +22,8 @@ from Map import Map
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
 
 # IMPORTANTEEEEEE       -- se puede hacer con la misma RDP la cuestion de definir ciertas celdas para que entre un solo robot no mas,
-#                          agregando una plaza conectada a las transiciones de entrada de esas plazas
+#                          agregando una plaza conectada a las transiciones de entrada de esas plazas - esto para los casos de definir
+#                          zonas como un pasillo donde solo puede entrar 1 robot
 
 def thread_run(robotID, jobQueue, monitor):
 
@@ -205,7 +206,7 @@ def main():
     #mqttc, mqttc_queue =  mqtt.main()
     monitor = MonitorWithQueuesAndPriorityQueue(rdp, map.getPathFinder())
 
-    viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
+    viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
     # create threads for each robot
     threads = []
