@@ -2,6 +2,7 @@ import time
 from decouple import config
 from RdPGenerator import RdPGenerator
 from Enums import MapCellOccupationStates, MapCellOccupationActions
+import numpy as np
 
 # FIXME refactorizar esta clase en una que sea la RDP sola y conectado tenga la interfaz para con el mapa y hacia el monitor
 
@@ -82,6 +83,20 @@ class RdP:
             self.__matrizEstadoPrior[placeID] = self.__matrizEstado[placeID]
         return 0
 
+    def getTransitionTranslation(self, transition):
+        translation = []
+        for placeIndex in range(self.__placesCount):
+            if(placeIndex%2 == 0):
+                if(self.__incidence[placeIndex][transition] == -1): # is initial position
+                    translation.insert(0, self.__map.getMapCoordinateFromPlaceID(placeIndex))
+                elif(self.__incidence[placeIndex][transition] == 1): # is end position
+                    translation.insert(1, self.__map.getMapCoordinateFromPlaceID(placeIndex))
+
+        if(len(translation) != 2):
+            print(f"ERRORRRRR -- fallo la insercion de tranduccion // LENGTH {len(translation)}")
+            return []
+        return translation
+
     def getTransitionSequence(self, coordinatesSequence): # returns the transitions that must be fired to accomplish the coordinates sequence
         placeSequence = self.__map.getPlacesSequenceFromCoordinates(coordinatesSequence) # FIXME esta funcion capaz implementarla dentro de RdP.py
         if(len(placeSequence) == 0):
@@ -127,3 +142,6 @@ class RdP:
     def getTransitionCount(self):
         return self.__transitionCount
 
+    def getMatrizEstado(self):
+        incidencia = np.array(self.__rdpGen.getIncidence())
+        return incidencia.sum(axis=0)

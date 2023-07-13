@@ -1,3 +1,4 @@
+from MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
 from JobManager import Job
 
 class RobotThreadExecutor:
@@ -25,7 +26,7 @@ class RobotThreadExecutor:
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
             self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
-        print(f"STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
+        print(f"{self.__robotID} || STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
 
     def __getCoorinatesSequence(self, paths):
         coordinatesSequence = []
@@ -44,23 +45,49 @@ class RobotThreadExecutor:
     def run(self):
 
         currentJob = self.__jobs[0]
-        transitionsSequence = currentJob.getTransitionsSequence()
+        transitionsSequence = currentJob.getTransitionsPathSequence()
         transitionIndex = currentJob.getTransitionIndex()
 
         if(not len(transitionsSequence)):
             print("ERROR - Transition sequence empty - must initialize paths")
             exit()
 
-        if(transitionIndex >= len(transitionsSequence)):
-            print(f"SEQUENCE FINISHED -- HERE AT THE BEGINNING @{self.__robotID}")
-            return False
-
         transitionToExecute = transitionsSequence[transitionIndex]
-        if(self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)): # si pudo disparar, busco la siguiente transicion
+        monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
+        if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
             nextTransitionIndex = transitionIndex + 1
             currentJob.setTransitionIndex(nextTransitionIndex)
 
             if(nextTransitionIndex>= len(transitionsSequence)):
                 print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
+                self.__jobs = []
                 return False
+        elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
+            blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
+            remainingPathCoordinates = currentJob.getCoordinatesPathSequence()[transitionIndex+1:]
+            print(f"{self.__robotID} || I MUST RECALCULATEEEEE -- ME QUEDE EN LA POSICION {blockedPosition} || ME QUEDE EN LA TRANSICION {transitionToExecute}")
+            print(f"{self.__robotID} || ME QUEDA RECORRER {remainingPathCoordinates}")
+
+            initPos = blockedPosition
+            endPos = remainingPathCoordinates[0]
+            dynamicOccupiedCells = []
+            dynamicOccupiedCells.append(remainingPathCoordinates[0])
+            print(f"{self.__robotID} || VOY A RECALCULARRRR // INIT POS = {initPos} // END POS = {endPos} // CELLS MARKED OCCUPIED = {dynamicOccupiedCells}")
+            coordSeq = self.__monitor.calculateDynamicPath(initPos[0], initPos[1], endPos[0], endPos[1], dynamicOccupiedCells)
+            newTransitionsSequence = self.__monitor.getTransitionSequence(coordSeq)
+            print(f"{self.__robotID} || RETRAYECTORIADO = {coordSeq} -- CORRESPOND TO TRANSITIONS <{newTransitionsSequence}>\n\n--------------------------------\n")
+
+            transitionsSequence.pop(transitionIndex)
+            transitionsSequence[transitionIndex:transitionIndex] = newTransitionsSequence # inserts elements from index
+            print(f"{self.__robotID} || NUEVO CALCULO DE LAS TRANSICIONES = {newTransitionsSequence} || EL TOTAL SERIA = {transitionsSequence}")
+            currentJob.setTransitionsPathSequence(transitionsSequence)
+
+            coordinatesPathSequence = currentJob.getCoordinatesPathSequence()
+            coordinatesPathSequence.pop(transitionIndex)
+            coordSeq.pop() # remove last element of list, the last element is the arrive position, which is already in the remaining of the sequence
+            coordinatesPathSequence[transitionIndex:transitionIndex] = coordSeq # inserts elements from index
+            print(f"{self.__robotID} || NUEVO CALCULO DE LAS COORDENADAS = {coordSeq} || EL TOTAL SERIA = {coordinatesPathSequence}\n\n--------------------------------\n")
+            currentJob.setCoordinatesPathSequence(coordinatesPathSequence)
+
+
         return True

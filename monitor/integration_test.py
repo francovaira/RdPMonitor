@@ -21,6 +21,8 @@ from Map import Map
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
 
+# IMPORTANTEEEEEE       -- se puede hacer con la misma RDP la cuestion de definir ciertas celdas para que entre un solo robot no mas,
+#                          agregando una plaza conectada a las transiciones de entrada de esas plazas
 
 def thread_run(robotID, jobQueue, monitor):
 
@@ -41,7 +43,8 @@ def thread_run(robotID, jobQueue, monitor):
         running = True
         while(running):
             running = robotThreadExecutor.run()
-            time.sleep(1)
+            time.sleep(0.5)
+            #time.sleep(random.random())
 
         print(f"THREAD {robotID} STALL")
 
@@ -74,39 +77,123 @@ def define_motor_direction(transSeq, transicion, plazasSeq):
 
 # este hilo simula como se irian generando los jobs y enviando a cada robot
 def threadSendJobs(jobManager):
-    jobA = Job()
-    #if(robotID == "ROB_A"):
-    path = Path(3,1,3,2)
-    jobA.addPath(path)
-    path = Path(3,2,5,5)
-    jobA.addPath(path)
-    path = Path(5,5,5,1)
-    jobA.addPath(path)
-    jobManager.sendJobToRobot('ROB_A', jobA)
+    
+    while(1):
+        jobA = Job()
+        # path = Path(3,1,3,2)
+        # jobA.addPath(path)
+        # path = Path(3,2,4,5)
+        # jobA.addPath(path)
+        # path = Path(4,5,5,2)
+        # jobA.addPath(path)
+        path = Path(1,1,11,11)
+        jobA.addPath(path)
+        path = Path(11,11,1,1)
+        jobA.addPath(path)
+        path = Path(1,1,5,3)
+        jobA.addPath(path)
+        path = Path(5,3,1,1)
+        jobA.addPath(path)
+        jobManager.sendJobToRobot('ROB_A', jobA)
 
-    time.sleep(5)
+        #time.sleep(5)
 
-    jobB = Job()
-    #if(robotID == "ROB_B"):
-    path = Path(1,3,1,1)
-    jobB.addPath(path)
-    path = Path(1,1,2,5)
-    jobB.addPath(path)
-    path = Path(2,5,1,1)
-    jobB.addPath(path)
-    jobManager.sendJobToRobot('ROB_B', jobB)
+        jobB = Job()
+        # path = Path(1,3,5,1)
+        # jobB.addPath(path)
+        # path = Path(5,1,2,5)
+        # jobB.addPath(path)
+        # path = Path(2,5,1,5)
+        # jobB.addPath(path)
+        path = Path(11,1,1,11)
+        jobB.addPath(path)
+        path = Path(1,11,11,1)
+        jobB.addPath(path)
+        path = Path(11,1,7,9)
+        jobB.addPath(path)
+        path = Path(7,9,11,1)
+        jobB.addPath(path)
+        jobManager.sendJobToRobot('ROB_B', jobB)
 
-    time.sleep(20)
+        #time.sleep(20)
 
-    jobC = Job()
-    #if(robotID == "ROB_C"):
-    path = Path(5,5,3,1)
-    jobC.addPath(path)
-    path = Path(3,1,3,5)
-    jobC.addPath(path)
-    path = Path(3,5,3,1)
-    jobC.addPath(path)
-    jobManager.sendJobToRobot('ROB_C', jobC)
+        jobC = Job()
+        # path = Path(1,2,5,2)
+        # jobC.addPath(path)
+        # path = Path(5,2,2,5)
+        # jobC.addPath(path)
+        # path = Path(2,5,3,1)
+        # jobC.addPath(path)
+        path = Path(3,1,11,11)
+        jobC.addPath(path)
+        path = Path(11,11,3,1)
+        jobC.addPath(path)
+        path = Path(3,1,7,9)
+        jobC.addPath(path)
+        path = Path(7,9,3,1)
+        jobC.addPath(path)
+        jobManager.sendJobToRobot('ROB_C', jobC)
+
+        time.sleep(15)
+
+
+def threadSendJobsRandom(jobManager, mapDefinition):
+    OBSTACLE = 1
+    robots = ["ROB_A", "ROB_B", "ROB_C"]
+    robots_index = 0
+
+    robotsInitPos = []
+
+    randPosInitX = None
+    randPosInitY = None
+
+    print(f"\n\n--------------------------\n{mapDefinition}\n\n")
+
+    while(1):
+        cantidad_paths = random.randint(1,3)
+        print(f"CANTIDAD PATHS {cantidad_paths}")
+
+        if(len(robotsInitPos) > robots_index):
+            randPosInitX = robotsInitPos[robots_index][0]
+            randPosInitY = robotsInitPos[robots_index][1]
+
+        if(randPosInitX == None and randPosInitY == None):
+            randPosInitX = random.randint(1,10)
+            randPosInitY = random.randint(1,10)
+
+        job = Job()
+        for i in range(cantidad_paths):
+            #randPosInitX = random.randint(1,10)
+            #randPosInitY = random.randint(1,10)
+            randPosEndX = random.randint(1,10)
+            randPosEndY = random.randint(1,10)
+
+            while(mapDefinition[randPosInitX][randPosInitY] == OBSTACLE or mapDefinition[randPosInitX][randPosInitY] == -1):
+                randPosInitX = random.randint(1,10)
+                randPosInitY = random.randint(1,10)
+
+            while(mapDefinition[randPosEndX][randPosEndY] == OBSTACLE or mapDefinition[randPosEndX][randPosEndY] == -1):
+                randPosEndX = random.randint(1,10)
+                randPosEndY = random.randint(1,10)
+
+            print(f"ENCONTRE RANDOM LA POS ({randPosInitX},{randPosInitY}) // END ({randPosEndX},{randPosEndY})")
+            path = Path(randPosInitX, randPosInitY, randPosEndX, randPosEndY)
+            job.addPath(path)
+
+            randPosInitX = randPosEndX
+            randPosInitY = randPosEndY
+
+        #robotsInitPos.insert(robots_index, (randPosInitX, randPosInitY))
+        if(len(robotsInitPos) > robots_index):
+            robotsInitPos[robots_index] = (randPosInitX, randPosInitY)
+        else:
+            robotsInitPos.insert(robots_index, (randPosInitX, randPosInitY))
+        print(f"LIST {robotsInitPos}")
+        jobManager.sendJobToRobot(robots[robots_index], job)
+        robots_index = (robots_index + 1) % 3
+
+        time.sleep(10)
+
 
 def main():
 
@@ -142,6 +229,9 @@ def main():
 
     threadSendTrbjo = Thread(target=threadSendJobs, args=(jobManager,))
     threadSendTrbjo.start()
+
+    # threadSendTrbjo = Thread(target=threadSendJobsRandom, args=(jobManager, map.getMapDefinition().getMapStructure()))
+    # threadSendTrbjo.start()
 
 
     # cualquier cosa que se ponga despues de esto no se va a ejecutar aunque los hilos terminen
