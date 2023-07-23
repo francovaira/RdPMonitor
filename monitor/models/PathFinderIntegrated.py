@@ -1,5 +1,5 @@
 from decouple import config
-import macros_mapa
+import macros
 
 class PathFinderCell:
     def __init__(self, posX, posY):
@@ -84,10 +84,10 @@ class PathFinder:
         # Initialize cells with map definition
         for i in range(self.cols):
             for j in range(self.rows):
-                if( self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_BORDER or
-                    self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OBSTACLE  ):
+                if( self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_BORDER or
+                    self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_OBSTACLE  ):
                     self.grid[i][j].setIsObstacle(True)
-                elif(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OCCUPABLE):
+                elif(self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_OCCUPABLE):
                     self.grid[i][j].setIsObstacle(False)
                 else:
                     print("ERROR map cell definition unknown")
@@ -102,7 +102,7 @@ class PathFinder:
     def calculateDynamicPath(self, startX, startY, endX, endY, cellsCoordinatesMarkedAsOccupied):
         finished = False
         iterations = 0
-        maxIterations = int(config('PATH_FINDER_MAX_ITERATIONS'))
+        maxIterations = macros.PATH_FINDER_MAX_ITERATIONS
 
         start = self.__getCell(startX, startY)
         end = self.__getCell(endX, endY)
@@ -198,7 +198,7 @@ class PathFinder:
     def calculatePath(self, startX, startY, endX, endY):
         finished = False
         iterations = 0
-        maxIterations = int(config('PATH_FINDER_MAX_ITERATIONS'))
+        maxIterations = macros.PATH_FINDER_MAX_ITERATIONS
 
         start = self.__getCell(startX, startY)
         end = self.__getCell(endX, endY)

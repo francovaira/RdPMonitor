@@ -1,5 +1,5 @@
 import os
-import macros_mapa
+import macros
 
 class MapDefinition:
 
@@ -86,7 +86,7 @@ class MapGenerator:
         # check that all elements are valid definitions
         for i in range(len(mapDefinition)):
             for j in range(len(mapDefinition[i])):
-                if(mapDefinition[i][j] != macros_mapa.MAP_BORDER and mapDefinition[i][j] != macros_mapa.MAP_OBSTACLE and mapDefinition[i][j] != macros_mapa.MAP_OCCUPABLE):
+                if(mapDefinition[i][j] != macros.MAP_BORDER and mapDefinition[i][j] != macros.MAP_OBSTACLE and mapDefinition[i][j] != macros.MAP_OCCUPABLE):
                     print("ERROR DE INCONSISTENCIA DEFINICION DE MAPA - Mapa contiene definiciones invalidas")
                     return False
 

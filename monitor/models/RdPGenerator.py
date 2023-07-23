@@ -1,6 +1,6 @@
 
 import os
-import macros_mapa
+import macros
 
 RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure, False will generate generic RdP
 RDP_REGENERATE_IF_READ_FROM_FILE_FAILED     = False     # True to regenerate RdP if some of de RdP definition files are missing or inconsistent
@@ -61,9 +61,9 @@ class RdPGenerator:
 
         for i in range(self.__mapDefinition.getHorizontalSize()-2):
             for j in range(self.__mapDefinition.getVerticalSize()-2):
-                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros.MAP_BORDER):
                     self.__initialMark.append(0) # occupation = 0
-                    if(self.__mapDefinition.getMapStructure()[i+1][j+1] == macros_mapa.MAP_OCCUPABLE):
+                    if(self.__mapDefinition.getMapStructure()[i+1][j+1] == macros.MAP_OCCUPABLE):
                         self.__initialMark.append(RDP_INITIAL_MARK_PLACES)
                     else:
                         self.__initialMark.append(0)
@@ -85,8 +85,8 @@ class RdPGenerator:
         # CREATE HORIZONTAL CONNECTIONS
         for i in range(self.__mapDefinition.getVerticalSize()-2):
             for j in range(self.__mapDefinition.getHorizontalSize()-2):
-                if(self.__mapDefinition.getMapStructure()[j+1][i+1] != macros_mapa.MAP_BORDER and
-                   self.__mapDefinition.getMapStructure()[j+2][i+1] != macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[j+1][i+1] != macros.MAP_BORDER and
+                   self.__mapDefinition.getMapStructure()[j+2][i+1] != macros.MAP_BORDER):
                     idOccupationPlaceOrigin = 2*(j + i*(self.__mapDefinition.getHorizontalSize()-2))
                     idOccupationPlaceDestination = idOccupationPlaceOrigin + 2
 
@@ -98,8 +98,8 @@ class RdPGenerator:
         # CREATE VERTICAL CONNECTIONS
         for i in range(self.__mapDefinition.getHorizontalSize()-2):
             for j in range(self.__mapDefinition.getVerticalSize()-2):
-                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros_mapa.MAP_BORDER and
-                   self.__mapDefinition.getMapStructure()[i+1][j+2] != macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros.MAP_BORDER and
+                   self.__mapDefinition.getMapStructure()[i+1][j+2] != macros.MAP_BORDER):
                     idOccupationPlaceOrigin = 2*(i + j*(self.__mapDefinition.getHorizontalSize()-2))
                     idOccupationPlaceDestination = 2*(i + (j+1)*(self.__mapDefinition.getHorizontalSize()-2))
 

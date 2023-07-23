@@ -7,8 +7,8 @@ import time
 import numpy
 import random
 from decouple import config
-import mqqt_client as mqtt
-import macros_mapa
+# import mqqt_client as mqtt
+import macros
 from views.Visualizer import Visualizer
 from models.RdP import RdP
 from models.MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
@@ -64,7 +64,7 @@ class Setup:
             plaza_next = plazasSeq[0]
 
         plaza_position = plaza_next - plaza
-        mapHorizontalSize = (len(macros_mapa.MAPA[0])-2)*2
+        mapHorizontalSize = (len(macros.MAPA[0])-2)*2
         motor_direction = None
         
         # match plaza_position:
@@ -134,7 +134,7 @@ class Setup:
         #mqttc, mqttc_queue =  mqtt.main()
         monitor = MonitorWithQueuesAndPriorityQueue(rdp, map.getPathFinder())
 
-        viz = Visualizer(800, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
+        viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
         # create threads for each robot
         threads = []

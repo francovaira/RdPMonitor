@@ -6,29 +6,34 @@ import pygame_menu
 # from Map import Map
 import numpy as np
 from .VisualizerCell import VisualizerCell
+# from .Controller import Controller
 
 # VERRRR DOCUUU https://pygame.readthedocs.io/en/latest/2_draw/draw.html
 class Visualizer:
 
-    def __init__(self, canvasHorizontalSizePixels, canvasVerticalSizePixels, horizontalCells, verticalCells, mapInSharedMemory):
+    def __init__(self, canvasHorizontalSizePixels, canvasVerticalSizePixels):
         pygame.init()
-        self.__canvas = pygame.display.set_mode((canvasHorizontalSizePixels, canvasVerticalSizePixels))
         self.__canvasHorizontalSizePixels = canvasHorizontalSizePixels
         self.__canvasVerticalSizePixels = canvasVerticalSizePixels
+        self.__canvas = pygame.display.set_mode((self.__canvasHorizontalSizePixels, self.__canvasVerticalSizePixels))
         self.__running = True
-        self.__mapInSharedMemory = mapInSharedMemory
+        self.__mapInSharedMemory = None
         # # self.__mqttcEvent = mqttcEvent
         # # self.__mqttcQueue = mqttcQueue
         self.__robotID = ""
+        # set the controller
+        self.controller = None
 
         # Set background color
         self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
 
-        self.__horizontalCells = horizontalCells
-        self.__verticalCells = verticalCells
-        self.__cellWidth = canvasHorizontalSizePixels // (self.__horizontalCells*2)
-        self.__cellHeight = canvasHorizontalSizePixels // (self.__horizontalCells*2)
+    def __createMap(self):
+        self.__horizontalCells = self.controller.getMapHorizontalSize()
+        self.__verticalCells = self.controller.getMapVerticalSize()
+        self.__cellWidth = self.__canvasHorizontalSizePixels // (self.__horizontalCells*2)
+        self.__cellHeight = self.__canvasHorizontalSizePixels // (self.__horizontalCells*2)
+        self.__mapInSharedMemory = self.controller.getMapInSharedMemory()
 
         # Create cells for the grid
         self.__grid = np.zeros((self.__horizontalCells, self.__verticalCells), dtype=object)
@@ -40,6 +45,9 @@ class Visualizer:
 
         pygame.display.update()
         pygame.display.flip()
+
+    def setController(self, controller):
+        self.controller = controller
 
     def _create_menu(self, surface, ):
         theme = pygame_menu.Theme(
@@ -93,13 +101,18 @@ class Visualizer:
 
         self._menu.draw(surface)
 
-    # def setRobotID(self, robotID):
-    #     if(robotID == None):
-    #         self.__robotID = ""
-    #     else:
-    #         self.__robotID = robotID
+    def setRobotID(self, robotID):
+        if(robotID == None):
+            self.__robotID = ""
+        else:
+            self.__robotID = robotID
+
+    # def __run_solver(self, parametro):
+    #     controller.run_algo()
+    #     cola_eventos(parametro)
 
     def run(self):
+        self.__createMap()
         while self.__running:
 
             events = pygame.event.get()

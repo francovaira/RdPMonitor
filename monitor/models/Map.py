@@ -3,7 +3,7 @@ from multiprocessing import Manager
 from .PathFinderIntegrated import PathFinder
 from .MapGenerator import MapGenerator
 from Enums import MapCellOccupationStates, MapCellOccupationActions, MapCellTypes
-import macros_mapa
+import macros
 
 class MapCell:
     def __init__(self, posX, posY):
@@ -100,11 +100,11 @@ class Map:
         # Initialize cells with map definition
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
-                if(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_BORDER):
                     self.__mapInSharedMemory[i][j].setType(MapCellTypes.BORDER)
-                elif(self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OBSTACLE):
+                elif(self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_OBSTACLE):
                     self.__mapInSharedMemory[i][j].setType(MapCellTypes.OBSTACLE)
-                elif(not self.__mapDefinition.getMapStructure()[j][i] == macros_mapa.MAP_OCCUPABLE):
+                elif(not self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_OCCUPABLE):
                     print("ERROR map cell definition unknown")
 
         # Associate map cells with RdP places
