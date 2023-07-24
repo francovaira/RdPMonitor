@@ -70,7 +70,7 @@ class Visualizer:
 
         self._menu.add.button(
             'Run Solver',
-            self._run_solver(),
+            self.controller.run(),
             button_id='run_solver',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,

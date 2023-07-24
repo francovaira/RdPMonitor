@@ -1,5 +1,7 @@
 # from views.Visualizer import Visualizer as view
 # from models.JobManager import JobManager as model
+import multiprocessing
+from multiprocessing import Process
 
 class Controller:
     def __init__(self, model, view):
@@ -16,6 +18,9 @@ class Controller:
 
     def getMapInSharedMemory(self):
         return self.model.getMapInSharedMemory()
+
+    def run(self):
+        self.model.startJobManager()
 
     def start(self):
         try:
