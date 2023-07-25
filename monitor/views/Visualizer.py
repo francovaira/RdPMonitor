@@ -68,9 +68,9 @@ class Visualizer:
             width=240
         )
 
-        self._menu.add.button(
+        self.btn = self._menu.add.button(
             'Run Solver',
-            self.controller.run(),
+            self.controller.run,
             button_id='run_solver',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
@@ -84,7 +84,7 @@ class Visualizer:
             """
             if w.readonly:
                 return
-            w.set_background_color((98, 103, 106))
+            w.set_background_color((255,255,255))
 
         def button_onmouseleave(w: 'pygame_menu.widgets.Widget', _) -> None:
             """
@@ -92,12 +92,12 @@ class Visualizer:
             """
             w.set_background_color((75, 79, 81))
 
-        for btn in self._menu.get_widgets(['run_solver']):
-            btn.set_onmouseover(button_onmouseover)
-            btn.set_onmouseleave(button_onmouseleave)
-            if not btn.readonly:
-                btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
-            btn.set_background_color((75, 79, 81))
+        # for btn in self._menu.get_widgets(['run_solver']):
+        self.btn.set_onmouseover(button_onmouseover)
+        self.btn.set_onmouseleave(button_onmouseleave)
+        if not self.btn.readonly:
+            self.btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
+        self.btn.set_background_color((75, 79, 81))
 
         self._menu.draw(surface)
 

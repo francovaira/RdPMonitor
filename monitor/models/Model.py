@@ -34,25 +34,23 @@ class Model:
         # threads.append(thread_ROBOT_C)
 
     def startJobManager(self):
-        print("aa")
-        # self.thread_ROBOT_A.start()
-        # self.thread_ROBOT_B.start()
-        # self.thread_ROBOT_C.start()
+        self.thread_ROBOT_A.start()
+        self.thread_ROBOT_B.start()
+        self.thread_ROBOT_C.start()
 
-        # self.jobManager = JobManager()
-        # self.jobManager.addRobotJobQueue('ROB_A', self.jobQueueRobA)
-        # self.jobManager.addRobotJobQueue('ROB_B', self.jobQueueRobB)
-        # self.jobManager.addRobotJobQueue('ROB_C', self.jobQueueRobC)
+        self.jobManager = JobManager()
+        self.jobManager.addRobotJobQueue('ROB_A', self.jobQueueRobA)
+        self.jobManager.addRobotJobQueue('ROB_B', self.jobQueueRobB)
+        self.jobManager.addRobotJobQueue('ROB_C', self.jobQueueRobC)
 
-        # self.threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.jobManager,))
+        self.threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.jobManager,))
 
-        # self.threadSendTrbjo.start()
+        self.threadSendTrbjo.start()
 
     def getMapHorizontalSize(self):
         return self.map.getMapDefinition().getHorizontalSize()
 
     def getMapVerticalSize(self):
-        # return self.map.getMapDefinition().getHorizontalSize()
         return self.map.getMapDefinition().getVerticalSize()
 
     def getMapInSharedMemory(self):
