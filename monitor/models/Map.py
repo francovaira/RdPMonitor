@@ -1,6 +1,6 @@
 import multiprocessing
 from multiprocessing import Manager
-from .PathFinderIntegrated import PathFinder
+from .PathFinder import PathFinder
 from .MapGenerator import MapGenerator
 from Enums import MapCellOccupationStates, MapCellOccupationActions, MapCellTypes
 import macros

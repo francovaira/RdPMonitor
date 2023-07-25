@@ -17,6 +17,16 @@ from models.JobManager import Path
 from models.JobManager import Job
 from models.JobManager import JobManager
 from models.Map import Map
+import MQTTClient as mqtt
+import macros_mapa
+from RdP import RdP
+from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
+from Visualizer import Visualizer
+from RobotThreadExecutor import RobotThreadExecutor
+from JobManager import Path
+from JobManager import Job
+from JobManager import JobManager
+from Map import Map
 
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
@@ -88,9 +98,13 @@ class Setup:
         # jobA.addPath(path)
         # path = Path(4,5,5,2)
         # jobA.addPath(path)
-        path = Path(1,1,5,5)
+        path = Path(1,1,11,11)
         jobA.addPath(path)
-        path = Path(5,5,1,1)
+        path = Path(11,11,1,1)
+        jobA.addPath(path)
+        path = Path(1,1,5,3)
+        jobA.addPath(path)
+        path = Path(5,3,1,1)
         jobA.addPath(path)
         jobManager.sendJobToRobot('ROB_A', jobA)
 
@@ -103,9 +117,13 @@ class Setup:
         # jobB.addPath(path)
         # path = Path(2,5,1,5)
         # jobB.addPath(path)
-        path = Path(5,1,1,5)
+        path = Path(11,1,1,11)
         jobB.addPath(path)
-        path = Path(1,5,5,1)
+        path = Path(1,11,11,1)
+        jobB.addPath(path)
+        path = Path(11,1,7,9)
+        jobB.addPath(path)
+        path = Path(7,9,11,1)
         jobB.addPath(path)
         jobManager.sendJobToRobot('ROB_B', jobB)
 
@@ -118,11 +136,76 @@ class Setup:
         # jobC.addPath(path)
         # path = Path(2,5,3,1)
         # jobC.addPath(path)
-        path = Path(3,1,5,5)
+        path = Path(3,1,11,11)
         jobC.addPath(path)
-        path = Path(5,5,3,1)
+        path = Path(11,11,3,1)
+        jobC.addPath(path)
+        path = Path(3,1,7,9)
+        jobC.addPath(path)
+        path = Path(7,9,3,1)
         jobC.addPath(path)
         jobManager.sendJobToRobot('ROB_C', jobC)
+
+        time.sleep(15)
+
+
+def threadSendJobsRandom(jobManager, mapDefinition):
+    OBSTACLE = 1
+    robots = ["ROB_A", "ROB_B", "ROB_C"]
+    robots_index = 0
+
+    robotsInitPos = []
+
+    randPosInitX = None
+    randPosInitY = None
+
+    print(f"\n\n--------------------------\n{mapDefinition}\n\n")
+
+    while(1):
+        cantidad_paths = random.randint(1,3)
+        print(f"CANTIDAD PATHS {cantidad_paths}")
+
+        if(len(robotsInitPos) > robots_index):
+            randPosInitX = robotsInitPos[robots_index][0]
+            randPosInitY = robotsInitPos[robots_index][1]
+
+        if(randPosInitX == None and randPosInitY == None):
+            randPosInitX = random.randint(1,10)
+            randPosInitY = random.randint(1,10)
+
+        job = Job()
+        for i in range(cantidad_paths):
+            #randPosInitX = random.randint(1,10)
+            #randPosInitY = random.randint(1,10)
+            randPosEndX = random.randint(1,10)
+            randPosEndY = random.randint(1,10)
+
+            while(mapDefinition[randPosInitX][randPosInitY] == OBSTACLE or mapDefinition[randPosInitX][randPosInitY] == -1):
+                randPosInitX = random.randint(1,10)
+                randPosInitY = random.randint(1,10)
+
+            while(mapDefinition[randPosEndX][randPosEndY] == OBSTACLE or mapDefinition[randPosEndX][randPosEndY] == -1):
+                randPosEndX = random.randint(1,10)
+                randPosEndY = random.randint(1,10)
+
+            print(f"ENCONTRE RANDOM LA POS ({randPosInitX},{randPosInitY}) // END ({randPosEndX},{randPosEndY})")
+            path = Path(randPosInitX, randPosInitY, randPosEndX, randPosEndY)
+            job.addPath(path)
+
+            randPosInitX = randPosEndX
+            randPosInitY = randPosEndY
+
+        #robotsInitPos.insert(robots_index, (randPosInitX, randPosInitY))
+        if(len(robotsInitPos) > robots_index):
+            robotsInitPos[robots_index] = (randPosInitX, randPosInitY)
+        else:
+            robotsInitPos.insert(robots_index, (randPosInitX, randPosInitY))
+        print(f"LIST {robotsInitPos}")
+        jobManager.sendJobToRobot(robots[robots_index], job)
+        robots_index = (robots_index + 1) % 3
+
+        time.sleep(10)
+
 
     def main(self):
 
@@ -158,6 +241,9 @@ class Setup:
 
         threadSendTrbjo = Thread(target=self.threadSendJobs, args=(jobManager,))
         threadSendTrbjo.start()
+
+    # threadSendTrbjo = Thread(target=threadSendJobsRandom, args=(jobManager, map.getMapDefinition().getMapStructure()))
+    # threadSendTrbjo.start()
 
 
         # cualquier cosa que se ponga despues de esto no se va a ejecutar aunque los hilos terminen

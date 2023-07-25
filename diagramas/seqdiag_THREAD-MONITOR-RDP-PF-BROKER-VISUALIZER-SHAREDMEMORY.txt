@@ -1,0 +1,63 @@
+title This is a title
+
+participantgroup #lightgreen <color:#black>MainProcess</color>
+
+participantgroup #lightyellow <color:#black>JobManager Thread</color>
+    participant JobManager
+end
+
+participantgroup #green <color:#white>Robot Thread</color>
+    participant Thread A
+end
+
+JobManager->Thread A: newJob(start, destination)
+Thread A->PathFinder: calculatePath(start destination)
+Thread A<--PathFinder: return calculatedPath()
+
+Thread A->Monitor: getTransitionSequence(calculatedPath)
+Thread A<--Monitor: return transitionSequence
+
+loop while sequenceNotFinished
+    Thread A->Monitor:monitorDisparar(nextTransition)
+    Monitor->Lock:acquire(nextTransition)
+    Monitor<--Lock:return lockAcquired
+    alt lockAcquired == true
+        Monitor->RdP:solicitudDisparo(nextTransition)
+        Monitor<--RdP:return k
+        loop while k == 0
+            Monitor->Thread A:wait()
+            Monitor<--Thread A:wake up
+            Monitor->RdP:solicitudDisparo(nextTransition)
+            Monitor<--RdP:return k
+        end
+        Monitor->RdP:redDisparar()
+        RdP->RdP:getPlacesChangedMarking()
+        RdP->Map:updatePosition(placesChangedMarking)
+        Map->MapInSharedMemory:updateCell()
+        RdP<--Map:
+        Monitor->RdP:printMarcado()
+        Monitor->Monitor:notifyAll()
+        Monitor->Lock:release()
+        Monitor<--Lock:
+    end
+   Thread A<--Monitor:
+
+   participantgroup #violet <color:#white>MQTT Thread</color>
+       participant MQTT_Broker
+   end
+   Thread A->MQTT_Broker:sendMovementParameters()
+   Thread A<--MQTT_Broker:
+   MQTT_Broker->MQTT_Broker:sendToRobot()
+end
+end
+
+participantgroup #lightblue <color:#black>VisualizerProcess</color>
+participant Visualizer
+end
+loop while true
+    Visualizer->MapInSharedMemory:read()
+    Visualizer<--MapInSharedMemory:return mapState
+    Visualizer->Visualizer:updateCanvas()
+    Visualizer->Visualizer:waitMiliseconds(FPSrate)
+end
+
