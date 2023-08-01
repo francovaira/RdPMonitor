@@ -34,12 +34,12 @@ class VisualizerCell:
         elif(cellType == MapCellTypes.OCCUPABLE):
             if(self.__mapCell.getOccupationState() == MapCellOccupationStates.OCCUPIED_PLACE):
                 #self.__color = Colors.GREEN.value
-                if(self.__robotID == "ROB_A"):
-                    self.__color = Colors.ROBOT_1.value
-                elif(self.__robotID == "ROB_B"):
-                    self.__color = Colors.ROBOT_2.value
-                elif(self.__robotID == "ROB_C"):
-                    self.__color = Colors.ROBOT_3.value
+                # if(self.__robotID == "ROB_A"):
+                self.__color = Colors.ROBOT_1.value
+                # elif(self.__robotID == "ROB_B"):
+                self.__color = Colors.ROBOT_2.value
+                # elif(self.__robotID == "ROB_C"):
+                self.__color = Colors.ROBOT_3.value
 
             elif(self.__mapCell.getOccupationState() == MapCellOccupationStates.FREE_PLACE):
                 self.__color = Colors.GREY.value

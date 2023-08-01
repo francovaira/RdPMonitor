@@ -30,37 +30,6 @@ class App:
         processVisualizer = multiprocessing.Process(target=viz.run())
         processVisualizer.start()
 
-
-    # def main():
-
-    #     map = Map()
-    #     mapHorizontalSize = map.getMapDefinition().getHorizontalSize()
-    #     mapVerticalSize = map.getMapDefinition().getVerticalSize()
-
-    #     rdp = RdP(map)
-    #     # mqttc, mqttc_robot_queue =  mqtt.main()
-    #     monitor = Monitor(rdp, map.getPathFinder())
-    #     viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
-
-    #     # create threads for each robot
-    #     threads = []
-    #     thread_ROBOT_A = Thread(target=thread_run, args=(monitor, Robot('ROB_A')))
-    #     thread_ROBOT_B = Thread(target=thread_run, args=(monitor, Robot('ROB_B')))
-    #     # thread_ROBOT_B = Thread(target=thread_run, args=(monitor, 'ROB_B', map.getPathFinder(), mqttc, mqttc_queue))
-    #     threads.append(thread_ROBOT_A)
-    #     threads.append(thread_ROBOT_B)
-    #     # threads.append(thread_ROBOT_C)
-    #     thread_ROBOT_A.start()
-    #     thread_ROBOT_B.start()
-    #     # thread_ROBOT_C.start()
-
-    #     processVisualizer = multiprocessing.Process(target=viz.run())
-    #     processVisualizer.start()
-
-    #     # wait for the threads to complete
-    #     for thread in threads:
-    #         thread.join()
-    #     processVisualizer.join()
            
 if __name__ == '__main__':
     app = App()

@@ -57,6 +57,8 @@ class RobotThreadExecutor:
         if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
             nextTransitionIndex = transitionIndex + 1
             currentJob.setTransitionIndex(nextTransitionIndex)
+            print(f"@{self.__robotID} || NEXT TRANSITION @{currentJob.getCoordinatesPathSequence()[transitionIndex]}")
+            # blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
 
             if(nextTransitionIndex>= len(transitionsSequence)):
                 print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
@@ -88,6 +90,5 @@ class RobotThreadExecutor:
             coordinatesPathSequence[transitionIndex:transitionIndex] = coordSeq # inserts elements from index
             print(f"{self.__robotID} || NUEVO CALCULO DE LAS COORDENADAS = {coordSeq} || EL TOTAL SERIA = {coordinatesPathSequence}\n\n--------------------------------\n")
             currentJob.setCoordinatesPathSequence(coordinatesPathSequence)
-
 
         return True

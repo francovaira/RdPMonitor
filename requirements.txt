@@ -1,6 +1,8 @@
 paho-mqtt==1.6.1
 beautifulsoup4==4.11.1
 python-dotenv==0.21.0
-pandas
-pygame
-pygame_menu
+pandas==2.0.3
+pygame==2.2.0
+pygame_menu==4.2.2
+numpy==1.25.0
+python-decouple==3.8 

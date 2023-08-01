@@ -1,6 +1,5 @@
-import queue
+# import queue
 import time
-import random
 import threading
 from threading import Thread
 from .Map import Map
@@ -9,7 +8,7 @@ from .MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
 from .JobManager import Path
 from .JobManager import Job
 from .JobManager import JobManager
-from .RobotThreadExecutor import RobotThreadExecutor
+from .Robot import Robot
 
 class Model:
     def __init__(self):
@@ -22,26 +21,27 @@ class Model:
 
         # create threads for each robot
         threads = []
-        self.jobQueueRobA = queue.Queue()
-        self.jobQueueRobB = queue.Queue()
-        self.jobQueueRobC = queue.Queue()
+        self.robA = Robot(self.monitor)
+        self.robB = Robot(self.monitor)
+        self.robC = Robot(self.monitor)
 
-        self.thread_ROBOT_A = Thread(target=self.__threadRun, args=('ROB_A', self.jobQueueRobA, self.monitor))
-        self.thread_ROBOT_B = Thread(target=self.__threadRun, args=('ROB_B', self.jobQueueRobB, self.monitor))
-        self.thread_ROBOT_C = Thread(target=self.__threadRun, args=('ROB_C', self.jobQueueRobC, self.monitor))
+        # self.thread_ROBOT_A = Thread(target=self.__threadRun, args=(self.robA,))
+        # self.thread_ROBOT_B = Thread(target=self.__threadRun, args=(self.robB,))
+        # self.thread_ROBOT_C = Thread(target=self.__threadRun, args=(self.robC,))
         # threads.append(thread_ROBOT_A)
         # threads.append(thread_ROBOT_B)
         # threads.append(thread_ROBOT_C)
 
     def startJobManager(self):
-        self.thread_ROBOT_A.start()
-        self.thread_ROBOT_B.start()
-        self.thread_ROBOT_C.start()
+        self.robA.getThread().start()
+        self.robB.getThread().start()
+        self.robC.getThread().start()
 
         self.jobManager = JobManager()
-        self.jobManager.addRobotJobQueue('ROB_A', self.jobQueueRobA)
-        self.jobManager.addRobotJobQueue('ROB_B', self.jobQueueRobB)
-        self.jobManager.addRobotJobQueue('ROB_C', self.jobQueueRobC)
+        # print(self.robA.getRobotQueue() , self.robB.getRobotQueue() , self.robC.getRobotQueue())
+        self.jobManager.addRobotJobQueue(self.robA.getRobotID(), self.robA.getRobotQueue())
+        self.jobManager.addRobotJobQueue(self.robB.getRobotID(), self.robB.getRobotQueue())
+        self.jobManager.addRobotJobQueue(self.robC.getRobotID(), self.robC.getRobotQueue())
 
         self.threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.jobManager,))
 
@@ -56,30 +56,6 @@ class Model:
     def getMapInSharedMemory(self):
         return self.map.getMapInSharedMemory()
 
-    def __threadRun(self, robotID, jobQueue, monitor):
-
-        robotThreadExecutor = RobotThreadExecutor(robotID, monitor)
-
-        time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
-
-        while(1):
-            print(f"{robotID} || me voy a bloquear")
-            nextJob = jobQueue.get() # se bloquea hasta que se ponga un elemento
-
-            if(not type(nextJob) == Job):
-                continue
-
-            robotThreadExecutor.addJob(nextJob)
-            robotThreadExecutor.startPaths()
-
-            running = True
-            while(running):
-                running = robotThreadExecutor.run()
-                #time.sleep(0.5)
-                time.sleep(random.random())
-
-            print(f"THREAD {robotID} STALL")
-
     # este hilo simula como se irian generando los jobs y enviando a cada robot
     def __threadSendJobs(self, jobManager):
         jobA = Job()
@@ -89,11 +65,15 @@ class Model:
         # jobA.addPath(path)
         # path = Path(4,5,5,2)
         # jobA.addPath(path)
-        path = Path(1,1,5,5)
+        path = Path(1,1,11,11)
         jobA.addPath(path)
-        path = Path(5,5,1,1)
+        path = Path(11,11,1,1)
         jobA.addPath(path)
-        jobManager.sendJobToRobot('ROB_A', jobA)
+        # path = Path(1,1,5,3)
+        # jobA.addPath(path)
+        # path = Path(5,3,1,1)
+        # jobA.addPath(path)
+        jobManager.sendJobToRobot(self.robA.getRobotID(), jobA)
 
         #time.sleep(5)
 
@@ -104,11 +84,15 @@ class Model:
         # jobB.addPath(path)
         # path = Path(2,5,1,5)
         # jobB.addPath(path)
-        path = Path(5,1,1,5)
+        path = Path(11,1,1,11)
         jobB.addPath(path)
-        path = Path(1,5,5,1)
-        jobB.addPath(path)
-        jobManager.sendJobToRobot('ROB_B', jobB)
+        # path = Path(1,11,11,1)
+        # jobB.addPath(path)
+        # path = Path(11,1,7,9)
+        # jobB.addPath(path)
+        # path = Path(7,9,11,1)
+        # jobB.addPath(path)
+        jobManager.sendJobToRobot(self.robB.getRobotID(), jobB)
 
         #time.sleep(20)
 
@@ -119,8 +103,14 @@ class Model:
         # jobC.addPath(path)
         # path = Path(2,5,3,1)
         # jobC.addPath(path)
-        path = Path(3,1,5,5)
+        path = Path(3,1,11,11)
         jobC.addPath(path)
-        path = Path(5,5,3,1)
+        path = Path(11,11,3,1)
         jobC.addPath(path)
-        jobManager.sendJobToRobot('ROB_C', jobC)
+        # path = Path(3,1,7,9)
+        # jobC.addPath(path)
+        # path = Path(7,9,3,1)
+        # jobC.addPath(path)
+        jobManager.sendJobToRobot(self.robC.getRobotID(), jobC)
+
+        time.sleep(15)

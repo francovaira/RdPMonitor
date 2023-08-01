@@ -17,16 +17,16 @@ from models.JobManager import Path
 from models.JobManager import Job
 from models.JobManager import JobManager
 from models.Map import Map
-import MQTTClient as mqtt
-import macros_mapa
-from RdP import RdP
-from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
-from Visualizer import Visualizer
-from RobotThreadExecutor import RobotThreadExecutor
-from JobManager import Path
-from JobManager import Job
-from JobManager import JobManager
-from Map import Map
+# import MQTTClient as mqtt
+# import macros_mapa
+# from RdP import RdP
+# from MonitorWithQueuesAndPriorityQueue import MonitorWithQueuesAndPriorityQueue
+# from Visualizer import Visualizer
+# from RobotThreadExecutor import RobotThreadExecutor
+# from JobManager import Path
+# from JobManager import Job
+# from JobManager import JobManager
+# from Map import Map
 
 # muy buena explicacion de GIL https://pythonspeed.com/articles/python-gil/
 # about yield = time.sleep(0) https://stackoverflow.com/a/790246
