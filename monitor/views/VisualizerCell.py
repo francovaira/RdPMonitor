@@ -3,7 +3,7 @@ from pygame.locals import *
 from Enums import Colors, MapCellOccupationStates, MapCellTypes
 
 class VisualizerCell:
-    def __init__(self, canvas, mapCell, width, height, robotID):
+    def __init__(self, canvas, mapCell, width, height):
         self.__canvas = canvas
         self.__mapCell = mapCell
         self.__color = Colors.BLACK.value

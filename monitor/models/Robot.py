@@ -9,8 +9,8 @@ class Robot:
     def __init__(self, monitor):
     # def __init__(self, robotID):
         self.robotID = None
-        self._prioridad = None
-        self._caminoRecorrido = None
+        self.__prioridad = None
+        self.__caminoRecorrido = None
         # self._mqtt_client = mqttc.create_client(self.robotID)
         self.robotQueue = queue.Queue()
         self.monitor = monitor
