@@ -6,34 +6,31 @@ import threading
 from threading import Thread
 
 class Robot:
-    def __init__(self, monitor):
-    # def __init__(self, robotID):
-        self.robotID = None
+    def __init__(self, monitor, robotID):
+        self.__robotID = robotID
         self.__prioridad = None
         self.__caminoRecorrido = None
-        # self._mqtt_client = mqttc.create_client(self.robotID)
-        self.robotQueue = queue.Queue()
-        self.monitor = monitor
-        self.robotThreadRun = RobotThreadRun(self)
+        # self.__mqtt_client = mqttc.create_client(self.__robotID)
+        self.__robotQueue = queue.Queue()
+        self.__monitor = monitor
 
-        self.__setRobotID()
+        self.robotThreadRun = RobotThreadRun(self)
         self.thread = Thread(target=self.robotThreadRun.threadRun)
 
     def getRobotID(self):
-        return self.robotID
+        return self.__robotID
 
     def getThread(self):
         return self.thread
 
     def getRobotQueue(self):
-        return self.robotQueue
+        return self.__robotQueue
 
     def getMonitor(self):
-        return self.monitor
+        return self.__monitor
 
-    def __setRobotID(self):
-        identificador = "id_" + str(rd.randint(1, 10))
-        self.robotID = identificador
+    def __setRobotID(self, robotID):
+        self.__robotID = robotID
 
     # def getPrioridad(self):
 

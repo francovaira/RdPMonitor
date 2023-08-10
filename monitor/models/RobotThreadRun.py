@@ -6,17 +6,17 @@ from .RobotThreadExecutor import RobotThreadExecutor
 
 class RobotThreadRun:
     def __init__(self, robot):
-        self.robot = robot
+        self.__robot = robot
 
     def threadRun(self):
 
-        self.robotThreadExecutor = RobotThreadExecutor(self.robot.getRobotID(), self.robot.getMonitor())
+        self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
 
         time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
         while(1):
-            print(f"{self.robot.getRobotID()} || me voy a bloquear")
-            nextJob = self.robot.getRobotQueue().get() # se bloquea hasta que se ponga un elemento
+            print(f"{self.__robot.getRobotID()} || me voy a bloquear")
+            nextJob = self.__robot.getRobotQueue().get() # se bloquea hasta que se ponga un elemento
 
             if(not type(nextJob) == Job):
                 continue
@@ -30,4 +30,4 @@ class RobotThreadRun:
                 #time.sleep(0.5)
                 time.sleep(random.random())
 
-            print(f"THREAD {self.robot.getRobotID()} STALL")
+            print(f"THREAD {self.__robot.getRobotID()} STALL")

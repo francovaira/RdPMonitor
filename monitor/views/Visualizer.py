@@ -17,18 +17,18 @@ class Visualizer:
         self.__running = True
         self.__mapInSharedMemory = None
         # set the controller
-        self.controller = None
+        self.__controller = None
 
         # Set background color
         self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
 
     def __createMap(self):
-        self.__horizontalCells = self.controller.getMapHorizontalSize()
-        self.__verticalCells = self.controller.getMapVerticalSize()
-        self.__cellWidth = self.__canvasHorizontalSizePixels // (self.__horizontalCells*2)
-        self.__cellHeight = self.__canvasHorizontalSizePixels // (self.__horizontalCells*2)
-        self.__mapInSharedMemory = self.controller.getMapInSharedMemory()
+        self.__horizontalCells = self.__controller.getMapHorizontalSize()
+        self.__verticalCells = self.__controller.getMapVerticalSize()
+        self.__cellWidth = self.__canvasHorizontalSizePixels // (self.__horizontalCells*1.75)
+        self.__cellHeight = self.__canvasHorizontalSizePixels // (self.__horizontalCells*1.75)
+        self.__mapInSharedMemory = self.__controller.getMapInSharedMemory()
 
         # Create cells for the grid
         self.__grid = np.zeros((self.__horizontalCells, self.__verticalCells), dtype=object)
@@ -42,9 +42,9 @@ class Visualizer:
         pygame.display.flip()
 
     def setController(self, controller):
-        self.controller = controller
+        self.__controller = controller
 
-    def __create_menu(self, surface, ):
+    def __create_menu(self, surface):
         theme = pygame_menu.Theme(
             background_color=pygame_menu.themes.TRANSPARENT_COLOR,
             title=False,
@@ -65,7 +65,7 @@ class Visualizer:
 
         self.btn = self.__menu.add.button(
             'Run Solver',
-            self.controller.run,
+            self.__controller.run,
             button_id='run_solver',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
