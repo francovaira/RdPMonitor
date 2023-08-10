@@ -1,5 +1,5 @@
 import os
-import macros_mapa
+import macros
 
 class MapDefinition:
 
@@ -46,10 +46,13 @@ class MapGenerator:
 
     def __fileMapDefinitionRead(self):
         try:
-            absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
-            mapFilePath = os.path.join(absolutePath, "maps", "mapDefinition.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
-            mapFile=open(mapFilePath,"r")
-            mapDefinitionRead=eval(mapFile.read())
+            # get the absolute path of the directory the script is in
+            absolutePath = os.path.dirname(os.path.realpath(__file__))
+            absolutePath = os.path.split(absolutePath)
+            # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            mapFilePath = os.path.join(absolutePath[0], "maps", "mapDefinition.txt")
+            mapFile = open(mapFilePath,"r")
+            mapDefinitionRead = eval(mapFile.read())
             mapFile.close()
         except Exception as e:
             print(str(e))
@@ -83,7 +86,7 @@ class MapGenerator:
         # check that all elements are valid definitions
         for i in range(len(mapDefinition)):
             for j in range(len(mapDefinition[i])):
-                if(mapDefinition[i][j] != macros_mapa.MAP_BORDER and mapDefinition[i][j] != macros_mapa.MAP_OBSTACLE and mapDefinition[i][j] != macros_mapa.MAP_OCCUPABLE):
+                if(mapDefinition[i][j] != macros.MAP_BORDER and mapDefinition[i][j] != macros.MAP_OBSTACLE and mapDefinition[i][j] != macros.MAP_OCCUPABLE):
                     print("ERROR DE INCONSISTENCIA DEFINICION DE MAPA - Mapa contiene definiciones invalidas")
                     return False
 

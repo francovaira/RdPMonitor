@@ -1,6 +1,6 @@
 
 import os
-import macros_mapa
+import macros
 
 RDP_READ_FROM_FILE                          = False     # True to read RdP definition from rdpDefinition.txt regardless of map structure, False will generate generic RdP
 RDP_REGENERATE_IF_READ_FROM_FILE_FAILED     = False     # True to regenerate RdP if some of de RdP definition files are missing or inconsistent
@@ -61,9 +61,9 @@ class RdPGenerator:
 
         for i in range(self.__mapDefinition.getHorizontalSize()-2):
             for j in range(self.__mapDefinition.getVerticalSize()-2):
-                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros.MAP_BORDER):
                     self.__initialMark.append(0) # occupation = 0
-                    if(self.__mapDefinition.getMapStructure()[i+1][j+1] == macros_mapa.MAP_OCCUPABLE):
+                    if(self.__mapDefinition.getMapStructure()[i+1][j+1] == macros.MAP_OCCUPABLE):
                         self.__initialMark.append(RDP_INITIAL_MARK_PLACES)
                     else:
                         self.__initialMark.append(0)
@@ -85,8 +85,8 @@ class RdPGenerator:
         # CREATE HORIZONTAL CONNECTIONS
         for i in range(self.__mapDefinition.getVerticalSize()-2):
             for j in range(self.__mapDefinition.getHorizontalSize()-2):
-                if(self.__mapDefinition.getMapStructure()[j+1][i+1] != macros_mapa.MAP_BORDER and
-                   self.__mapDefinition.getMapStructure()[j+2][i+1] != macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[j+1][i+1] != macros.MAP_BORDER and
+                   self.__mapDefinition.getMapStructure()[j+2][i+1] != macros.MAP_BORDER):
                     idOccupationPlaceOrigin = 2*(j + i*(self.__mapDefinition.getHorizontalSize()-2))
                     idOccupationPlaceDestination = idOccupationPlaceOrigin + 2
 
@@ -98,8 +98,8 @@ class RdPGenerator:
         # CREATE VERTICAL CONNECTIONS
         for i in range(self.__mapDefinition.getHorizontalSize()-2):
             for j in range(self.__mapDefinition.getVerticalSize()-2):
-                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros_mapa.MAP_BORDER and
-                   self.__mapDefinition.getMapStructure()[i+1][j+2] != macros_mapa.MAP_BORDER):
+                if(self.__mapDefinition.getMapStructure()[i+1][j+1] != macros.MAP_BORDER and
+                   self.__mapDefinition.getMapStructure()[i+1][j+2] != macros.MAP_BORDER):
                     idOccupationPlaceOrigin = 2*(i + j*(self.__mapDefinition.getHorizontalSize()-2))
                     idOccupationPlaceDestination = 2*(i + (j+1)*(self.__mapDefinition.getHorizontalSize()-2))
 
@@ -151,14 +151,16 @@ class RdPGenerator:
 
     def __fileRdPDefinitionRead(self):
         try:
-            absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
-
-            rdpFilePath = os.path.join(absolutePath, "petri_nets", "rdpDefinition.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
-            rdpFile=open(rdpFilePath,"r")
-            rdpDefinitionRead=eval(rdpFile.read())
+            # get the absolute path of the directory the script is in
+            absolutePath = os.path.dirname(os.path.realpath(__file__))
+            absolutePath = os.path.split(absolutePath)
+            # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            rdpFilePath = os.path.join(absolutePath[0], "petri_nets", "rdpDefinition.txt")
+            rdpFile = open(rdpFilePath,"r")
+            rdpDefinitionRead = eval(rdpFile.read())
             rdpFile.close()
-
-            initialMarkFilePath = os.path.join(absolutePath, "petri_nets", "initial_calculated.txt") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            initialMarkFilePath = os.path.join(absolutePath[0], "petri_nets", "initial_calculated.txt")
             initialMarkFile=open(initialMarkFilePath,"r")
             initialMarkRead=eval(initialMarkFile.read())
             initialMarkFile.close()
@@ -175,8 +177,9 @@ class RdPGenerator:
     def __fileWrite(self, list2write, filename):
         try:
             absolutePath = os.path.dirname(os.path.realpath(__file__)) # get the absolute path of the directory the script is in
-            writeFilePath = os.path.join(absolutePath, "petri_nets", f"{filename}") # construct the path to the file in the subdirectory # FIXME hacer un define/config
-            writeFile=open(writeFilePath,"w")
+            absolutePath = os.path.split(absolutePath)
+            writeFilePath = os.path.join(absolutePath[0], "petri_nets", f"{filename}") # construct the path to the file in the subdirectory # FIXME hacer un define/config
+            writeFile = open(writeFilePath,"w")
             writeFile.write(str(list2write))
             writeFile.close()
         except Exception as e:

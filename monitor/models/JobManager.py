@@ -6,7 +6,7 @@ class JobManager:
 
     def addRobotJobQueue(self, robotID, jobQueue):
         self.__robotsJobsQueue.update({robotID:jobQueue})
-        #print(f"ADDED JOB QUEUE OF ROBOT {robotID} || {self.__robotsJobsQueue}")
+        print(f"ADDED JOB QUEUE OF ROBOT {robotID} || {self.__robotsJobsQueue}")
 
     def sendJobToRobot(self, robotID, job):
         if(not type(job) == Job):
