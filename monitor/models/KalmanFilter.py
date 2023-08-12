@@ -22,22 +22,18 @@ class KalmanFilter:
         self.__R = np.array([[self.__delta_x**2, 0], [0, self.__delta_vx**2]])
 
     def inputMeasurementUpdate(self, inputMeasurement):
-
         Ykmx = 0
         Ykmvx = 0
-
-        Xkp = self.__calculatePredictedState(self.__Xkm1)
-
-        Pkp = self.__calculateProcessCovarianceMatrix(self.__Pkm1)
-
-        K = self.__calculateKalmanGain(Pkp, self.__R)
 
         Ykmx = Ykmx + inputMeasurement[0] # acumulativo de distancia - FIXME no deberia hacerse aca, deberia llegar desde afuera asi
         Ykmvx = inputMeasurement[1]
         Yk = np.array([[Ykmx], [Ykmvx]])
 
-        Xk = self.__calculateNewEstimatedState(Xkp, K, Yk)
+        Xkp = self.__calculatePredictedState(self.__Xkm1)
+        Pkp = self.__calculateProcessCovarianceMatrix(self.__Pkm1)
+        K = self.__calculateKalmanGain(Pkp, self.__R)
 
+        Xk = self.__calculateNewEstimatedState(Xkp, K, Yk)
         Pk = self.__calculateNewProcessCovarianceMatrix(Pkp, K)
 
         self.__Xkm1 = Xk
