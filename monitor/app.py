@@ -1,4 +1,3 @@
-from integration_test import Setup
 import multiprocessing
 from multiprocessing import Process
 from controllers.Controller import Controller
@@ -24,13 +23,9 @@ class App:
 
         # set the controller to view
         viz.setController(controller)
-        # viz.createMap()
-        # viz.run()
         # cualquier cosa que se ponga despues de esto no se va a ejecutar aunque los hilos terminen
         processVisualizer = multiprocessing.Process(target=viz.run())
         processVisualizer.start()
 
-           
 if __name__ == '__main__':
     app = App()
-    # app.mainloop()
