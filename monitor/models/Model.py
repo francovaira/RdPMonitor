@@ -27,7 +27,7 @@ class Model:
 
     def startJobManager(self):
         for robot in self.__robots:
-            self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getRobotQueue())
+            self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
             robot.getThread().start()
 
         threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.__jobManager,))

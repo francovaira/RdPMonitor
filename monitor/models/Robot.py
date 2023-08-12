@@ -11,7 +11,7 @@ class Robot:
         self.__prioridad = None
         self.__caminoRecorrido = None
         # self.__mqtt_client = mqttc.create_client(self.__robotID)
-        self.__robotQueue = queue.Queue()
+        self.__jobQueue = queue.Queue()
         self.__monitor = monitor
 
         self.robotThreadRun = RobotThreadRun(self)
@@ -23,8 +23,8 @@ class Robot:
     def getThread(self):
         return self.thread
 
-    def getRobotQueue(self):
-        return self.__robotQueue
+    def getJobQueue(self):
+        return self.__jobQueue
 
     def getMonitor(self):
         return self.__monitor
