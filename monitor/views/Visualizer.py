@@ -100,7 +100,6 @@ class Visualizer:
         while self.__running:
 
             events = pygame.event.get()
-
             for event in events:
                 if event.type == QUIT:
                     self.__running = False

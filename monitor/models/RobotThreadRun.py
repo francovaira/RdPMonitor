@@ -16,12 +16,12 @@ class RobotThreadRun:
 
         while(1):
             print(f"{self.__robot.getRobotID()} || me voy a bloquear")
-            nextJob = self.__robot.getJobQueue().get() # se bloquea hasta que se ponga un elemento
+            newJob = self.__robot.getJobQueue().get() # se bloquea hasta que se ponga un elemento
 
-            if(not type(nextJob) == Job):
+            if(not type(newJob) == Job):
                 continue
 
-            self.robotThreadExecutor.addJob(nextJob)
+            self.robotThreadExecutor.addJob(newJob)
             self.robotThreadExecutor.startPaths()
 
             running = True

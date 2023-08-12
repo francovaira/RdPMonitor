@@ -15,13 +15,13 @@ class Robot:
         self.__monitor = monitor
 
         self.robotThreadRun = RobotThreadRun(self)
-        self.thread = Thread(target=self.robotThreadRun.threadRun)
+        self.__thread = Thread(target=self.robotThreadRun.threadRun)
 
     def getRobotID(self):
         return self.__robotID
 
     def getThread(self):
-        return self.thread
+        return self.__thread
 
     def getJobQueue(self):
         return self.__jobQueue

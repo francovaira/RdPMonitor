@@ -13,7 +13,6 @@ class App:
 
         # create a view and place it on the root window
         viz = Visualizer(1200, 800)
-        # viz = Visualizer(1200, 800, mapHorizontalSize, mapVerticalSize, map.getMapInSharedMemory())
 
         # view = View(self)
         # view.grid(row=0, column=0, padx=10, pady=10)
