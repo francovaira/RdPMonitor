@@ -44,6 +44,8 @@ class RobotThreadExecutor:
 
     def run(self):
 
+        # FIXME aca adentro se deberia hacer toda la parte de comunicacion de setpoints y compensacion de kalman, etc
+
         currentJob = self.__jobs[0]
         transitionsSequence = currentJob.getTransitionsPathSequence()
         transitionIndex = currentJob.getTransitionIndex()
