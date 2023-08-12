@@ -6,6 +6,8 @@ from .JobManager import Job
 from .JobManager import JobManager
 from .Robot import Robot
 
+# esta clase contiene todos los robots asociados y a traves del job manager les envia trabajos
+
 class RobotsManager:
     def __init__(self, monitor):
         self.__monitor = monitor
