@@ -14,8 +14,8 @@ class Robot:
         self.__jobQueue = queue.Queue()
         self.__monitor = monitor
 
-        self.robotThreadRun = RobotThreadRun(self)
-        self.__thread = Thread(target=self.robotThreadRun.threadRun)
+        self.__robotThreadRun = RobotThreadRun(self)
+        self.__thread = Thread(target=self.__robotThreadRun.threadRun)
 
     def getRobotID(self):
         return self.__robotID

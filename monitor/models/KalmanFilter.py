@@ -40,6 +40,7 @@ class KalmanFilter:
         self.__Pkm1 = Pk
 
     def getEstimatedState(self):
+        # returns a 2x1 matrix *X*k = [Xk, Vk]
         return self.__Xkm1
 
     def __calculatePredictedState(self, Xkm1):
