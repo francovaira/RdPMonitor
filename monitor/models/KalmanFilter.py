@@ -2,10 +2,10 @@ import numpy as np
 
 class KalmanFilter:
     def __init__(self):
-        self.__DELTA_T = 1 # expresado en segundos
+        self.__DELTA_T = 0.5 # expresado en segundos
 
-        self.__x_0  = 4000 # Posicion inicial - expresado en metros
-        self.__vx_0 = 280 # Velocidad inicial - expresado en m/seg
+        self.__x_0  = 0 # Posicion inicial - expresado en metros
+        self.__vx_0 = 0 # Velocidad inicial - expresado en m/seg
         self.__a_0  = 0 # Aceleracion inicial - expresado en m/seg^2
 
         self.__delta_Px     = 20 # valor inicial de la varianza de proceso - expresado en metros
@@ -17,6 +17,7 @@ class KalmanFilter:
 
         self.__Xkm1 = np.array([[self.__x_0], [self.__vx_0]]) # estado inicial de posicion y velocidad 
         self.__Pkm1 = np.array([[self.__delta_Px**2, 0], [0, self.__delta_Pvx**2]]) # estado inicial de la matriz de covarianza de proceso
+        self.__Xkp = self.__Xkm1
 
         # R is a 2x2 matrix R = [[delta_x^2, 0], [0, delta_vx^2]]
         self.__R = np.array([[self.__delta_x**2, 0], [0, self.__delta_vx**2]])
@@ -29,11 +30,11 @@ class KalmanFilter:
         Ykmvx = inputMeasurement[1]
         Yk = np.array([[Ykmx], [Ykmvx]])
 
-        Xkp = self.__calculatePredictedState(self.__Xkm1)
+        self.__Xkp = self.__calculatePredictedState(self.__Xkm1)
         Pkp = self.__calculateProcessCovarianceMatrix(self.__Pkm1)
         K = self.__calculateKalmanGain(Pkp, self.__R)
 
-        Xk = self.__calculateNewEstimatedState(Xkp, K, Yk)
+        Xk = self.__calculateNewEstimatedState(self.__Xkp, K, Yk)
         Pk = self.__calculateNewProcessCovarianceMatrix(Pkp, K)
 
         self.__Xkm1 = Xk
@@ -42,6 +43,10 @@ class KalmanFilter:
     def getEstimatedState(self):
         # returns a 2x1 matrix *X*k = [Xk, Vk]
         return self.__Xkm1
+
+    # retorna un vector diciendo que tan desviado esta el estado estimado del predecido (el punto deseado en el DELTA_T)
+    def getDeltaEstimatedAndPredictedState(self):
+        return self.__Xkm1 - self.__Xkp
 
     def __calculatePredictedState(self, Xkm1):
         # returns a 2x1 matrix  *X*kp = [Xkp, Vxkp]
@@ -111,15 +116,27 @@ class KalmanFilter:
 #     kalmanFilter = KalmanFilter()
 
 #     measurements = []
-#     measurements.append([4000, 280])
-#     measurements.append([4260, 282])
-#     measurements.append([4540, 285])
-#     measurements.append([4825, 286])
-#     measurements.append([5110, 290])
+#     # measurements.append([4000, 280])
+#     # measurements.append([4260, 282])
+#     # measurements.append([4540, 285])
+#     # measurements.append([4825, 286])
+#     # measurements.append([5110, 290])
+#     measurements.append([0.08, 0.18])
+#     measurements.append([0.10, 0.22])
+#     measurements.append([0.12, 0.25])
+#     measurements.append([0.13, 0.27])
+#     measurements.append([0.11, 0.24])
 
-#     for i in range(len(measurements)):
-#         kalmanFilter.inputMeasurementUpdate(measurements[i%len(measurements)])
-#         print(f"NEW ESTIMATED STATE\n{kalmanFilter.getEstimatedState()}\n")
+#     distanciaRecorrida = 0
+#     for i in range(3*len(measurements)):
+#         distanciaRecorrida = distanciaRecorrida + measurements[i%len(measurements)][0]
+#         velocidad = measurements[i%len(measurements)][1]
+#         inputMeasurement = (distanciaRecorrida, velocidad)
+#         kalmanFilter.inputMeasurementUpdate(inputMeasurement)
+#         print(f"INPUT MEASUREMENT {measurements[i%len(measurements)]} || INPUT MEASUREMENT ACUMULADO {inputMeasurement}")
+#         print(f"KALMAN ESTIMATED:\n{kalmanFilter.getEstimatedState()}\n")
+#         print(f"DELTA ESTIMATED/PREDICTED:\n{kalmanFilter.getDeltaEstimatedAndPredictedState()}\n")
+#         print("====================================")
 
 # if __name__ == "__main__":
 #     main()

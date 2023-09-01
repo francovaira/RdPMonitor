@@ -2,6 +2,9 @@
 HILOS = 1
 
 # MAPA
+CELL_WIDTH      = 0.5 # ancho de una celda del mapa fisico real - expresado en metros
+CELL_HEIGHT     = 0.5 # alto de una celda del mapa fisico real - expresado en metros
+
 MAP_BORDER      = -1
 MAP_OBSTACLE    = 1
 MAP_OCCUPABLE   = 0

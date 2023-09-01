@@ -10,8 +10,8 @@ class MapCell:
         self.__placeID = None
         self.__posX = posX # these are the "ordinal" coordinates (only whole numbers)
         self.__posY = posY
-        self.__cellWidth = 1 # must be expressed in meters
-        self.__cellHeight = 1
+        self.__cellWidth = macros.CELL_WIDTH # must be expressed in meters
+        self.__cellHeight = macros.CELL_HEIGHT
         self.__xCoordinate = posX * self.__cellWidth # these are the "metric" coordinates, position in space (real numbers)
         self.__yCoordinate = posY * self.__cellHeight
 
