@@ -7,10 +7,9 @@ from .RobotThreadExecutor import RobotThreadExecutor
 class RobotThreadRun:
     def __init__(self, robot):
         self.__robot = robot
+        self.__robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
 
     def threadRun(self):
-
-        self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
 
         time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
@@ -21,12 +20,12 @@ class RobotThreadRun:
             if(not type(newJob) == Job):
                 continue
 
-            self.robotThreadExecutor.addJob(newJob)
-            self.robotThreadExecutor.startPaths()
+            self.__robotThreadExecutor.addJob(newJob)
+            self.__robotThreadExecutor.startPaths()
 
             running = True
             while(running):
-                running = self.robotThreadExecutor.run()
+                running = self.__robotThreadExecutor.run()
                 #time.sleep(0.5)
                 time.sleep(random.random())
 

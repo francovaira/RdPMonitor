@@ -1,5 +1,21 @@
 import numpy as np
 
+# Filtro de Kalman unidimensional, modelando un sistema que realiza un movimiento rectilineo
+# uniforme con aceleracion inicial.
+
+# La entrada del filtro se realiza mediante la funcion inputMeasurementUpdate(inputMeasurement)
+# la cual toma como parametro la medicion realizada en esa unidimension con el formato:
+#       (deltaX_t[metros], Vxt[metros/seg]) --> distancia recorrida en el DELTA_T y velocidad medida en ese intervalo
+# Importante que se debe introducir la distancia de manera acumulativa, es decir, si tengo 2 mediciones
+# en las cuales medi el delta de distancia y fueron 0.25 y 0.21, respectivamente, deberia primero
+# introducir el 0.25 y luego el acumulado 0.25+0.21=0.46 y asi sucesivamente
+
+# La salida del filtro es mediante la funcion getEstimatedState(), la cual retorna un vector con
+# el formato:
+#       (Xest_t[metros], Vxest_t[metros/seg]) --> posicion actual estimada y velocidad actual estimada, ambas para el intervalo de tiempo actual
+# Recordar que el Filtro de Kalman solo estima el estado en base a las mediciones, despues para la compensacion
+# deberia involucrarse el vector deseado y comparar para obtener el vector que se debe mandar efectivamente
+
 class KalmanFilter:
     def __init__(self):
         self.__DELTA_T = 0.5 # expresado en segundos

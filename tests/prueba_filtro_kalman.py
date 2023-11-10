@@ -5,7 +5,7 @@ DELTA_T = 1 # expresado en segundos
 
 x_0 = 4000 # Posicion inicial - expresado en metros
 vx_0 = 280 # Velocidad inicial - expresado en m/seg
-a_0 = 2 # Aceleracion inicial - expresado en m/seg^2
+a_0 = 0 # Aceleracion inicial - expresado en m/seg^2
 
 delta_Px    = 20 # valor inicial de la varianza de proceso - expresado en metros
 delta_Pvx   = 5 # valor inicial de la varianza de proceso - expresado en m/seg
@@ -89,7 +89,7 @@ def main():
     Ykmvx = 0
 
     measurements = []
-    measurements.append([x_0, vx_0])
+    #measurements.append([x_0, vx_0])
     measurements.append([4260, 282])
     measurements.append([4540, 285])
     measurements.append([4825, 286])
@@ -100,26 +100,28 @@ def main():
 
     for i in range(5*len(measurements)):
         Xkp = calculate_predicted_state(Xkm1)
-        # print(f"PREDICTED STATE\n{Xkp}\n")
+        print(f"PREDICTED STATE\n{Xkp}\n")
 
         Pkp = calculate_process_covariance_matrix(Pkm1)
         # print(f"PREDICTED PROCESS COVARIANCE MATRIX\n{Pkp}\n")
 
         K = calculate_kalman_gain(Pkp, R)
-        print(f"KALMAN GAIN\n{K}\n")
+        #print(f"KALMAN GAIN\n{K}\n")
 
-        Ykmx = Ykmx + measurements[i%len(measurements)][0]
+        #Ykmx = Ykmx + measurements[i%len(measurements)][0]
+        Ykmx = measurements[i%len(measurements)][0]
         Ykmvx = measurements[i%len(measurements)][1]
         Yk = np.array([[Ykmx], [Ykmvx]])
         print(f"MEDICION GENERADA\n{Yk}\n")
 
         Xk = calculate_new_estimated_state(Xkp, K, Yk)
-        print(f"NUEVO ESTADO PREDECIDO\n{Xk}\n")
+        print(f"NUEVO ESTADO ESTIMADO\n{Xk}\n")
 
         Pk = calculate_new_process_covariance_matrix(Pkp, K)
-        print(f"NUEVA MATRIZ DE COVARIANZA DE PROCESO PREDECIDA\n{Pk}\n")
+        print(f"NUEVA MATRIZ DE COVARIANZA DE PROCESO ESTIMADA\n{Pk}\n")
 
-        print(f"DELTA DE ESTIMACION VS MEDICION\n{Yk-Xk}\n")
+        #print(f"DELTA DE ESTIMACION VS MEDICION\n{Yk-Xk}")
+        print(f"DELTA ESTIMADO VS PREDECIDO (deseado en el DELTA_T)\n{Xk-Xkp}\n")
 
         print(f"########################################################################\n\n")
 
