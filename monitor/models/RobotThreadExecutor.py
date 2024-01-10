@@ -93,4 +93,4 @@ class RobotThreadExecutor:
             print(f"{self.__robotID} || NUEVO CALCULO DE LAS COORDENADAS = {coordSeq} || EL TOTAL SERIA = {coordinatesPathSequence}\n\n--------------------------------\n")
             currentJob.setCoordinatesPathSequence(coordinatesPathSequence)
 
-        return True
+        return monitorReturnStatus

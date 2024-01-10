@@ -3,6 +3,7 @@ import time
 import random
 from .JobManager import Job
 from .RobotThreadExecutor import RobotThreadExecutor
+from .StateMachine import RobotMachine
 
 class RobotThreadRun:
     def __init__(self, robot):
@@ -11,6 +12,7 @@ class RobotThreadRun:
     def threadRun(self):
 
         self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
+        self.stateMachine = RobotMachine(self.robotThreadExecutor)
 
         time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
@@ -26,8 +28,9 @@ class RobotThreadRun:
 
             running = True
             while(running):
-                running = self.robotThreadExecutor.run()
+                # running = self.robotThreadExecutor.run()
                 #time.sleep(0.5)
+                self.stateMachine.run_monitor()
                 time.sleep(random.random())
 
             print(f"THREAD {self.__robot.getRobotID()} STALL")
