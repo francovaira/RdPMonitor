@@ -1,4 +1,4 @@
-# import MQTTClient as mqttc
+from .MQTTClient import MQTTClient
 from .RobotThreadRun import RobotThreadRun
 import random as rd
 import queue
@@ -10,7 +10,7 @@ class Robot:
         self.__robotID = robotID
         self.__prioridad = None
         self.__caminoRecorrido = None
-        # self.__mqtt_client = mqttc.create_client(self.__robotID)
+        self.__mqtt_client = MQTTClient(robotID)
         self.__jobQueue = queue.Queue()
         self.__monitor = monitor
 
