@@ -10,9 +10,10 @@ class Robot:
         self.__robotID = robotID
         self.__prioridad = None
         self.__caminoRecorrido = None
-        self.__mqtt_client = MQTTClient(robotID)
+        self.__messageQueue = queue.Queue()
         self.__jobQueue = queue.Queue()
         self.__monitor = monitor
+        self.__mqtt_client = MQTTClient(robotID, self.__messageQueue)
 
         self.robotThreadRun = RobotThreadRun(self)
         self.__thread = Thread(target=self.robotThreadRun.threadRun)

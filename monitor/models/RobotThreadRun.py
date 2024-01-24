@@ -30,7 +30,8 @@ class RobotThreadRun:
             while(running):
                 # running = self.robotThreadExecutor.run()
                 #time.sleep(0.5)
-                self.stateMachine.run_monitor()
+                self.stateMachine.dispararMonitor()
+                self.stateMachine.recibirMensaje()
                 time.sleep(random.random())
 
             print(f"THREAD {self.__robot.getRobotID()} STALL")

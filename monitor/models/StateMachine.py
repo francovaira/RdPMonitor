@@ -12,6 +12,10 @@ class RobotMachine(StateMachine):
         | green.to(green, unless="run_monitor")
     )
 
+    recibirMensaje = (
+        yellow.to(green)
+    )
+
     # cycle = (
     #     green.to(yellow)
     #     | yellow.to(red)
@@ -23,6 +27,7 @@ class RobotMachine(StateMachine):
     #     return f"Running {event} from {source.id} to {target.id}{message}"
     def __init__(self, executor):
         self.__executor = executor
+        super(RobotMachine, self).__init__()
 
     def run_monitor(self):
         return self.__executor.run()
@@ -32,8 +37,9 @@ class RobotMachine(StateMachine):
     def blocked_thread(self):
         print("BLOCKED!")
 
-    def on_enter_red(self):
-        print("Don't move.")
+    def on_enter_yellow(self):
+        print("BLOCKED YELLOW!")
+        # exit()
 
     def on_exit_red(self):
         print("Go ahead!")
