@@ -1,4 +1,3 @@
-# import context  # Ensures paho is in PYTHONPATH
 import paho.mqtt.client as mqtt
 import threading
 import queue
@@ -28,7 +27,6 @@ class MQTTClient:
             mqttc.subscribe(self.__robotID, 2)
         except:
             print("No se pudo conectar al broker.")
-            # mqttc.
 
         return mqttc
 
@@ -38,6 +36,7 @@ class MQTTClient:
     def on_message(self, mqttc, obj, msg):
         # print(mqttc._client_id)
         print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
+        self.__msgQueue.put(str(msg.topic))
         # return true
 
     def on_publish(self, mqttc, obj, mid):

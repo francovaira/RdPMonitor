@@ -27,6 +27,9 @@ class Robot:
     def getJobQueue(self):
         return self.__jobQueue
 
+    def getMsgQueue(self):
+        return self.__messageQueue
+
     def getMonitor(self):
         return self.__monitor
 

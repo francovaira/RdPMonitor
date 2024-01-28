@@ -1,10 +1,13 @@
 from statemachine import StateMachine, State
-from .RobotThreadExecutor import RobotThreadExecutor
+import time
+# from .RobotThreadExecutor import RobotThreadExecutor
 
 class RobotMachine(StateMachine):
     green = State(initial=True)
     yellow = State()
-    # red = State()
+    red = State()
+    # blue = State()
+    # black = State()
     # dispararMonitor = green.to(yellow, cond="dispararMonitor")
 
     dispararMonitor = (
@@ -12,10 +15,9 @@ class RobotMachine(StateMachine):
         | green.to(green, unless="run_monitor")
     )
 
-    recibirMensaje = (
-        yellow.to(green)
-    )
+    recibirMensaje = (yellow.to(red))
 
+    mandarMensaje = (red.to(green))
     # cycle = (
     #     green.to(yellow)
     #     | yellow.to(red)
@@ -25,8 +27,9 @@ class RobotMachine(StateMachine):
     # def before_cycle(self, event: str, source: State, target: State, message: str = ""):
     #     message = ". " + message if message else ""
     #     return f"Running {event} from {source.id} to {target.id}{message}"
-    def __init__(self, executor):
+    def __init__(self, executor, msgQueue):
         self.__executor = executor
+        self.__msgQueue = msgQueue
         super(RobotMachine, self).__init__()
 
     def run_monitor(self):
@@ -38,8 +41,19 @@ class RobotMachine(StateMachine):
         print("BLOCKED!")
 
     def on_enter_yellow(self):
-        print("BLOCKED YELLOW!")
-        # exit()
+        robotMsg = self.__msgQueue.get()
+        print("FREE YELLOW!")
 
-    def on_exit_red(self):
-        print("Go ahead!")
+    def on_enter_red(self):
+        print("FREE RED!")
+    # def on_enter_yellow(self):
+    #     print("BLOCKED YELLOW!")
+    #     try:
+    #         robotMsg = self.__msgQueue.get(timeout=10)
+    #     except:
+    #         print("FREE YELLOW!")
+        # robotMsg = msgQueue.get()
+        # # exit()
+
+    # def on_exit_yellow(self):
+    #     robotMsg = self.__msgQueue.get()
