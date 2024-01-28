@@ -1,5 +1,6 @@
 from .MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
 from .JobManager import Job
+import operator
 
 class RobotThreadExecutor:
     def __init__(self, robotID, monitor):
@@ -41,6 +42,21 @@ class RobotThreadExecutor:
             else:
                 coordinatesSequence = coordSeq
         return coordinatesSequence
+
+    def getPathTuple(self):
+        currentJob = self.__jobs[0]
+        transitionIndex = currentJob.getTransitionIndex()
+        previousPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
+        currentPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        if (currentPath == previousPath):
+            return tuple((0,0))
+        else:
+            res = tuple(map(operator.sub, currentPath, previousPath))
+            i = (-3,0)
+            print(f'TUPLA LIMPIA: {res} - {i}')
+            print(f'RESTO CON AND: {tuple(map(lambda x: -1 if (x<0) else (1 if x>1 else 0), res))}')
+            print(f'III: {tuple(map(lambda x: -1 if (x<0) else (1 if x>1 else 0), i))}')
+            return tuple(map(lambda x: 1 if (x>1) else 0, res))
 
     def run(self):
 

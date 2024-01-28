@@ -39,7 +39,7 @@ class RobotsManager:
         jobA = Job()
         # path = Path(4,5,5,2)
         # jobA.addPath(path)
-        path = Path(1,1,11,11)
+        path = Path(3,1,11,11)
         jobA.addPath(path)
         path = Path(11,11,1,1)
         jobA.addPath(path)
@@ -47,18 +47,18 @@ class RobotsManager:
 
         #time.sleep(5)
 
-        jobB = Job()
-        path = Path(11,1,1,11)
-        jobB.addPath(path)
-        jobManager.sendJobToRobot(self.__robots[1].getRobotID(), jobB)
+        # jobB = Job()
+        # path = Path(11,1,1,11)
+        # jobB.addPath(path)
+        # jobManager.sendJobToRobot(self.__robots[1].getRobotID(), jobB)
 
-        #time.sleep(20)
+        # #time.sleep(20)
 
-        jobC = Job()
-        path = Path(3,1,11,11)
-        jobC.addPath(path)
-        path = Path(11,11,3,1)
-        jobC.addPath(path)
-        jobManager.sendJobToRobot(self.__robots[2].getRobotID(), jobC)
+        # jobC = Job()
+        # path = Path(3,1,11,11)
+        # jobC.addPath(path)
+        # path = Path(11,11,3,1)
+        # jobC.addPath(path)
+        # jobManager.sendJobToRobot(self.__robots[2].getRobotID(), jobC)
 
         time.sleep(15)
