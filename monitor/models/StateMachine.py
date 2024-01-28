@@ -15,45 +15,29 @@ class RobotMachine(StateMachine):
         | green.to(green, unless="run_monitor")
     )
 
-    recibirMensaje = (yellow.to(red))
+    mandarMensaje = (yellow.to(red))
 
-    mandarMensaje = (red.to(green))
-    # cycle = (
-    #     green.to(yellow)
-    #     | yellow.to(red)
-    #     | red.to(green)
-    # )
+    recibirMensaje = (red.to(green))
 
-    # def before_cycle(self, event: str, source: State, target: State, message: str = ""):
-    #     message = ". " + message if message else ""
-    #     return f"Running {event} from {source.id} to {target.id}{message}"
-    def __init__(self, executor, msgQueue):
+    def __init__(self, executor, robot):
         self.__executor = executor
-        self.__msgQueue = msgQueue
+        self.__robotID = robot.getRobotID()
+        self.__mqttClient = robot.getMqttClient()
+        self.__msgQueue = robot.getMsgQueue()
         super(RobotMachine, self).__init__()
 
     def run_monitor(self):
         return self.__executor.run()
-                # running = self.robotThreadExecutor.run()
-        # return sum(self.payments) + amount >= self.order_total
 
     def blocked_thread(self):
         print("BLOCKED!")
 
     def on_enter_yellow(self):
-        robotMsg = self.__msgQueue.get()
-        print("FREE YELLOW!")
+        topic = f'/topic/{self.__robotID}'
+        msg = self.__mqttClient.publish(topic, '{"id":"searching"}', qos=2)
+        msg.wait_for_publish()
+        print("FREE RED!")
 
     def on_enter_red(self):
-        print("FREE RED!")
-    # def on_enter_yellow(self):
-    #     print("BLOCKED YELLOW!")
-    #     try:
-    #         robotMsg = self.__msgQueue.get(timeout=10)
-    #     except:
-    #         print("FREE YELLOW!")
-        # robotMsg = msgQueue.get()
-        # # exit()
-
-    # def on_exit_yellow(self):
-    #     robotMsg = self.__msgQueue.get()
+        robotMsg = self.__msgQueue.get()
+        print("FREE YELLOW!")

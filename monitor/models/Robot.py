@@ -13,7 +13,7 @@ class Robot:
         self.__messageQueue = queue.Queue()
         self.__jobQueue = queue.Queue()
         self.__monitor = monitor
-        self.__mqtt_client = MQTTClient(robotID, self.__messageQueue)
+        self.__mqtt_client = MQTTClient(robotID, self.__messageQueue).createClient()
 
         self.robotThreadRun = RobotThreadRun(self)
         self.__thread = Thread(target=self.robotThreadRun.threadRun)
@@ -29,6 +29,9 @@ class Robot:
 
     def getMsgQueue(self):
         return self.__messageQueue
+
+    def getMqttClient(self):
+        return self.__mqtt_client
 
     def getMonitor(self):
         return self.__monitor

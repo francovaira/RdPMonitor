@@ -12,7 +12,9 @@ class RobotThreadRun:
     def threadRun(self):
 
         self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
-        self.stateMachine = RobotMachine(self.robotThreadExecutor, self.__robot.getMsgQueue())
+        self.stateMachine = RobotMachine(self.robotThreadExecutor, self.__robot)
+
+        print(type(self.__robot.getMqttClient()))
 
         time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
@@ -31,8 +33,8 @@ class RobotThreadRun:
                 # running = self.robotThreadExecutor.run()
                 #time.sleep(0.5)
                 self.stateMachine.dispararMonitor()
-                self.stateMachine.recibirMensaje()
                 self.stateMachine.mandarMensaje()
+                self.stateMachine.recibirMensaje()
 
                 time.sleep(random.random())
 
