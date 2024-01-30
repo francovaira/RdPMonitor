@@ -52,11 +52,10 @@ class RobotThreadExecutor:
             return tuple((0,0))
         else:
             res = tuple(map(operator.sub, currentPath, previousPath))
-            i = (-3,0)
-            print(f'TUPLA LIMPIA: {res} - {i}')
-            print(f'RESTO CON AND: {tuple(map(lambda x: -1 if (x<0) else (1 if x>1 else 0), res))}')
-            print(f'III: {tuple(map(lambda x: -1 if (x<0) else (1 if x>1 else 0), i))}')
-            return tuple(map(lambda x: 1 if (x>1) else 0, res))
+            # Normalizar tupla
+            filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
+            filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+            return filtro_positivo
 
     def run(self):
 

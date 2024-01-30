@@ -39,10 +39,10 @@ class RobotsManager:
         jobA = Job()
         # path = Path(4,5,5,2)
         # jobA.addPath(path)
-        path = Path(3,1,11,11)
-        jobA.addPath(path)
         path = Path(11,11,1,1)
         jobA.addPath(path)
+        # path = Path(11,11,1,1)
+        # jobA.addPath(path)
         jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
 
         #time.sleep(5)

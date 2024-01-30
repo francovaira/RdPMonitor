@@ -40,24 +40,16 @@ class Robot:
         self.__robotID = robotID
 
     def traslatePath(self, path):
-        print("traslatePath" + str(tuple(map(lambda i, j: i & j, path, (1,0)))))
-
-        if tuple(map(lambda i, j: i & j, path, (1,0))) == (1,0):
+        if path == (1,0):
             print("You can become a web developer.")
-        elif tuple(map(lambda i, j: i & j, path, (-1,0))) == (-1,0):
+        elif path == (-1,0):
             print("You can become a backend developer.")
-        elif tuple(map(lambda i, j: i & j, path, (0,1))) == (0,1):
+        elif path == (0,1):
             print("You can become a Data Scientist")
-        elif tuple(map(lambda i, j: i & j, path, (0,-1))) == (0,-1):
+        elif path == (0,-1):
              print("You can become a Blockchain developer.")
         elif path == (0,0):
             print("You can become a mobile app developer")
-
-    # def __normalize(self, path):
-    #     if path[0] >= 1:
-    #         path[0]
-    #     elif path[1] >= 1:
-
 
     # def getPrioridad(self):
 
