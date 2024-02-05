@@ -24,7 +24,7 @@ class App:
         viz.setController(controller)
         # cualquier cosa que se ponga despues de esto no se va a ejecutar aunque los hilos terminen
         processVisualizer = multiprocessing.Process(target=viz.run(), daemon=True)
-        processVisualizer.start()
+        processVisualizer.run()
 
 if __name__ == '__main__':
     app = App()

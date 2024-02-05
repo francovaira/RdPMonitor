@@ -22,22 +22,20 @@ class MQTTClient:
         try:
             mqttc.connect("localhost", 1883, 60)
             mqttc.loop_start()
-            print(self.__robotID)
-            mqttc.subscribe(self.__robotID, 2)
+            mqttc.subscribe("/topic/robot", 0)
         except:
             print("No se pudo conectar al broker.")
 
         return mqttc
 
     def on_connect(self, mqttc, obj, flags, rc):
-        print("rc: " + str(rc))
+        pass
 
     def on_message(self, mqttc, obj, msg):
         print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
         self.__msgQueue.put(str(msg.topic))
 
     def on_publish(self, mqttc, obj, mid):
-        print("mid: " + str(mid) + "aa")
         pass
 
     def on_subscribe(self, mqttc, obj, mid, granted_qos):

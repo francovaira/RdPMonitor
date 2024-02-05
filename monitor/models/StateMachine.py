@@ -25,16 +25,15 @@ class RobotMachine(StateMachine):
         self.__robotID = robot.getRobotID()
         self.__mqttClient = robot.getMqttClient()
         self.__msgQueue = robot.getMsgQueue()
+        self.__velocities = None
         super(RobotMachine, self).__init__()
 
     def run_monitor(self):
-        # print(f"@{self.__robotID} || TRANSITION @{self.__executor.getPath()} - {type(self.__executor.getPath())}")
-        self.__robot.traslatePath(self.__executor.getPathTuple())
         return self.__executor.run()
 
     def on_enter_yellow(self):
-        topic = f'/topic/{self.__robotID}'
-        msg = self.__mqttClient.publish(topic, '{"id":"searching"}', qos=2)
+        self.__velocities = self.__robot.traslatePath(self.__executor.getPathTuple())
+        msg = self.__mqttClient.publish("/topic/qos0", self.__velocities, qos=0)
         msg.wait_for_publish()
         print("FREE RED!")
 

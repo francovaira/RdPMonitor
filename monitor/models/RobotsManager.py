@@ -61,4 +61,4 @@ class RobotsManager:
         # jobC.addPath(path)
         # jobManager.sendJobToRobot(self.__robots[2].getRobotID(), jobC)
 
-        time.sleep(15)
+        # time.sleep(15)

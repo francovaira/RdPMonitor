@@ -13,9 +13,6 @@ class RobotThreadRun:
 
         self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
         self.stateMachine = RobotMachine(self.robotThreadExecutor, self.__robot)
-
-        print(type(self.__robot.getMqttClient()))
-
         time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
         while(1):
@@ -30,12 +27,8 @@ class RobotThreadRun:
 
             running = True
             while(running):
-                # running = self.robotThreadExecutor.run()
-                #time.sleep(0.5)
                 self.stateMachine.dispararMonitor()
                 self.stateMachine.mandarMensaje()
                 self.stateMachine.recibirMensaje()
-
-                time.sleep(random.random())
 
             print(f"THREAD {self.__robot.getRobotID()} STALL")

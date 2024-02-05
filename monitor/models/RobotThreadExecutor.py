@@ -48,7 +48,9 @@ class RobotThreadExecutor:
         transitionIndex = currentJob.getTransitionIndex()
         previousPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
         currentPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        if (currentPath == previousPath):
+        print('CURRENT:', currentPath, 'PREVIO', previousPath)
+        print('INDEX', )
+        if (currentJob.getTransitionIndex() == 0):
             return tuple((0,0))
         else:
             res = tuple(map(operator.sub, currentPath, previousPath))

@@ -41,15 +41,15 @@ class Robot:
 
     def traslatePath(self, path):
         if path == (1,0):
-            print("You can become a web developer.")
+            return '{"setpoint" : 1, "vel_x" : 0.25, "vel_y" : 0, "vel_ang" : 0}'
         elif path == (-1,0):
-            print("You can become a backend developer.")
+            return '{"setpoint" : 1, "vel_x" : -0.25, "vel_y" : 0, "vel_ang" : 0}'
         elif path == (0,1):
-            print("You can become a Data Scientist")
+            return '{"setpoint" : 1, "vel_x" : 0, "vel_y" : 0.25, "vel_ang" : 0}'
         elif path == (0,-1):
-             print("You can become a Blockchain developer.")
+            return '{"setpoint" : 1, "vel_x" : 0, "vel_y" : -0.25, "vel_ang" : 0}'
         elif path == (0,0):
-            print("You can become a mobile app developer")
+            return '{"setpoint" : 1, "vel_x" : 0.25, "vel_y" : 0, "vel_ang" : 0}'
 
     # def getPrioridad(self):
 
