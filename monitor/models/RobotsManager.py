@@ -17,8 +17,8 @@ class RobotsManager:
         # create instances for each robot - FIXME proximamente esto seria automatico cuando se registren los robots al conectarse
         robotNames = ['ROB_A', 'ROB_B', 'ROB_C']
         self.addRobot(Robot(self.__monitor, robotNames.pop()))
-        self.addRobot(Robot(self.__monitor, robotNames.pop()))
-        self.addRobot(Robot(self.__monitor, robotNames.pop()))
+        # self.addRobot(Robot(self.__monitor, robotNames.pop()))
+        # self.addRobot(Robot(self.__monitor, robotNames.pop()))
 
     def addRobot(self, robot):
         if(not type(robot) == Robot):
