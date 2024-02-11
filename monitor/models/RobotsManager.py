@@ -37,12 +37,14 @@ class RobotsManager:
     # este hilo simula como se irian generando los jobs y enviando a cada robot
     def __threadSendJobs(self, jobManager):
         jobA = Job()
-        # path = Path(4,5,5,2)
-        # jobA.addPath(path)
-        path = Path(11,11,1,1)
+        path = Path(1,1,3,1)
         jobA.addPath(path)
-        # path = Path(11,11,1,1)
-        # jobA.addPath(path)
+        path = Path(3,1,3,3)
+        jobA.addPath(path)
+        path = Path(3,3,1,3)
+        jobA.addPath(path)
+        path = Path(1,3,1,1)
+        jobA.addPath(path)
         jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
 
         #time.sleep(5)

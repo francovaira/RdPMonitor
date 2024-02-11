@@ -28,7 +28,12 @@ class RobotThreadRun:
             running = True
             while(running):
                 self.stateMachine.dispararMonitor()
-                self.stateMachine.mandarMensaje()
-                self.stateMachine.recibirMensaje()
+                if self.stateMachine.green.is_active != False:
+                    pass
+                else:
+                # assert self.stateMachine.green.is_active is False
+                # assert self.stateMachine.yellow.is_active is True
+                    self.stateMachine.mandarMensaje()
+                    self.stateMachine.recibirMensaje()
 
             print(f"THREAD {self.__robot.getRobotID()} STALL")

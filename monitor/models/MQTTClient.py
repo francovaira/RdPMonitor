@@ -14,9 +14,9 @@ class MQTTClient:
         mqttc.on_subscribe = self.on_subscribe
         mqttc.on_disconnect = self.on_disconnect
         mqttc.message_callback_add('/topic/robot', self.on_publish_common)
-        mqttc.on_message = self.on_message
+        # mqttc.on_message = self.on_message
         try:
-            mqttc.connect('192.168.0.87', 1883, 60)
+            mqttc.connect('localhost', 1883, 60)
             mqttc.loop_start()
             mqttc.subscribe('/topic/robot', 0)
         except:
@@ -28,7 +28,7 @@ class MQTTClient:
         pass
 
     def on_publish_common(self, mqttc, obj, msg):
-        if self.__robotID == str(msg.payload, 'utf-8'):
+        if str(f'/topic/{self.__robotID}') == str(msg.payload, 'utf-8'):
             print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
             self.__topicRobotID = f'/topic/{self.__robotID}'
             mqttc.subscribe(self.__topicRobotID, 0)
@@ -39,9 +39,9 @@ class MQTTClient:
         print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
         self.__msgQueue.put(str(msg.topic))
 
-    def on_message(self, mqttc, obj, msg):
-        print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
-        # self.__msgQueue.put(str(msg.topic))
+    # def on_message(self, mqttc, obj, msg):
+    #     print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
+    #     self.__msgQueue.put(str(msg.topic))
 
     def on_publish(self, mqttc, obj, mid):
         pass
@@ -50,5 +50,5 @@ class MQTTClient:
         print("Subscribed: " + str(mid) + " " + str(granted_qos))
 
     def on_disconnect(self, client, userdata, rc):
-        if rc != 0:
-            print("Unexpected disconnection.")
+        # if rc != 0:
+        print("Unexpected disconnection.")

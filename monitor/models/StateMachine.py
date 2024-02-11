@@ -33,7 +33,7 @@ class RobotMachine(StateMachine):
 
     def on_enter_yellow(self):
         self.__velocities = self.__robot.traslatePath(self.__executor.getPathTuple())
-        msg = self.__mqttClient.publish("/topic/qos0", self.__velocities, qos=0)
+        msg = self.__mqttClient.publish(self.__robot.getRobotTopic(), self.__velocities, qos=0)
         msg.wait_for_publish()
         print("FREE RED!")
 
