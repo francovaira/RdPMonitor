@@ -28,8 +28,7 @@ class MQTTClient:
         pass
 
     def on_publish_common(self, mqttc, obj, msg):
-        if str(f'/topic/{self.__robotID}') == str(msg.payload, 'utf-8'):
-            print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
+        if self.__robotID == str(msg.payload, 'utf-8'):
             self.__topicRobotID = f'/topic/{self.__robotID}'
             mqttc.subscribe(self.__topicRobotID, 0)
             mqttc.message_callback_add(self.__topicRobotID, self.on_robot_message)
