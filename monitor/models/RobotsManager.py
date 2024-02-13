@@ -30,7 +30,7 @@ class RobotsManager:
             robot.getThread().start()
             print(f'[ROBOTS_MANAGER] {robot.getRobotID()} added to the Queue')
         except:
-            print("[ROBOTS_MANAGER] Imposible to add more robots.")
+            print("[ROBOTS_MANAGER] Imposible to add more robots")
 
     # def sendMockJobsToRobots(self):
     #     for robot in self.__robots:
@@ -42,17 +42,19 @@ class RobotsManager:
 
     # este hilo simula como se irian generando los jobs y enviando a cada robot
     def sendJob(self):
-        jobA = Job()
-        path = Path(1,1,3,1)
-        jobA.addPath(path)
-        # path = Path(3,1,3,3)
-        # jobA.addPath(path)
-        # path = Path(3,3,1,3)
-        # jobA.addPath(path)
-        # path = Path(1,3,1,1)
-        # jobA.addPath(path)
-        self.__jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
-
+        try:
+            jobA = Job()
+            path = Path(1,1,3,1)
+            jobA.addPath(path)
+            # path = Path(3,1,3,3)
+            # jobA.addPath(path)
+            # path = Path(3,3,1,3)
+            # jobA.addPath(path)
+            # path = Path(1,3,1,1)
+            # jobA.addPath(path)
+            self.__jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
+        except:
+            print("[ROBOTS_MANAGER] Any robot available")
         #time.sleep(5)
 
         # jobB = Job()

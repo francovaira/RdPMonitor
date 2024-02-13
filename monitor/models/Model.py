@@ -28,6 +28,9 @@ class Model:
     def getMapInSharedMemory(self):
         return self.__map.getMapInSharedMemory()
 
+    def getPlaceIDFromMapCoordinate(self, coordinate):
+        return self.__map.getPlaceIDFromMapCoordinate(coordinate)
+
     def handler(self, signum, frame):
         signame = signal.Signals(signum).name
         print(f'Signal handler called with signal {signame} ({signum})')

@@ -38,6 +38,9 @@ class MapCell:
         self.__cellType = cellType
         self.__isOccupable = cellType.value[1]
 
+    def getXCoordinate(self):
+        return self.__xCoordinate
+
     def getType(self):
         return self.__cellType
 

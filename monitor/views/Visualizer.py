@@ -35,11 +35,18 @@ class Visualizer:
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
                 self.__grid[i][j] = VisualizerCell(self.__canvas, self.__mapInSharedMemory[i][j], self.__cellWidth, self.__cellHeight)
+                self.__grid[i][j].draw()
 
+        # pygame.display.flip()
+
+        # time.sleep(2)
+        # pygame.display.update()
         self.__create_menu(pygame.display.get_surface())
+        # pygame.display.flip()
+        # pygame.display.update()
 
-        pygame.display.update()
-        pygame.display.flip()
+        # time.sleep(2)
+
 
     def setController(self, controller):
         self.__controller = controller
@@ -64,9 +71,9 @@ class Visualizer:
         )
 
         self.btn = self.__menu.add.button(
-            'Run Solver',
-            self.__controller.run,
-            button_id='run_solver',
+            'Create Robot',
+            self.__controller.createRobot,
+            button_id='create_robot',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
             margin=(0, 75),
@@ -74,13 +81,13 @@ class Visualizer:
         )
 
         self.btn = self.__menu.add.button(
-            'Add Solver',
-            self.__controller.add_solver,
-            button_id='add_solver',
+            'Start Road',
+            self.__controller.setRobotRoad,
+            button_id='start_road',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
             margin=(0, 75),
-            shadow_width=1,
+            shadow_width=10,
         )
 
         def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
@@ -101,33 +108,50 @@ class Visualizer:
         self.btn.set_onmouseleave(button_onmouseleave)
         if not self.btn.readonly:
             self.btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
-        self.btn.set_background_color((75, 79, 81))
+            self.btn.set_background_color((75, 79, 81))
 
         self.__menu.draw(surface)
 
     def run(self):
         self.__createMap()
         while self.__running:
-
             events = pygame.event.get()
+            self.__menu.update(events)
+            if pygame_menu.events.MENU_LAST_WIDGET_DISABLE_ACTIVE_STATE in self.__menu.get_last_update_mode()[0]:
+                events = []
+
             for event in events:
                 if event.type == QUIT:
                     self.__running = False
                     pygame.quit()
                     quit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if (pos[0] > self.__cellWidth+80) and (pos[0] < self.__cellWidth*(self.__horizontalCells-1)+80):
+                        if (pos[1] > self.__cellWidth+80) and (pos[1] < self.__cellWidth*(self.__horizontalCells-1)+80):
+                    # a = self.__controller.getPlaceIDFromMapCoordinate(pos)
+                            print(f"VIZ MOUSE POS: {(pos[0]-80)//52}, {(pos[1]-80)//52} ||| {pos[0]}, {pos[1]}")
 
-            self.__menu.update(events)
             self.__updateFromMap()
-            self.__drawDisplay()
-            time.sleep(0.01)
+            # self.__drawDisplay()
+            # time.sleep(4)
 
     def __updateFromMap(self):
-        for i in range(self.__horizontalCells-2):
-            for j in range(self.__verticalCells-2):
+        pygame.display.update()
+        time.sleep(0.001)
+        # print(f'H: {self.__horizontalCells} - V: {self.__verticalCells}')
+        for i in range(self.__horizontalCells-1):
+            for j in range(self.__verticalCells-1):
                 self.__grid[i+1][j+1].update()
+                self.__grid[i][j].draw()
+                # print(f'POS_X:' {self.__grid[i][j].getPosX()})
+                # print(f'POS_X:', self.__grid[i][j].getMapCell().getXCoordinate())
+
 
     def __drawDisplay(self):
-        for i in range(self.__horizontalCells):
-            for j in range(self.__verticalCells):
-                self.__grid[i][j].draw()
         pygame.display.update()
+        for i in range(self.__horizontalCells-1):
+            for j in range(self.__verticalCells-1):
+                self.__grid[i+1][j+1].update()
+                self.__grid[i][j].draw()
+        # pygame.display.update()

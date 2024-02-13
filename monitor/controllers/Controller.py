@@ -18,8 +18,11 @@ class Controller:
     def getMapInSharedMemory(self):
         return self.model.getMapInSharedMemory()
 
-    def run(self):
+    def getPlaceIDFromMapCoordinate(self, coordinate):
+        return self.model.getPlaceIDFromMapCoordinate(coordinate)
+
+    def createRobot(self):
         self.model.createRobot()
 
-    def add_solver(self):
+    def setRobotRoad(self):
         self.model.setRobotRoad()
