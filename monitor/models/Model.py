@@ -19,6 +19,12 @@ class Model:
     def setRobotRoad(self):
         self.__robotsManager.sendJob()
 
+    def setInitialPoint(self, coordinates):
+        self.__robotsManager.setInitialPoint(coordinates)
+
+    def setFinalPoint(self, coordinates):
+        self.__robotsManager.setFinalPoint(coordinates)
+
     def getMapHorizontalSize(self):
         return self.__map.getMapDefinition().getHorizontalSize()
 

@@ -39,13 +39,29 @@ class RobotsManager:
 
     #     threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.__jobManager,))
     #     threadSendTrbjo.start()
+    def setInitialPoint(self, coordinates):
+        try:
+            self.__robots[0].setInitialPoint(coordinates)
+        except:
+            print("[ROBOTS_MANAGER] Any robot available to set initial point")
+
+    def setFinalPoint(self, coordinates):
+        try:
+            self.__robots[0].setFinalPoint(coordinates)
+        except:
+            print("[ROBOTS_MANAGER] Any robot available to set final point")
 
     # este hilo simula como se irian generando los jobs y enviando a cada robot
     def sendJob(self):
         try:
             jobA = Job()
-            path = Path(1,1,3,1)
-            jobA.addPath(path)
+            x_0 = self.__robots[0].getInitialPoint()[0]
+            y_0 = self.__robots[0].getInitialPoint()[1]
+            x_1 = self.__robots[0].getFinalPoint()[0]
+            y_1 = self.__robots[0].getFinalPoint()[1]
+
+            # path = 
+            jobA.addPath(Path(x_0, y_0, x_1, y_1))
             # path = Path(3,1,3,3)
             # jobA.addPath(path)
             # path = Path(3,3,1,3)

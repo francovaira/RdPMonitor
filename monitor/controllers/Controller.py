@@ -26,3 +26,9 @@ class Controller:
 
     def setRobotRoad(self):
         self.model.setRobotRoad()
+
+    def setInitialPoint(self, coordinates):
+        self.model.setInitialPoint(coordinates)
+
+    def setFinalPoint(self, coordinates):
+        self.model.setFinalPoint(coordinates)

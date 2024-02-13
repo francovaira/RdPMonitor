@@ -18,6 +18,7 @@ class Visualizer:
         self.__mapInSharedMemory = None
         # set the controller
         self.__controller = None
+        self._diagonals = True
 
         # Set background color
         self.__canvas.fill(Colors.BACKGROUND.value)
@@ -90,6 +91,24 @@ class Visualizer:
             shadow_width=10,
         )
 
+        def _diagonals(value: bool) -> None:
+            """
+            Changes diagonals
+            """
+            self._diagonals = value
+
+        self.__menu.add.toggle_switch(
+            'Diagonals',
+            self._diagonals,
+            font_size=20,
+            margin=(0, 30),
+            onchange=_diagonals,
+            state_text_font_color=((0, 0, 0), (0, 0, 0)),
+            switch_margin=(15, 0),
+            toggleswitch_id='diagonals',
+            width=80
+        )
+
         def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
             """
             Set the background color of buttons if entered.
@@ -127,31 +146,40 @@ class Visualizer:
                     quit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
+                    but = pygame.mouse.get_pressed()
                     if (pos[0] > self.__cellWidth+80) and (pos[0] < self.__cellWidth*(self.__horizontalCells-1)+80):
                         if (pos[1] > self.__cellWidth+80) and (pos[1] < self.__cellWidth*(self.__horizontalCells-1)+80):
-                    # a = self.__controller.getPlaceIDFromMapCoordinate(pos)
-                            print(f"VIZ MOUSE POS: {(pos[0]-80)//52}, {(pos[1]-80)//52} ||| {pos[0]}, {pos[1]}")
+                            x = (pos[0]-80)//52
+                            y = (pos[1]-80)//52
+                            # print(f'DESOCUPADA: {}')
+                            if self.__grid[x][y].getMapCell().getIsOccupable() == True:
+                                if but[0] == True:
+                                    # print(f"RIGHT: {(pos[0]-80)//52}, {(pos[1]-80)//52} ||| {but[0]}")
+                                    self.__controller.setInitialPoint(tuple((x, y)))
+                                elif but[2] == True:
+                                    # print(f"LEFT: {(pos[0]-80)//52}, {(pos[1]-80)//52} ||| {but[2]}")
+                                    self.__controller.setFinalPoint(tuple((x, y)))
 
             self.__updateFromMap()
-            # self.__drawDisplay()
+            self.__drawDisplay()
             # time.sleep(4)
 
     def __updateFromMap(self):
-        pygame.display.update()
-        time.sleep(0.001)
+        # pygame.display.update()
+        # time.sleep(0.1)
         # print(f'H: {self.__horizontalCells} - V: {self.__verticalCells}')
         for i in range(self.__horizontalCells-1):
             for j in range(self.__verticalCells-1):
                 self.__grid[i+1][j+1].update()
-                self.__grid[i][j].draw()
+                # self.__grid[i][j].draw()
                 # print(f'POS_X:' {self.__grid[i][j].getPosX()})
                 # print(f'POS_X:', self.__grid[i][j].getMapCell().getXCoordinate())
 
 
     def __drawDisplay(self):
         pygame.display.update()
-        for i in range(self.__horizontalCells-1):
-            for j in range(self.__verticalCells-1):
-                self.__grid[i+1][j+1].update()
+        for i in range(self.__horizontalCells):
+            for j in range(self.__verticalCells):
+                # self.__grid[i+1][j+1].update()
                 self.__grid[i][j].draw()
         # pygame.display.update()

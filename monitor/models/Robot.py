@@ -11,6 +11,8 @@ class Robot:
         self.__robotID = robotID
         self.__prioridad = None
         self.__caminoRecorrido = None
+        self.__initialPoint = None
+        self.__finalPoint = None
         self.__messageQueue = queue.Queue(maxsize=1)
         self.__jobQueue = queue.Queue()
         self.__monitor = monitor
@@ -21,6 +23,18 @@ class Robot:
 
     def getRobotID(self):
         return self.__robotID
+
+    def setInitialPoint(self, point):
+        self.__initialPoint = point
+
+    def setFinalPoint(self, point):
+        self.__finalPoint = point
+
+    def getInitialPoint(self):
+        return self.__initialPoint
+
+    def getFinalPoint(self):
+        return self.__finalPoint
 
     def getRobotTopic(self):
         return str(f'/topic/v1/{self.__robotID}')
