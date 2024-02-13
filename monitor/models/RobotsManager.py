@@ -15,37 +15,43 @@ class RobotsManager:
         self.__robots = []
 
         # create instances for each robot - FIXME proximamente esto seria automatico cuando se registren los robots al conectarse
-        robotNames = ['ROB_A', 'ROB_B', 'ROB_C']
-        self.addRobot(Robot(self.__monitor, robotNames.pop()))
+        self.robotNames = ['ROB_A', 'ROB_B', 'ROB_C']
+        # self.addRobot(Robot(self.__monitor, robotNames.pop()))
         # self.addRobot(Robot(self.__monitor, robotNames.pop()))
         # self.addRobot(Robot(self.__monitor, robotNames.pop()))
 
-    def addRobot(self, robot):
-        if(not type(robot) == Robot):
-            print("[ROBOTS_MANAGER] Trying to add something that is not a robot.")
-        self.__robots.append(robot)
-        self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
-
-    def sendMockJobsToRobots(self):
-        for robot in self.__robots:
-            # self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
+    def addRobot(self):
+        try:
+            robot = Robot(self.__monitor, self.robotNames.pop())
+            if(not type(robot) == Robot):
+                print("[ROBOTS_MANAGER] Trying to add something that is not a robot.")
+            self.__robots.append(robot)
+            self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
             robot.getThread().start()
+            print(f'[ROBOTS_MANAGER] {robot.getRobotID()} added to the Queue')
+        except:
+            print("[ROBOTS_MANAGER] Imposible to add more robots.")
 
-        threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.__jobManager,))
-        threadSendTrbjo.start()
+    # def sendMockJobsToRobots(self):
+    #     for robot in self.__robots:
+    #         # self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
+    #         robot.getThread().start()
+
+    #     threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.__jobManager,))
+    #     threadSendTrbjo.start()
 
     # este hilo simula como se irian generando los jobs y enviando a cada robot
-    def __threadSendJobs(self, jobManager):
+    def sendJob(self):
         jobA = Job()
         path = Path(1,1,3,1)
         jobA.addPath(path)
-        path = Path(3,1,3,3)
-        jobA.addPath(path)
-        path = Path(3,3,1,3)
-        jobA.addPath(path)
-        path = Path(1,3,1,1)
-        jobA.addPath(path)
-        jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
+        # path = Path(3,1,3,3)
+        # jobA.addPath(path)
+        # path = Path(3,3,1,3)
+        # jobA.addPath(path)
+        # path = Path(1,3,1,1)
+        # jobA.addPath(path)
+        self.__jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
 
         #time.sleep(5)
 

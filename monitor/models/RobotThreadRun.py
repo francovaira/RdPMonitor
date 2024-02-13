@@ -18,6 +18,7 @@ class RobotThreadRun:
         while(1):
             print(f"{self.__robot.getRobotID()} || me voy a bloquear")
             newJob = self.__robot.getJobQueue().get() # se bloquea hasta que se ponga un elemento
+            print(f"THREAD {self.__robot.getRobotID()} STALL")
 
             if(not type(newJob) == Job):
                 continue
@@ -28,12 +29,12 @@ class RobotThreadRun:
             running = True
             while(running):
                 self.stateMachine.dispararMonitor()
-                if self.stateMachine.green.is_active != False:
-                    pass
-                else:
-                # assert self.stateMachine.green.is_active is False
-                # assert self.stateMachine.yellow.is_active is True
-                    self.stateMachine.mandarMensaje()
-                    self.stateMachine.recibirMensaje()
+                if self.stateMachine.blue.is_active == True:
+                    running = False
+                #     pass
+                # else:
+                # # assert self.stateMachine.green.is_active is False
+                # # assert self.stateMachine.yellow.is_active is True
+                #     self.stateMachine.mandarMensaje()
+                #     self.stateMachine.recibirMensaje()
 
-            print(f"THREAD {self.__robot.getRobotID()} STALL")

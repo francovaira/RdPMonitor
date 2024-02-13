@@ -1,6 +1,7 @@
 # from views.Visualizer import Visualizer as view
 # from models.JobManager import JobManager as model
 import multiprocessing
+import logging
 from multiprocessing import Process
 
 class Controller:
@@ -18,4 +19,7 @@ class Controller:
         return self.model.getMapInSharedMemory()
 
     def run(self):
-        self.model.startJobManager()
+        self.model.createRobot()
+
+    def add_solver(self):
+        self.model.setRobotRoad()

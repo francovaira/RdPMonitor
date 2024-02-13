@@ -13,8 +13,11 @@ class Model:
         # Set the signal handler and a 5-second alarm
         # signal.signal(signal.SIGINT, self.handler)
 
-    def startJobManager(self):
-        self.__robotsManager.sendMockJobsToRobots()
+    def createRobot(self):
+        self.__robotsManager.addRobot()
+
+    def setRobotRoad(self):
+        self.__robotsManager.sendJob()
 
     def getMapHorizontalSize(self):
         return self.__map.getMapDefinition().getHorizontalSize()

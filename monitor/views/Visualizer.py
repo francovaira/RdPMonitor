@@ -73,6 +73,16 @@ class Visualizer:
             shadow_width=10,
         )
 
+        self.btn = self.__menu.add.button(
+            'Add Solver',
+            self.__controller.add_solver,
+            button_id='add_solver',
+            cursor=pygame_menu.locals.CURSOR_HAND,
+            font_size=20,
+            margin=(0, 75),
+            shadow_width=1,
+        )
+
         def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
             """
             Set the background color of buttons if entered.
