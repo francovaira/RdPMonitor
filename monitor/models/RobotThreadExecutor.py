@@ -2,6 +2,7 @@ from .MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
 from .JobManager import Job
 import operator
 import logging
+import time
 
 class RobotThreadExecutor:
     def __init__(self, robotID, monitor):
@@ -28,7 +29,7 @@ class RobotThreadExecutor:
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
             self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
-        print(f"{self.__robotID} || STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
+        print(f"@{self.__robotID} || STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
 
     def __getCoorinatesSequence(self, paths):
         coordinatesSequence = []
@@ -49,8 +50,6 @@ class RobotThreadExecutor:
         transitionIndex = currentJob.getTransitionIndex()
         previousPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
         currentPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        print('CURRENT:', currentPath, 'PREVIO', previousPath)
-        print('INDEX', )
         if (currentJob.getTransitionIndex() == 0):
             return tuple((0,0))
         else:
@@ -83,7 +82,7 @@ class RobotThreadExecutor:
                 if(nextTransitionIndex>= len(transitionsSequence)):
                     print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
                     self.__jobs = []
-                    return False
+                    return "END"
             elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
                 blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
                 remainingPathCoordinates = currentJob.getCoordinatesPathSequence()[transitionIndex+1:]
@@ -111,9 +110,9 @@ class RobotThreadExecutor:
                 print(f"{self.__robotID} || NUEVO CALCULO DE LAS COORDENADAS = {coordSeq} || EL TOTAL SERIA = {coordinatesPathSequence}\n\n--------------------------------\n")
                 currentJob.setCoordinatesPathSequence(coordinatesPathSequence)
 
-            return monitorReturnStatus
+            return "WORKING"
 
         except:
             # No hay jobs disponibles por lo tanto retorna False para mantener el estado
-            return False
+            return "NO_JOBS"
 

@@ -316,7 +316,7 @@ class PathFinder:
 
         #print(f"START ({orderedCellSequence[0].i},{orderedCellSequence[0].j})")
         #print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
-        print()
+        # print()
 
         direction = 0 # 0 = upwards / 1 = right / 2 = downwards / 3 = left
         directionAux = 0 # robot is supposed to start "looking upwards"

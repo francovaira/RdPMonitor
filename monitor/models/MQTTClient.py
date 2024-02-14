@@ -11,7 +11,7 @@ class MQTTClient:
         mqttc = mqtt.Client()
         mqttc.on_connect = self.on_connect
         mqttc.on_publish = self.on_publish
-        mqttc.on_subscribe = self.on_subscribe
+        # mqttc.on_subscribe = self.on_subscribe
         mqttc.on_disconnect = self.on_disconnect
         mqttc.message_callback_add('/topic/robot', self.on_publish_common)
         # mqttc.on_message = self.on_message
@@ -35,7 +35,7 @@ class MQTTClient:
             mqttc.unsubscribe('/topic/robot')
 
     def on_robot_message(self, mqttc, obj, msg):
-        print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
+        # print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
         self.__msgQueue.put(str(msg.topic))
 
     # def on_message(self, mqttc, obj, msg):
@@ -45,8 +45,8 @@ class MQTTClient:
     def on_publish(self, mqttc, obj, mid):
         pass
 
-    def on_subscribe(self, mqttc, obj, mid, granted_qos):
-        print("Subscribed: " + str(mid) + " " + str(granted_qos))
+    # def on_subscribe(self, mqttc, obj, mid, granted_qos):
+        # print("Subscribed: " + str(mid) + " " + str(granted_qos))
 
     def on_disconnect(self, client, userdata, rc):
         # if rc != 0:
