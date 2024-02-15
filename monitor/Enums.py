@@ -25,7 +25,7 @@ class Colors(Enum):
     LIGHT_BLUE = (255, 255, 200)
     GREY = (127, 127, 127)
     DARK_GREY = (180, 180, 180)
-    BACKGROUND = BLACK
+    BACKGROUND = (34, 40, 44)
 
     ROBOT_1 = (255, 120, 20)
     ROBOT_2 = (100, 255, 20)

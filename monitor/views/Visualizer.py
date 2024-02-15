@@ -16,10 +16,12 @@ class Visualizer:
         self.__canvas = pygame.display.set_mode((self.__canvasHorizontalSizePixels, self.__canvasVerticalSizePixels))
         self.__running = True
         self.__mapInSharedMemory = None
-        # set the controller
+        # set the Controller
         self.__controller = None
-        self._diagonals = True
-
+        # Available robots
+        self.__switch_rob_a = False
+        self.__switch_rob_b = False
+        self.__switch_rob_c = False
         # Set background color
         self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
@@ -38,21 +40,45 @@ class Visualizer:
                 self.__grid[i][j] = VisualizerCell(self.__canvas, self.__mapInSharedMemory[i][j], self.__cellWidth, self.__cellHeight)
                 self.__grid[i][j].draw()
 
-        # pygame.display.flip()
-
-        # time.sleep(2)
-        # pygame.display.update()
-        self.__create_menu(pygame.display.get_surface())
-        # pygame.display.flip()
-        # pygame.display.update()
-
-        # time.sleep(2)
-
+        self.__create_menu(self.__canvas)
 
     def setController(self, controller):
         self.__controller = controller
 
     def __create_menu(self, surface):
+
+        def _switch_rob_a(value: bool) -> None:
+            """
+            Changes diagonals
+            """
+            self.__switch_rob_a = value
+
+        def _switch_rob_b(value: bool) -> None:
+            """
+            Changes diagonals
+            """
+            self.__switch_rob_b = value
+
+        def _switch_rob_c(value: bool) -> None:
+            """
+            Changes diagonals
+            """
+            self.__switch_rob_c = value
+
+        def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
+            """
+            Set the background color of buttons if entered.
+            """
+            if w.readonly:
+                return
+            w.set_background_color((98, 103, 106))
+
+        def button_onmouseleave(w: 'pygame_menu.widgets.Widget', _) -> None:
+            """
+            Set the background color of buttons if leaved.
+            """
+            w.set_background_color((75, 79, 81))
+
         theme = pygame_menu.Theme(
             background_color=pygame_menu.themes.TRANSPARENT_COLOR,
             title=False,
@@ -72,14 +98,16 @@ class Visualizer:
         )
 
         self.btn = self.__menu.add.button(
-            'Create Robot',
+            'Synchronize Robot',
             self.__controller.createRobot,
-            button_id='create_robot',
+            button_id='sync_robot',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
-            margin=(0, 75),
-            shadow_width=10,
+            margin=(0, 30),
+            shadow_width=3,
         )
+        self.btn.set_onmouseover(button_onmouseover)
+        self.btn.set_onmouseleave(button_onmouseleave)
 
         self.btn = self.__menu.add.button(
             'Start Road',
@@ -88,48 +116,55 @@ class Visualizer:
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
             margin=(0, 75),
-            shadow_width=10,
+            shadow_width=3,
         )
-
-        def _diagonals(value: bool) -> None:
-            """
-            Changes diagonals
-            """
-            self._diagonals = value
+        self.btn.set_onmouseover(button_onmouseover)
+        self.btn.set_onmouseleave(button_onmouseleave)
 
         self.__menu.add.toggle_switch(
-            'Diagonals',
-            self._diagonals,
+            'ROB_A',
+            self.__switch_rob_a,
             font_size=20,
             margin=(0, 30),
-            onchange=_diagonals,
+            onchange=_switch_rob_a,
             state_text_font_color=((0, 0, 0), (0, 0, 0)),
             switch_margin=(15, 0),
-            toggleswitch_id='diagonals',
+            toggleswitch_id='ROB_A',
+            shadow_width=3,
             width=80
         )
 
-        def button_onmouseover(w: 'pygame_menu.widgets.Widget', _) -> None:
-            """
-            Set the background color of buttons if entered.
-            """
-            if w.readonly:
-                return
-            w.set_background_color((255,255,255))
+        self.__menu.add.toggle_switch(
+            'ROB_B',
+            self.__switch_rob_b,
+            font_size=20,
+            margin=(0, 30),
+            onchange=_switch_rob_b,
+            state_text_font_color=((0, 0, 0), (0, 0, 0)),
+            switch_margin=(15, 0),
+            toggleswitch_id='ROB_B',
+            shadow_width=3,
+            width=80
+        )
 
-        def button_onmouseleave(w: 'pygame_menu.widgets.Widget', _) -> None:
-            """
-            Set the background color of buttons if leaved.
-            """
-            w.set_background_color((75, 79, 81))
+        self.__menu.add.toggle_switch(
+            'ROB_C',
+            self.__switch_rob_c,
+            font_size=20,
+            margin=(0, 100),
+            onchange=_switch_rob_c,
+            state_text_font_color=((0, 0, 0), (0, 0, 0)),
+            switch_margin=(15, 0),
+            toggleswitch_id='ROB_C',
+            shadow_width=3,
+            width=80
+        )
 
-        self.btn.set_onmouseover(button_onmouseover)
-        self.btn.set_onmouseleave(button_onmouseleave)
-        if not self.btn.readonly:
-            self.btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
-            self.btn.set_background_color((75, 79, 81))
-
-        self.__menu.draw(surface)
+        for btn in self.__menu.get_widgets():
+            btn.set_onmouseover(button_onmouseover)
+            btn.set_onmouseleave(button_onmouseleave)
+            btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
+            btn.set_background_color((75, 79, 81))
 
     def run(self):
         self.__createMap()
@@ -145,41 +180,33 @@ class Visualizer:
                     pygame.quit()
                     quit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    pos = pygame.mouse.get_pos()
-                    but = pygame.mouse.get_pressed()
-                    if (pos[0] > self.__cellWidth+80) and (pos[0] < self.__cellWidth*(self.__horizontalCells-1)+80):
-                        if (pos[1] > self.__cellWidth+80) and (pos[1] < self.__cellWidth*(self.__horizontalCells-1)+80):
-                            x = (pos[0]-80)//52
-                            y = (pos[1]-80)//52
-                            # print(f'DESOCUPADA: {}')
+
+                    x, y = pygame.mouse.get_pos()
+                    right, middle, left = pygame.mouse.get_pressed()
+                    if (x > self.__cellWidth+80) and (x < self.__cellWidth*(self.__horizontalCells-1)+80):
+                        if (y > self.__cellWidth+80) and (y < self.__cellWidth*(self.__verticalCells-1)+80):
+                            x = (x-80)//int(self.__cellWidth)
+                            y = (y-80)//int(self.__cellHeight)
                             if self.__grid[x][y].getMapCell().getIsOccupable() == True:
-                                if but[0] == True:
-                                    # print(f"RIGHT: {(pos[0]-80)//52}, {(pos[1]-80)//52} ||| {but[0]}")
+                                if right == True:
                                     self.__controller.setInitialPoint(tuple((x, y)))
-                                elif but[2] == True:
-                                    # print(f"LEFT: {(pos[0]-80)//52}, {(pos[1]-80)//52} ||| {but[2]}")
+                                elif left == True:
                                     self.__controller.setFinalPoint(tuple((x, y)))
+                            else:
+                                print(f"[VISUALIZER] Coordinates ({x-1},{y-1}) are occupied")
 
             self.__updateFromMap()
             self.__drawDisplay()
-            # time.sleep(4)
+            self.__menu.draw(self.__canvas)
+            time.sleep(0.01)
 
     def __updateFromMap(self):
-        # pygame.display.update()
-        # time.sleep(0.1)
-        # print(f'H: {self.__horizontalCells} - V: {self.__verticalCells}')
         for i in range(self.__horizontalCells-1):
             for j in range(self.__verticalCells-1):
                 self.__grid[i+1][j+1].update()
-                # self.__grid[i][j].draw()
-                # print(f'POS_X:' {self.__grid[i][j].getPosX()})
-                # print(f'POS_X:', self.__grid[i][j].getMapCell().getXCoordinate())
-
 
     def __drawDisplay(self):
         pygame.display.update()
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
-                # self.__grid[i+1][j+1].update()
                 self.__grid[i][j].draw()
-        # pygame.display.update()
