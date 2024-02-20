@@ -13,17 +13,17 @@ class Model:
         # Set the signal handler and a 5-second alarm
         # signal.signal(signal.SIGINT, self.handler)
 
-    def createRobot(self):
-        self.__robotsManager.addRobot()
+    def createRobot(self, rob_id):
+        self.__robotsManager.addRobot(rob_id)
 
-    def setRobotRoad(self):
-        self.__robotsManager.sendJob()
+    def setRobotRoad(self, rob_id):
+        self.__robotsManager.sendJob(rob_id)
 
-    def setInitialPoint(self, coordinates):
-        self.__robotsManager.setInitialPoint(coordinates)
+    def setInitialPoint(self, coordinates, rob_id):
+        self.__robotsManager.setInitialPoint(coordinates, rob_id)
 
-    def setFinalPoint(self, coordinates):
-        self.__robotsManager.setFinalPoint(coordinates)
+    def setFinalPoint(self, coordinates, rob_id):
+        self.__robotsManager.setFinalPoint(coordinates, rob_id)
 
     def getMapHorizontalSize(self):
         return self.__map.getMapDefinition().getHorizontalSize()

@@ -26,6 +26,10 @@ class Visualizer:
         self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
 
+        self._clock = pygame.time.Clock()
+        self._fps = 60
+
+
     def __createMap(self):
         self.__horizontalCells = self.__controller.getMapHorizontalSize()
         self.__verticalCells = self.__controller.getMapVerticalSize()
@@ -99,7 +103,7 @@ class Visualizer:
 
         self.btn = self.__menu.add.button(
             'Synchronize Robot',
-            self.__controller.createRobot,
+            self.__syncRobot,
             button_id='sync_robot',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
@@ -111,7 +115,7 @@ class Visualizer:
 
         self.btn = self.__menu.add.button(
             'Start Road',
-            self.__controller.setRobotRoad,
+            self.__sendRobotJob,
             button_id='start_road',
             cursor=pygame_menu.locals.CURSOR_HAND,
             font_size=20,
@@ -121,50 +125,77 @@ class Visualizer:
         self.btn.set_onmouseover(button_onmouseover)
         self.btn.set_onmouseleave(button_onmouseleave)
 
-        self.__menu.add.toggle_switch(
-            'ROB_A',
-            self.__switch_rob_a,
-            font_size=20,
-            margin=(0, 30),
-            onchange=_switch_rob_a,
-            state_text_font_color=((0, 0, 0), (0, 0, 0)),
-            switch_margin=(15, 0),
-            toggleswitch_id='ROB_A',
-            shadow_width=3,
-            width=80
+        self.__menu.add.dropselect(
+            title='',
+            items=[('ROB_A', 0),
+                   ('ROB_B', 1),
+                   ('ROB_C', 2)],
+            default=0,
+            dropselect_id='robot_id',
+            font_size=16,
+            padding=0,
+            placeholder='Select one',
+            selection_box_height=5,
+            selection_box_inflate=(0, 20),
+            selection_box_margin=0,
+            selection_box_text_margin=10,
+            selection_box_width=200,
+            selection_option_font_size=20,
+            shadow_width=20
         )
-
-        self.__menu.add.toggle_switch(
-            'ROB_B',
-            self.__switch_rob_b,
-            font_size=20,
-            margin=(0, 30),
-            onchange=_switch_rob_b,
-            state_text_font_color=((0, 0, 0), (0, 0, 0)),
-            switch_margin=(15, 0),
-            toggleswitch_id='ROB_B',
-            shadow_width=3,
-            width=80
-        )
-
-        self.__menu.add.toggle_switch(
-            'ROB_C',
-            self.__switch_rob_c,
-            font_size=20,
-            margin=(0, 100),
-            onchange=_switch_rob_c,
-            state_text_font_color=((0, 0, 0), (0, 0, 0)),
-            switch_margin=(15, 0),
-            toggleswitch_id='ROB_C',
-            shadow_width=3,
-            width=80
-        )
+        self.__menu.add.vertical_margin(10)
 
         for btn in self.__menu.get_widgets():
             btn.set_onmouseover(button_onmouseover)
             btn.set_onmouseleave(button_onmouseleave)
             btn.set_cursor(pygame_menu.locals.CURSOR_HAND)
             btn.set_background_color((75, 79, 81))
+
+    def __updateFromMap(self):
+        for i in range(self.__horizontalCells-1):
+            for j in range(self.__verticalCells-1):
+                self.__grid[i+1][j+1].update()
+
+    def __drawDisplay(self):
+        for i in range(self.__horizontalCells):
+            for j in range(self.__verticalCells):
+                self.__grid[i][j].draw()
+
+    def __getRobotIdWidget(self):
+        rob_id = self.__menu.get_widget('robot_id')
+        return rob_id.get_value()[0][0]
+
+    def __syncRobot(self):
+        rob_id = self.__getRobotIdWidget()
+        self.__controller.createRobot(rob_id)
+
+    def __sendRobotJob(self):
+        rob_id = self.__getRobotIdWidget()
+        self.__controller.setRobotRoad(rob_id)
+
+    def __selectMapsPoints(self):
+        x, y = pygame.mouse.get_pos()
+        left, middle, right = pygame.mouse.get_pressed()
+        if (x > self.__cellWidth+80) and (x < self.__cellWidth*(self.__horizontalCells-1)+80):
+            if (y > self.__cellWidth+80) and (y < self.__cellWidth*(self.__verticalCells-1)+80):
+                x = (x-80)//int(self.__cellWidth)
+                y = (y-80)//int(self.__cellHeight)
+                rob_id = self.__getRobotIdWidget()
+                if self.__grid[x][y].getMapCell().getIsOccupable() == True:
+                    if left == True:
+                        self.__controller.setInitialPoint(tuple((x, y)), rob_id)
+                    elif right == True:
+                        self.__controller.setFinalPoint(tuple((x, y)), rob_id)
+                else:
+                    logging.error(f'[{__name__}] coordinates ({x-1},{y-1}) are occupied')
+
+    def __refreshWindow(self):
+        self.__canvas.fill(Colors.BACKGROUND.value)
+        self.__drawDisplay()
+        self.__updateFromMap()
+        self.__menu.draw(self.__canvas)
+        pygame.display.flip()
+        self._clock.tick(self._fps)
 
     def run(self):
         self.__createMap()
@@ -173,40 +204,12 @@ class Visualizer:
             self.__menu.update(events)
             if pygame_menu.events.MENU_LAST_WIDGET_DISABLE_ACTIVE_STATE in self.__menu.get_last_update_mode()[0]:
                 events = []
-
             for event in events:
                 if event.type == QUIT:
                     self.__running = False
                     pygame.quit()
                     quit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self.__selectMapsPoints()
 
-                    x, y = pygame.mouse.get_pos()
-                    right, middle, left = pygame.mouse.get_pressed()
-                    if (x > self.__cellWidth+80) and (x < self.__cellWidth*(self.__horizontalCells-1)+80):
-                        if (y > self.__cellWidth+80) and (y < self.__cellWidth*(self.__verticalCells-1)+80):
-                            x = (x-80)//int(self.__cellWidth)
-                            y = (y-80)//int(self.__cellHeight)
-                            if self.__grid[x][y].getMapCell().getIsOccupable() == True:
-                                if right == True:
-                                    self.__controller.setInitialPoint(tuple((x, y)))
-                                elif left == True:
-                                    self.__controller.setFinalPoint(tuple((x, y)))
-                            else:
-                                print(f"[VISUALIZER] Coordinates ({x-1},{y-1}) are occupied")
-
-            self.__updateFromMap()
-            self.__drawDisplay()
-            self.__menu.draw(self.__canvas)
-            time.sleep(0.01)
-
-    def __updateFromMap(self):
-        for i in range(self.__horizontalCells-1):
-            for j in range(self.__verticalCells-1):
-                self.__grid[i+1][j+1].update()
-
-    def __drawDisplay(self):
-        pygame.display.update()
-        for i in range(self.__horizontalCells):
-            for j in range(self.__verticalCells):
-                self.__grid[i][j].draw()
+            self.__refreshWindow()

@@ -5,7 +5,7 @@ from .JobManager import Path
 from .JobManager import Job
 from .JobManager import JobManager
 from .Robot import Robot
-
+import logging
 # esta clase contiene todos los robots asociados y a traves del job manager les envia trabajos
 
 class RobotsManager:
@@ -15,73 +15,49 @@ class RobotsManager:
         self.__robots = []
 
         # create instances for each robot - FIXME proximamente esto seria automatico cuando se registren los robots al conectarse
-        self.robotNames = ['ROB_A', 'ROB_B', 'ROB_C']
+        self.__robotNames = []
 
-    def addRobot(self):
+    def addRobot(self, rob_id):
         try:
-            robot = Robot(self.__monitor, self.robotNames.pop())
-            if(not type(robot) == Robot):
-                print("[ROBOTS_MANAGER] Trying to add something that is not a robot.")
-            self.__robots.append(robot)
-            self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
-            robot.getThread().start()
-            print(f'[ROBOTS_MANAGER] {robot.getRobotID()} added to the Queue')
+            if rob_id in self.__robotNames:
+                logging.error(f'[{__name__}] {rob_id} exists in the list')
+            else:
+                robot = Robot(self.__monitor, rob_id)
+                self.__robotNames.append(rob_id)
+                self.__robots.append(robot)
+                self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
+                robot.getThread().start()
         except:
-            print("[ROBOTS_MANAGER] Imposible to add more robots")
+            logging.error("[{__name__}] imposible add more robots")
 
-    # def sendMockJobsToRobots(self):
-    #     for robot in self.__robots:
-    #         # self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
-    #         robot.getThread().start()
+    def getRobotIndex(self, rob_id):
+        return self.__robotNames.index(rob_id)
 
-    #     threadSendTrbjo = Thread(target=self.__threadSendJobs, args=(self.__jobManager,))
-    #     threadSendTrbjo.start()
-    def setInitialPoint(self, coordinates):
+    def setInitialPoint(self, coordinates, rob_id):
         try:
-            self.__robots[0].setInitialPoint(coordinates)
+            self.__robots[self.getRobotIndex(rob_id)].setInitialPoint(coordinates)
+            logging.debug(f'[@{rob_id}] inital point {coordinates}')
         except:
-            print("[ROBOTS_MANAGER] Any robot available to set initial point")
+            logging.error(f'[{__name__}] any robot available to set initial point')
 
-    def setFinalPoint(self, coordinates):
+    def setFinalPoint(self, coordinates, rob_id):
         try:
-            self.__robots[0].setFinalPoint(coordinates)
+            self.__robots[self.getRobotIndex(rob_id)].setFinalPoint(coordinates)
+            logging.debug(f'[@{rob_id}] final point {coordinates}')
         except:
-            print("[ROBOTS_MANAGER] Any robot available to set final point")
+            logging.error(f'[{__name__}] any robot available to set final point')
 
     # este hilo simula como se irian generando los jobs y enviando a cada robot
-    def sendJob(self):
+    def sendJob(self, rob_id):
         try:
-            jobA = Job()
-            x_0 = self.__robots[0].getInitialPoint()[0]
-            y_0 = self.__robots[0].getInitialPoint()[1]
-            x_1 = self.__robots[0].getFinalPoint()[0]
-            y_1 = self.__robots[0].getFinalPoint()[1]
+            job = Job()
+            robot_index = self.getRobotIndex(rob_id)
+            x_0 = self.__robots[robot_index].getInitialPoint()[0]
+            y_0 = self.__robots[robot_index].getInitialPoint()[1]
+            x_1 = self.__robots[robot_index].getFinalPoint()[0]
+            y_1 = self.__robots[robot_index].getFinalPoint()[1]
 
-            # path = 
-            jobA.addPath(Path(x_0, y_0, x_1, y_1))
-            # path = Path(3,1,3,3)
-            # jobA.addPath(path)
-            # path = Path(3,3,1,3)
-            # jobA.addPath(path)
-            # path = Path(1,3,1,1)
-            # jobA.addPath(path)
-            self.__jobManager.sendJobToRobot(self.__robots[0].getRobotID(), jobA)
+            job.addPath(Path(x_0, y_0, x_1, y_1))
+            self.__jobManager.sendJobToRobot(self.__robots[robot_index].getRobotID(), job)
         except:
-            print("[ROBOTS_MANAGER] Any robot available")
-        #time.sleep(5)
-
-        # jobB = Job()
-        # path = Path(11,1,1,11)
-        # jobB.addPath(path)
-        # jobManager.sendJobToRobot(self.__robots[1].getRobotID(), jobB)
-
-        # #time.sleep(20)
-
-        # jobC = Job()
-        # path = Path(3,1,11,11)
-        # jobC.addPath(path)
-        # path = Path(11,11,3,1)
-        # jobC.addPath(path)
-        # jobManager.sendJobToRobot(self.__robots[2].getRobotID(), jobC)
-
-        # time.sleep(15)
+            logging.error(f'[{__name__}] any robot available')

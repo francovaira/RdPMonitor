@@ -17,8 +17,9 @@ class RobotThreadExecutor:
     # calculates coordinates sequence then transition sequence for each job and places robot in init position. Sets everything to start running on the thread
     def startPaths(self):
         if(not len(self.__jobs) or len(self.__jobs) > 1): # FIXME por ahora no soporta mas de 1 job
-            print(f"NO JOBS DEFINED -- WILL DO NOTHING, EXITING...")
-            exit()
+            # print(f"NO JOBS DEFINED -- WILL DO NOTHING, EXITING...")
+            logging.error(f'[{__name__}] no jobs defined')
+            # exit()
 
         # por aca deberia checkear que los path (si hay mas de uno) sean continuos - es decir, no seria valido ir de (1,1 a 5,5) y despues de (3,2 a 4,1)
         # capaz se podria hacer que calcule la trayectoria del tramo faltante de ultima
@@ -29,7 +30,9 @@ class RobotThreadExecutor:
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
             self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
-        print(f"@{self.__robotID} || STARTED PATHS || COORDINATES SEQUENCE = {coordinatesSequence} // TRANSITIONS SEQUENCE = {transitionsSequence}")
+        logging.debug(f'[{self.__robotID}] STARTED PATHS')
+        logging.debug(f'[{self.__robotID}] COORDINATES SEQUENCE = {coordinatesSequence}')
+        logging.debug(f'[{self.__robotID}] TRANSITIONS SEQUENCE = {transitionsSequence}')
 
     def __getCoorinatesSequence(self, paths):
         coordinatesSequence = []
@@ -76,7 +79,7 @@ class RobotThreadExecutor:
             if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
                 nextTransitionIndex = transitionIndex + 1
                 currentJob.setTransitionIndex(nextTransitionIndex)
-                print(f"@{self.__robotID} || NEXT TRANSITION @{currentJob.getCoordinatesPathSequence()[transitionIndex]}")
+                logging.debug(f'[@{self.__robotID}] || NEXT TRANSITION @{currentJob.getCoordinatesPathSequence()[transitionIndex]}')
                 # blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
 
                 if(nextTransitionIndex>= len(transitionsSequence)):

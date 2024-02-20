@@ -21,14 +21,14 @@ class Controller:
     def getPlaceIDFromMapCoordinate(self, coordinate):
         return self.model.getPlaceIDFromMapCoordinate(coordinate)
 
-    def createRobot(self):
-        self.model.createRobot()
+    def createRobot(self, rob_id):
+        self.model.createRobot(rob_id)
 
-    def setRobotRoad(self):
-        self.model.setRobotRoad()
+    def setRobotRoad(self, rob_id):
+        self.model.setRobotRoad(rob_id)
 
-    def setInitialPoint(self, coordinates):
-        self.model.setInitialPoint(coordinates)
+    def setInitialPoint(self, coordinates, rob_id):
+        self.model.setInitialPoint(coordinates, rob_id)
 
-    def setFinalPoint(self, coordinates):
-        self.model.setFinalPoint(coordinates)
+    def setFinalPoint(self, coordinates, rob_id):
+        self.model.setFinalPoint(coordinates, rob_id)

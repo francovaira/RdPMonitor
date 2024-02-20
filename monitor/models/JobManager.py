@@ -1,4 +1,4 @@
-
+import logging
 # esta clase seria la encargada de distribuir los jobs - en teoria cualquier robot podria hacer cualquier job
 class JobManager:
     def __init__(self):
@@ -6,19 +6,16 @@ class JobManager:
 
     def addRobotJobQueue(self, robotID, jobQueue):
         self.__robotsJobsQueue.update({robotID:jobQueue})
-        print(f"ADDED JOB QUEUE OF ROBOT {robotID} || {self.__robotsJobsQueue}")
+        logging.debug(f'[{__name__}] added job queue robot {robotID}')
 
     def sendJobToRobot(self, robotID, job):
         if(not type(job) == Job):
-            print("ERROR - unable to send JOB to robot")
-
+            logging.error(f'unable to send JOB to robot {robotID}')
         try:
             self.__robotsJobsQueue[robotID].put(job)
-            print(f"ADDED TO ROBOT {robotID} THE JOB {job.getPaths()}")
+            # logging.debug(f'added to robot {robotID} the job {job.getPaths()}')
         except Exception as e:
-            print(str(e))
-            print(f"EXCEPTION - Unable to put a job to robot {robotID}")
-
+            logging.error(f'unable to put a job to robot {robotID}')
 
 class Path:
     def __init__(self, initPosX, initPosY, endPosX, endPosY):
@@ -30,7 +27,6 @@ class Path:
 
     def getEndPos(self):
         return self.__endPos
-
 
 # esto tiene basicamente un conjunto de paths (compuestos cada uno por un punto o mas) para realizar
 class Job:
