@@ -27,37 +27,54 @@ class RobotsManager:
                 self.__robots.append(robot)
                 self.__jobManager.addRobotJobQueue(robot.getRobotID(), robot.getJobQueue())
                 robot.getThread().start()
-        except:
-            logging.error("[{__name__}] imposible add more robots")
+        except Exception as error:
+            logging.error(f'[{__name__}] imposible add more robots')
+            logging.error(f'[{__name__}] {error}')
 
     def getRobotIndex(self, rob_id):
         return self.__robotNames.index(rob_id)
 
     def setInitialPoint(self, coordinates, rob_id):
         try:
-            self.__robots[self.getRobotIndex(rob_id)].setInitialPoint(coordinates)
-            logging.debug(f'[@{rob_id}] inital point {coordinates}')
+            robot = self.__robots[self.getRobotIndex(rob_id)]
+            if not robot.getState():
+                robot.setInitialPoint(coordinates)
+                logging.debug(f'[@{rob_id}] inital point {coordinates}')
+            else:
+                logging.error(f'[{__name__}] exists job in process in {rob_id}')
         except:
             logging.error(f'[{__name__}] any robot available to set initial point')
 
     def setFinalPoint(self, coordinates, rob_id):
         try:
-            self.__robots[self.getRobotIndex(rob_id)].setFinalPoint(coordinates)
-            logging.debug(f'[@{rob_id}] final point {coordinates}')
+            robot = self.__robots[self.getRobotIndex(rob_id)]
+            if not robot.getState():
+                robot.setFinalPoint(coordinates)
+                logging.debug(f'[@{rob_id}] final point {coordinates}')
+            else:
+                logging.error(f'[{__name__}] exists job in process in {rob_id}')
         except:
             logging.error(f'[{__name__}] any robot available to set final point')
 
     # este hilo simula como se irian generando los jobs y enviando a cada robot
     def sendJob(self, rob_id):
         try:
-            job = Job()
-            robot_index = self.getRobotIndex(rob_id)
-            x_0 = self.__robots[robot_index].getInitialPoint()[0]
-            y_0 = self.__robots[robot_index].getInitialPoint()[1]
-            x_1 = self.__robots[robot_index].getFinalPoint()[0]
-            y_1 = self.__robots[robot_index].getFinalPoint()[1]
-
-            job.addPath(Path(x_0, y_0, x_1, y_1))
-            self.__jobManager.sendJobToRobot(self.__robots[robot_index].getRobotID(), job)
+            robot = self.__robots[self.getRobotIndex(rob_id)]
+            if not robot.getState():
+                job = Job()
+                initial = robot.getInitialPoint()
+                final = robot.getFinalPoint()
+                if (initial and final) != None: 
+                    job.addPath(Path(initial, final))
+                    self.__jobManager.sendJobToRobot(robot.getRobotID(), job)
+                else:
+                    logging.error(f'[{__name__}] initial and final points not selected for @{rob_id}')
+            else:
+                logging.error(f'[{__name__}] exists job in process in {rob_id}')
         except:
             logging.error(f'[{__name__}] any robot available')
+
+    # def __verifyJob(self, rob_id):
+    #     robot_index = self.getRobotIndex(rob_id)
+    #     qsize = self.__robots[robot_index].getJobQueue().qsize()
+    #     return qsize

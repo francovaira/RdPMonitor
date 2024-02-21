@@ -9,6 +9,7 @@ from .StateMachine import RobotMachine
 class RobotThreadRun:
     def __init__(self, robot):
         self.__robot = robot
+        self.__state = False
 
     def threadRun(self):
 
@@ -26,9 +27,12 @@ class RobotThreadRun:
             self.robotThreadExecutor.addJob(newJob)
             self.robotThreadExecutor.startPaths()
 
-            running = True
-            while(running):
+            self.__state = True
+            while(self.__state):
                 # Dispara la transición que desemboca en la ejecución del ciclo de estados
                 self.stateMachine.dispararMonitor()
                 if self.stateMachine.blue.is_active == True:
-                    running = False
+                    self.__state = False
+
+    def getRobotState(self):
+        return self.__state

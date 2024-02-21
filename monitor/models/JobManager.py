@@ -18,9 +18,9 @@ class JobManager:
             logging.error(f'unable to put a job to robot {robotID}')
 
 class Path:
-    def __init__(self, initPosX, initPosY, endPosX, endPosY):
-        self.__initPos = tuple((initPosX, initPosY))
-        self.__endPos = tuple((endPosX, endPosY))
+    def __init__(self, initPos, endPos):
+        self.__initPos = initPos
+        self.__endPos = endPos
 
     def getInitPos(self):
         return self.__initPos

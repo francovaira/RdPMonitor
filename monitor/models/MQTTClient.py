@@ -7,23 +7,23 @@ class MQTTClient:
         self.__msgQueue = messageQueue
         self.__topicRobotID = f'/topic/{robotID}'
         self.__topicPath = f'/topic/live/{robotID}'
+        self.mqttc = mqtt.Client()
 
-    def createClient(self):
-        mqttc = mqtt.Client()
-        mqttc.on_connect = self.on_connect
-        mqttc.on_publish = self.on_publish
-        mqttc.on_subscribe = self.on_subscribe
-        mqttc.on_disconnect = self.on_disconnect
-        mqttc.message_callback_add(self.__topicRobotID, self.on_publish_common)
-        # mqttc.on_message = self.on_message
+        self.mqttc.on_connect = self.on_connect
+        self.mqttc.on_publish = self.on_publish
+        self.mqttc.on_subscribe = self.on_subscribe
+        self.mqttc.on_disconnect = self.on_disconnect
+        self.mqttc.message_callback_add(self.__topicRobotID, self.on_publish_common)
+        # self.mqttc.on_message = self.on_message
         try:
-            mqttc.connect('localhost', 1883, 60)
-            mqttc.loop_start()
-            mqttc.subscribe(self.__topicRobotID, 0)
+            self.mqttc.connect('localhost', 1883, 60)
+            self.mqttc.loop_start()
+            self.mqttc.subscribe(self.__topicRobotID, 0)
         except:
             logging.error(f'[{__name__}] {self.__robotID} cant connect to the broker')
 
-        return mqttc
+    def getClient(self):
+        return self.mqttc
 
     def on_connect(self, mqttc, obj, flags, rc):
         pass

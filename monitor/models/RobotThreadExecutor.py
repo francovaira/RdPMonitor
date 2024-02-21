@@ -36,17 +36,20 @@ class RobotThreadExecutor:
 
     def __getCoorinatesSequence(self, paths):
         coordinatesSequence = []
-        for path in paths:
-            initPos = path.getInitPos()
-            endPos = path.getEndPos()
-            coordSeq = self.__monitor.calculatePath(initPos[0], initPos[1], endPos[0], endPos[1])
+        try:
+            for path in paths:
+                initPos = path.getInitPos()
+                endPos = path.getEndPos()
+                coordSeq = self.__monitor.calculatePath(initPos[0], initPos[1], endPos[0], endPos[1])
 
-            if(len(coordinatesSequence) > 0):
-                coordSeq.pop(0)
-                coordinatesSequence.extend(coordSeq)
-            else:
-                coordinatesSequence = coordSeq
-        return coordinatesSequence
+                if(len(coordinatesSequence) > 0):
+                    coordSeq.pop(0)
+                    coordinatesSequence.extend(coordSeq)
+                else:
+                    coordinatesSequence = coordSeq
+            return coordinatesSequence
+        except:
+            logging.error(f'[{__name__}] path doesnt exist')
 
     def getPathTuple(self):
         currentJob = self.__jobs[0]
