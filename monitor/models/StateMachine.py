@@ -3,19 +3,19 @@ import time
 # from .RobotThreadExecutor import RobotThreadExecutor
 
 class RobotMachine(StateMachine):
-    green = State(initial=True)
-    yellow = State()
-    red = State()
-    blue = State()
+    disparo_monitor = State(initial=True)
+    send_setpoint_robot = State()
+    espera_respuesta = State()
+    finish_state = State()
 
     dispararMonitor = (
-        green.to(yellow, cond="run_monitor")
-        | green.to(green, unless="run_monitor")
-        | yellow.to(red, cond="mandar_mensaje")
-        | yellow.to(blue, unless="mandar_mensaje")
-        | red.to(green, cond="recibir_mensaje")
-        | red.to(blue, unless="recibir_mensaje")
-        | blue.to(green)
+        disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
+        | disparo_monitor.to(disparo_monitor, unless="run_monitor")
+        | send_setpoint_robot.to(espera_respuesta, cond="mandar_mensaje")
+        | send_setpoint_robot.to(finish_state, unless="mandar_mensaje")
+        | espera_respuesta.to(disparo_monitor, cond="recibir_mensaje")
+        | espera_respuesta.to(finish_state, unless="recibir_mensaje")
+        | finish_state.to(disparo_monitor)
     )
 
     def __init__(self, executor, robot):
@@ -51,5 +51,5 @@ class RobotMachine(StateMachine):
         except:
             return False
 
-    def on_exit_blue(self):
+    def on_exit_finish_state(self):
         print(f"@{self.__robotID} cycle completed")
