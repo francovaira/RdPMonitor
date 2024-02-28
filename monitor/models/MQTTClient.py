@@ -34,7 +34,7 @@ class MQTTClient:
             mqttc.subscribe(self.__topicPath, 0)
 
     def on_robot_message(self, mqttc, obj, msg):
-        logging.debug(f'[{__name__}] {self.__robotID} confirmation recived')
+        logging.debug(f'[{__name__}] {self.__robotID} setpoint confirmation recived')
         self.__msgQueue.put(str(msg.topic))
 
     # def on_message(self, mqttc, obj, msg):

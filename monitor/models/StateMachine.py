@@ -1,6 +1,5 @@
 from statemachine import StateMachine, State
 import time
-# from .RobotThreadExecutor import RobotThreadExecutor
 
 class RobotMachine(StateMachine):
     disparo_monitor = State(initial=True)

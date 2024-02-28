@@ -17,9 +17,7 @@ class RobotThreadExecutor:
     # calculates coordinates sequence then transition sequence for each job and places robot in init position. Sets everything to start running on the thread
     def startPaths(self):
         if(not len(self.__jobs) or len(self.__jobs) > 1): # FIXME por ahora no soporta mas de 1 job
-            # print(f"NO JOBS DEFINED -- WILL DO NOTHING, EXITING...")
-            logging.error(f'[{__name__}] no jobs defined')
-            # exit()
+            logging.error(f'[{__name__}] no jobs defined. Will do nothing.')
 
         # por aca deberia checkear que los path (si hay mas de uno) sean continuos - es decir, no seria valido ir de (1,1 a 5,5) y despues de (3,2 a 4,1)
         # capaz se podria hacer que calcule la trayectoria del tramo faltante de ultima
@@ -74,7 +72,7 @@ class RobotThreadExecutor:
             transitionIndex = currentJob.getTransitionIndex()
 
             if(not len(transitionsSequence)):
-                print("ERROR - Transition sequence empty - must initialize paths")
+                logging.error(f'[{__name__}] Transition sequence empty - must initialize paths')
                 exit()
 
             transitionToExecute = transitionsSequence[transitionIndex]
@@ -82,11 +80,10 @@ class RobotThreadExecutor:
             if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
                 nextTransitionIndex = transitionIndex + 1
                 currentJob.setTransitionIndex(nextTransitionIndex)
-                logging.debug(f'[@{self.__robotID}] || NEXT TRANSITION @{currentJob.getCoordinatesPathSequence()[transitionIndex]}')
-                # blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
+                logging.debug(f'[@{self.__robotID}] || disparo monitor exitoso. Next transition @{currentJob.getCoordinatesPathSequence()[transitionIndex]}')
 
-                if(nextTransitionIndex>= len(transitionsSequence)):
-                    print(f"SEQUENCE FINISHED AT THE END @{self.__robotID}")
+                if(nextTransitionIndex >= len(transitionsSequence)):
+                    logging.debug(f'[@{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
                     return "END"
             elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
