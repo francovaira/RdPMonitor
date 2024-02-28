@@ -11,10 +11,10 @@ class RobotMachine(StateMachine):
     dispararMonitor = (
         disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
         | disparo_monitor.to(disparo_monitor, unless="run_monitor")
-        | send_setpoint_robot.to(espera_respuesta, cond="mandar_mensaje")
-        | send_setpoint_robot.to(finish_state, unless="mandar_mensaje")
-        | espera_respuesta.to(disparo_monitor, cond="recibir_mensaje")
-        | espera_respuesta.to(finish_state, unless="recibir_mensaje")
+        | send_setpoint_robot.to(espera_respuesta, cond="send_setpoint")
+        | send_setpoint_robot.to(finish_state, unless="send_setpoint")
+        | espera_respuesta.to(disparo_monitor, cond="wait_response")
+        | espera_respuesta.to(finish_state, unless="wait_response")
         | finish_state.to(disparo_monitor)
     )
 
@@ -34,7 +34,7 @@ class RobotMachine(StateMachine):
         elif status == "NO_JOBS":
             return False
 
-    def mandar_mensaje(self):
+    def send_setpoint(self):
         try:
             self.__velocities = self.__robot.traslatePath(self.__executor.getPathTuple())
             msg = self.__mqttClient.publish(self.__robot.getRobotTopic(), self.__velocities, qos=0)
@@ -44,7 +44,7 @@ class RobotMachine(StateMachine):
             print("[STATE MACHINE] No jobs available")
             return False
 
-    def recibir_mensaje(self):
+    def wait_response(self):
         try:
             robotMsg = self.__msgQueue.get(timeout=15)
             return True
@@ -53,3 +53,4 @@ class RobotMachine(StateMachine):
 
     def on_exit_finish_state(self):
         print(f"@{self.__robotID} cycle completed")
+
