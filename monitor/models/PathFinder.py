@@ -1,5 +1,6 @@
 from decouple import config
 import macros
+import logging
 
 class PathFinderCell:
     def __init__(self, posX, posY):
@@ -90,7 +91,7 @@ class PathFinder:
                 elif(self.__mapDefinition.getMapStructure()[j][i] == macros.MAP_OCCUPABLE):
                     self.grid[i][j].setIsObstacle(False)
                 else:
-                    print("ERROR map cell definition unknown")
+                    logging.error(f'[{__name__}] map cell definition unknown')
 
         # Initialize neighbors for each cell
         for i in range(self.cols):
@@ -108,7 +109,7 @@ class PathFinder:
         end = self.__getCell(endX, endY)
 
         if(start == None or end == None or start.getIsObstacle() == True or end.getIsObstacle() == True): # FIXME este checkeo no aplica para cuando es dinamico -- VERRR
-            print("ERROR PATH FINDER - Invalid coordinates")
+            logging.error(f'[{__name__}] invalid coordinates')
             return None
 
         for i in range(len(self.grid)):
@@ -121,7 +122,8 @@ class PathFinder:
             for coordinateOccupiedCell in cellsCoordinatesMarkedAsOccupied:
                 dynamicOccupiedCell = self.__getCell(coordinateOccupiedCell[0], coordinateOccupiedCell[1])
                 if(dynamicOccupiedCell == None):
-                    print(f"ERROR - NO PUDO OBTENER CELDA DINAMICA PARA MARCAR OCUPADA")
+                    # print(f"ERROR - NO PUDO OBTENER CELDA DINAMICA PARA MARCAR OCUPADA")
+                    logging.error(f'[{__name__}] invalid cell')
                     continue
                 # dynamicOccupiedCell.setIsDynamicObstacle(True)
                 start.neighbors.remove(dynamicOccupiedCell)
@@ -140,7 +142,7 @@ class PathFinder:
 
             iterations = iterations + 1
             if(iterations >= maxIterations):
-                print("ERROR PATH FINDER - No path found for given coordinates (max iterations reached)")
+                logging.error(f'[{__name__}] no path found for given coordinates (max iterations reached)')
                 finished = True
                 start.neighbors.append(neighborsToRestore[0])
                 return []
@@ -164,7 +166,8 @@ class PathFinder:
                 #elif(current == end):
                 if(current == end):
                     pathDistance = current.f
-                    print(f"DONE - Distance: {pathDistance} // Iterations: {iterations}")
+                    logging.debug(f'[{__name__}] done - Distance: {pathDistance}')
+                    logging.debug(f'[{__name__}] done - Iterations: {iterations}')
 
                     seqParams = []
                     seqParams = self.__getSequenceCoordinates(current)
@@ -204,7 +207,7 @@ class PathFinder:
         end = self.__getCell(endX, endY)
 
         if(start == None or end == None or start.getIsObstacle() == True or end.getIsObstacle() == True):
-            print("ERROR PATH FINDER - Invalid coordinates")
+            logging.error(f'[{__name__}] invalid coordinates')
             return None
 
         for i in range(len(self.grid)):
@@ -232,12 +235,13 @@ class PathFinder:
 
                 # FINISHED CALCULATING or max iterations reached
                 if(iterations >= maxIterations):
-                    print("ERROR PATH FINDER - No path found for given coordinates (max iterations reached)")
+                    logging.error(f'[{__name__}] no path found for given coordinates (max iterations reached)')
                     finished = True
                     return []
                 elif(current == end):
                     pathDistance = current.f
-                    print(f"DONE - Distance: {pathDistance} // Iterations: {iterations}")
+                    logging.debug(f'[{__name__}] done - Distance: {pathDistance}')
+                    logging.debug(f'[{__name__}] done - Iterations: {iterations}')
 
                     seqParams = []
                     seqParams = self.__getSequenceCoordinates(current)
@@ -316,7 +320,7 @@ class PathFinder:
 
         #print(f"START ({orderedCellSequence[0].i},{orderedCellSequence[0].j})")
         #print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
-        print()
+        # print()
 
         direction = 0 # 0 = upwards / 1 = right / 2 = downwards / 3 = left
         directionAux = 0 # robot is supposed to start "looking upwards"
@@ -326,7 +330,7 @@ class PathFinder:
             #print(f"delta ({deltaX},{deltaY})")
 
             if(deltaX!=0 and deltaY!=0):
-                print("Error - Unable to move along 2 axis at the same time")
+                logging.error(f'[{__name__}] unable to move along 2 axis at the same time')
                 # FIXME hacer de ultima que capture el error y lo divida en 2 movimientos separados, ver
 
             #if(i != 0 and direction != directionAux): # ignore first iteration because i do not know the direction of the first movement 
@@ -335,25 +339,24 @@ class PathFinder:
 
             if(deltaX>0 and deltaX==1 and deltaY==0):
                 # move right
-                print("DERECHA")
+                logging.info(f'[{__name__}] derecha')
                 #if(mustAppendTurn):
                 #    pathSequence.append(asdasd)
-
                 pathSequence.append([0.25, 0.25, 0, oneCellDistance])
                 direction = 1
             elif(deltaX<0 and deltaX==-1 and deltaY==0):
                 # move left
-                print("IZQUIERDA")
+                logging.info(f'[{__name__}] izquierda')
                 pathSequence.append([-0.25, -0.25, 0, oneCellDistance])
                 direction = 3
             elif(deltaY>0 and deltaY==1 and deltaX==0):
                 # move downwards
-                print("ABAJO")
+                logging.info(f'[{__name__}] abajo')
                 pathSequence.append([-0.25, 0.25, 0, oneCellDistance])
                 direction = 2
             elif(deltaY<0 and deltaY==-1 and deltaX==0):
                 # move upwards
-                print("ARRIBA")
+                logging.info(f'[{__name__}] arriba')
                 pathSequence.append([0.25, -0.25, 0, oneCellDistance])
                 direction = 0
 

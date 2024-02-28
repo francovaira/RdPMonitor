@@ -23,6 +23,9 @@ class VisualizerCell:
     def getRobotID(self):
         return self.__robotID
 
+    def getMapCell(self):
+        return self.__mapCell
+
     def update(self):
         self.setRobotID(self.__mapCell.getOccupantsID())
         cellType = self.__mapCell.getType()
@@ -44,7 +47,7 @@ class VisualizerCell:
 
     def draw(self):
         pygame.draw.rect(self.__canvas, self.__color, (self.__mapCell.getPosX()*self.__width+80, self.__mapCell.getPosY()*self.__height+80, self.__width, self.__height), self.__borderWidth)
-
+        # print((self.__mapCell.getPosX()*self.__width+80, self.__mapCell.getPosY()*self.__height+80, self.__width, self.__height))
         # draw robot ID
         if(self.__robotID != None):
             font = pygame.font.SysFont(None, 20)

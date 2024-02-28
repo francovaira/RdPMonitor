@@ -1,21 +1,24 @@
 import queue
 import time
 import random
+import logging
 from .JobManager import Job
 from .RobotThreadExecutor import RobotThreadExecutor
+from .StateMachine import RobotMachine
 
 class RobotThreadRun:
     def __init__(self, robot):
         self.__robot = robot
+        self.__state = False
 
     def threadRun(self):
 
         self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
-
-        time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
+        self.stateMachine = RobotMachine(self.robotThreadExecutor, self.__robot)
+        # time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
         while(1):
-            print(f"{self.__robot.getRobotID()} || me voy a bloquear")
+            logging.debug(f'[{__name__}] {self.__robot.getRobotID()} blocked')
             newJob = self.__robot.getJobQueue().get() # se bloquea hasta que se ponga un elemento
 
             if(not type(newJob) == Job):
@@ -24,10 +27,12 @@ class RobotThreadRun:
             self.robotThreadExecutor.addJob(newJob)
             self.robotThreadExecutor.startPaths()
 
-            running = True
-            while(running):
-                running = self.robotThreadExecutor.run()
-                #time.sleep(0.5)
-                time.sleep(random.random())
+            self.__state = True
+            while(self.__state):
+                # Dispara la transición que desemboca en la ejecución del ciclo de estados
+                self.stateMachine.dispararMonitor()
+                if self.stateMachine.finish_state.is_active == True:
+                    self.__state = False
 
-            print(f"THREAD {self.__robot.getRobotID()} STALL")
+    def getRobotState(self):
+        return self.__state

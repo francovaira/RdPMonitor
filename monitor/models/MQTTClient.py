@@ -1,101 +1,51 @@
-# import context  # Ensures paho is in PYTHONPATH
 import paho.mqtt.client as mqtt
-import threading
-import queue
-import time
-import json
-import traceback
 import logging
 
-# mqttc_condition = threading.Condition()
-mqttc_event = threading.Event()
-mqttc_ping_event = threading.Event()
-mqttc_queue = queue.Queue()
-mqttc_ping_flag = 1
+class MQTTClient:
+    def __init__(self, robotID, messageQueue):
+        self.__robotID = robotID
+        self.__msgQueue = messageQueue
+        self.__topicRobotID = f'/topic/{robotID}'
+        self.__topicPath = f'/topic/live/{robotID}'
+        self.mqttc = mqtt.Client()
 
-def on_connect(mqttc, obj, flags, rc):
-    print("rc: " + str(rc))
+        self.mqttc.on_connect = self.on_connect
+        self.mqttc.on_publish = self.on_publish
+        self.mqttc.on_subscribe = self.on_subscribe
+        self.mqttc.on_disconnect = self.on_disconnect
+        self.mqttc.message_callback_add(self.__topicRobotID, self.on_publish_common)
+        # self.mqttc.on_message = self.on_message
+        try:
+            self.mqttc.connect('localhost', 1883, 60)
+            self.mqttc.loop_start()
+            self.mqttc.subscribe(self.__topicRobotID, 0)
+        except:
+            logging.error(f'[{__name__}] {self.__robotID} cant connect to the broker')
 
-def on_message(mqttc, obj, msg):
-    print(mqttc._client_id)
-    print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
-    # mqttc_condition.acquire()
-    # mqttc_condition.notify()
-    # mqttc_condition.release()
+    def getClient(self):
+        return self.mqttc
 
-def on_publish(mqttc, obj, mid):
-    print("mid: " + str(mid) + "aa")
-    pass
+    def on_connect(self, mqttc, obj, flags, rc):
+        pass
 
-def on_subscribe(mqttc, obj, mid, granted_qos):
-    print("Subscribed: " + str(mid) + " " + str(granted_qos))
+    def on_publish_common(self, mqttc, obj, msg):
+        if self.__robotID == str(msg.payload, 'utf-8'):
+            mqttc.message_callback_add(self.__topicPath, self.on_robot_message)
+            mqttc.subscribe(self.__topicPath, 0)
 
-def on_subscribe_thread(mqttc, obj, mid, granted_qos):
-    print("Subscribed: " + str(mid) + " " + str(granted_qos))
+    def on_robot_message(self, mqttc, obj, msg):
+        logging.debug(f'[{__name__}] {self.__robotID} confirmation recived')
+        self.__msgQueue.put(str(msg.topic))
 
-def on_log(mqttc, obj, level, string):
-    print(string)
+    # def on_message(self, mqttc, obj, msg):
+    #     print("topic: " + str(msg.topic) + " " + str(msg.qos) + " " + str(msg.payload))
+    #     self.__msgQueue.put(str(msg.topic))
 
-def on_log_thread(mqttc, obj, level, string):
-    print(string)
+    def on_publish(self, mqttc, obj, mid):
+        logging.debug(f'[{__name__}] {self.__robotID} velocities sent')
 
-def on_disconnect(client, userdata, rc):
-    if rc != 0:
-        print("Unexpected disconnection.")
+    def on_subscribe(self, mqttc, obj, mid, granted_qos):
+        logging.debug(f'[{__name__}] {self.__robotID} subscribed')
 
-def on_ping_message(mqttc, obj, msg):
-    str_data = str(msg.payload)
-    str_data = str_data[2:(len(str_data)-1)]
-    try:
-        json_data_response = json.loads(str_data)
-        if 'id' in json_data_response.keys():
-            getMqttcQueue().put(json_data_response.get('id'))
-            mqttc_event.clear()
-    except Exception:
-        logging.exception('Error al obtener el id del robot')
-
-def thread_run():
-    mqttc = mqtt.Client()
-    # mqttc.on_log = on_log_thread
-    mqttc.on_subscribe = on_subscribe_thread
-    mqttc.message_callback_add('/topic/ping_response', on_ping_message)
-
-    try:
-        mqttc.connect('localhost', 1883, 60)
-        mqttc.loop_start()
-        mqttc.subscribe('/topic/ping_response', 2)
-    except:
-        logging.error('No se pudo conectar al broker')
-
-    while True:
-        mqttc_event.wait()
-        while mqttc_event.isSet():
-            msg = mqttc.publish('/topic/ping', '{"id":"searching"}', qos=2)
-            msg.wait_for_publish()
-            time.sleep(1)
-
-def getMqttcEvent():
-    return mqttc_event
-
-def getMqttcQueue():
-    return mqttc_queue
-
-def create_client(robot_id):
-    mqttc = mqtt.Client(client_id=robot_id)
-    mqttc.on_message = on_message
-    mqttc.on_connect = on_connect
-    mqttc.on_publish = on_publish
-    mqttc.on_subscribe = on_subscribe
-    mqttc.on_disconnect = on_disconnect
-
-    # Uncomment to enable debug messages
-    # mqttc.on_log = on_log
-    mqttc.max_inflight_messages_set(1)
-    try:
-        mqttc.connect("localhost", 1883, 60)
-        mqttc.loop_start()
-        mqttc.subscribe(robot_id, 2)
-    except:
-        print("No se pudo conectar al broker.")
-
-    return mqttc
+    def on_disconnect(self, client, userdata, rc):
+        logging.warning(f'[{__name__}] {self.__robotID} unexpected disconnection')
