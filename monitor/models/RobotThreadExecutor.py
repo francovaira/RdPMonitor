@@ -69,22 +69,10 @@ class RobotThreadExecutor:
         try:
             currentJob = self.__jobs[0]
 
-            # transitionsSequence = currentJob.getTransitionsPathSequence()
-            # transitionIndex = currentJob.getTransitionIndex()
-            # if(not len(transitionsSequence)):
-            #     logging.error(f'[{__name__}] Transition sequence empty - must initialize paths')
-            #     exit()
-            # transitionToExecute = transitionsSequence[transitionIndex]
             transitionToExecute = currentJob.getNextTransitionToExecute()
-
             monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
             if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
-                #nextTransitionIndex = currentJob.getTransitionIndex() + 1
-                #currentJob.setTransitionIndex(nextTransitionIndex)
                 logging.debug(f'[{self.__robotID}] || disparo monitor exitoso.')
-                #currentJob.updateNextTransitionToExecute()
-
-                # if(nextTransitionIndex >= len(currentJob.getTransitionsPathSequence())):
                 if(currentJob.updateNextTransitionToExecute()):
                     logging.debug(f'[{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
