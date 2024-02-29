@@ -28,8 +28,7 @@ class RobotThreadRun:
 
             self.__state = True
             while(self.__state):
-                # Dispara la transición que desemboca en la ejecución del ciclo de estados
-                self.stateMachine.dispararMonitor()
+                self.stateMachine.dispararMonitor() # Dispara la transición que desemboca en la ejecución del ciclo de estados
                 if self.stateMachine.finish_state.is_active == True:
                     self.__state = False
 

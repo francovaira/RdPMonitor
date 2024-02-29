@@ -1,5 +1,8 @@
 from statemachine import StateMachine, State
 import time
+import json
+import logging
+import macros
 
 class RobotMachine(StateMachine):
     disparo_monitor = State(initial=True)
@@ -22,7 +25,7 @@ class RobotMachine(StateMachine):
         self.__robot = robot
         self.__robotID = robot.getRobotID()
         self.__mqttClient = robot.getMqttClient()
-        self.__msgQueue = robot.getMsgQueue()
+        self.__robotFeedbackQueue = robot.getFeedbackQueue()
         super(RobotMachine, self).__init__()
 
     def run_monitor(self):
@@ -36,7 +39,7 @@ class RobotMachine(StateMachine):
     def send_setpoint(self):
         try:
             setpoint_message = self.__robot.traslatePathToMessage(self.__executor.getPathTuple())
-            msg = self.__mqttClient.publish(self.__robot.getRobotTopic(), setpoint_message, qos=0)
+            msg = self.__mqttClient.publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
             return True
         except:
@@ -45,12 +48,28 @@ class RobotMachine(StateMachine):
 
     def wait_response(self):
         try:
-            robotMsg = self.__msgQueue.get(timeout=15)
-            # aca deberia avisarle al executor sobre el feedback para que pueda actualizar el kalman y tomar la compensacion
-            return True
-        except:
+            robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
+            logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
+
+            if(self.check_feedback_message(robotFeedback)):
+                # aca deberia avisarle al executor del feedback para que pueda actualizar el kalman y despues tomar la compensacion
+                return True
+
+        except Exception as e:
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
             return False
 
     def on_exit_finish_state(self):
         print(f"@{self.__robotID} cycle completed")
 
+    def check_feedback_message(self, feedback_message):
+        # feedback: '{"dx":0.06, "vx":0.23, "dy":0.07, "vy":0.24}'
+        data = json.loads(feedback_message)
+        dx = data['dx']
+        vx = data['vx']
+        dy = data['dy']
+        vy = data['vy']
+        if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
+            logging.error(f'[{__name__}] {self.__robotID} json contains invalid data')
+            return False
+        return True

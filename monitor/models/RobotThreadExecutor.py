@@ -50,6 +50,8 @@ class RobotThreadExecutor:
             logging.error(f'[{__name__}] path doesnt exist')
 
     def getPathTuple(self):
+        # en esta funcion se podria hacer que tome la compensacion de kalman, modificando las velocidades de setpoint
+        # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
         currentJob = self.__jobs[0]
         previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
         currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]

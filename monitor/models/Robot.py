@@ -1,8 +1,8 @@
 from .MQTTClient import MQTTClient
 from .RobotThreadRun import RobotThreadRun
 import random as rd
-import queue
 import threading
+import queue
 import json
 from threading import Thread
 import logging
@@ -15,8 +15,8 @@ class Robot:
             self.__caminoRecorrido = None
             self.__initialPoint = None
             self.__finalPoint = None
-            self.__messageQueue = queue.Queue(maxsize=1)
-            self.__mqtt_client = MQTTClient(robotID, self.__messageQueue)
+            self.__feedbackQueue = queue.Queue(maxsize=1)
+            self.__mqtt_client = MQTTClient(robotID, self.__feedbackQueue)
             self.__jobQueue = queue.Queue()
             self.__monitor = monitor
             self.robotThreadRun = RobotThreadRun(self)
@@ -39,8 +39,8 @@ class Robot:
     def getFinalPoint(self):
         return self.__finalPoint
 
-    def getRobotTopic(self):
-        return str(f'/topic/v1/{self.__robotID}')
+    def getRobotSendSetpointTopic(self):
+        return str(f'/topic/setpoint/{self.__robotID}')
 
     def getThread(self):
         return self.__thread
@@ -48,8 +48,8 @@ class Robot:
     def getJobQueue(self):
         return self.__jobQueue
 
-    def getMsgQueue(self):
-        return self.__messageQueue
+    def getFeedbackQueue(self):
+        return self.__feedbackQueue
 
     def getMqttClient(self):
         return self.__mqtt_client.getClient()
@@ -76,6 +76,23 @@ class Robot:
         elif path == (0,0):
             json_path = str('{"setpoint" : 1, "vel_x" : 0, "vel_y" : 0, "vel_ang" : 0}')
             return json_path[:58]
+
+        # FIXME
+        # import json
+
+        # x = {
+        #   "name": "John",
+        #   "age": 30,
+        #   "married": True,
+        #   "divorced": False,
+        #   "children": ("Ann","Billy"),
+        #   "pets": None,
+        #   "cars": [
+        #     {"model": "BMW 230", "mpg": 27.5},
+        #     {"model": "Ford Edge", "mpg": 24.1}
+        #   ]
+        # }
+        # print(json.dumps(x))
 
     def getState(self):
         return self.robotThreadRun.getRobotState()
