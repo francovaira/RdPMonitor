@@ -1,14 +1,17 @@
 from .MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
 from .JobManager import Job
+from .KalmanFilter2D import KalmanFilter2D
 import operator
 import logging
 import time
+import json
 
 class RobotThreadExecutor:
     def __init__(self, robotID, monitor):
         self.__monitor = monitor
         self.__robotID = robotID
         self.__jobs = []
+        self.__kalmanFilter = KalmanFilter2D()
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -50,7 +53,7 @@ class RobotThreadExecutor:
             logging.error(f'[{__name__}] path doesnt exist')
 
     def getPathTuple(self):
-        # en esta funcion se podria hacer que tome la compensacion de kalman, modificando las velocidades de setpoint
+        # en esta funcion se podria hacer que tome la compensacion desde kalman, modificando las velocidades de setpoint
         # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
         currentJob = self.__jobs[0]
         previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
@@ -63,6 +66,17 @@ class RobotThreadExecutor:
             filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
             filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
             return filtro_positivo
+
+    def updateRobotFeedback(self, robotFeedback):
+        logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
+
+        data = json.loads(robotFeedback)
+        dx = data['dx']
+        vx = data['vx']
+        dy = data['dy']
+        vy = data['vy']
+
+        self.__kalmanFilter.inputMeasurementUpdate([ [dx,vx], [dy,vy] ])
 
     def run(self):
 

@@ -142,7 +142,7 @@ class PathFinder:
 
             iterations = iterations + 1
             if(iterations >= maxIterations):
-                logging.error(f'[{__name__}] no path found for given coordinates (max iterations reached)')
+                logging.error(f'[{__name__}] no path found (max iterations reached)')
                 finished = True
                 start.neighbors.append(neighborsToRestore[0])
                 return []
@@ -166,12 +166,10 @@ class PathFinder:
                 #elif(current == end):
                 if(current == end):
                     pathDistance = current.f
-                    logging.debug(f'[{__name__}] done - Distance: {pathDistance}')
-                    logging.debug(f'[{__name__}] done - Iterations: {iterations}')
+                    logging.debug(f'[{__name__}] done - Distance: {pathDistance} | Iterations: {iterations}')
 
                     seqParams = []
                     seqParams = self.__getSequenceCoordinates(current)
-                    #print(seqParams)
                     finished = True
                     start.neighbors.append(neighborsToRestore[0])
                     return seqParams
@@ -240,12 +238,9 @@ class PathFinder:
                     return []
                 elif(current == end):
                     pathDistance = current.f
-                    logging.debug(f'[{__name__}] done - Distance: {pathDistance}')
-                    logging.debug(f'[{__name__}] done - Iterations: {iterations}')
-
+                    logging.debug(f'[{__name__}] done - Distance: {pathDistance} | Iterations: {iterations}')
                     seqParams = []
                     seqParams = self.__getSequenceCoordinates(current)
-                    #print(seqParams)
                     finished = True
                     return seqParams
 
@@ -291,7 +286,6 @@ class PathFinder:
                 currentCell = currentCell.previous
         reversedCellSequence.append(currentCell)
 
-        #print("#### SECUENCIA ------------------")
         for i in reversed(reversedCellSequence):
             orderedCellSequence.append(i)
             coordinatesPathSequence.append((i.i, i.j))
@@ -318,20 +312,14 @@ class PathFinder:
             orderedCellSequence.append(i)
             #print(f"X:{i.i} Y:{i.j}")
 
-        #print(f"START ({orderedCellSequence[0].i},{orderedCellSequence[0].j})")
-        #print(f"END ({orderedCellSequence[len(orderedCellSequence)-1].i},{orderedCellSequence[len(orderedCellSequence)-1].j})")
-        # print()
-
         direction = 0 # 0 = upwards / 1 = right / 2 = downwards / 3 = left
         directionAux = 0 # robot is supposed to start "looking upwards"
         for i in range(len(orderedCellSequence)-1):
             deltaX = orderedCellSequence[i+1].i - orderedCellSequence[i].i
             deltaY = orderedCellSequence[i+1].j - orderedCellSequence[i].j
-            #print(f"delta ({deltaX},{deltaY})")
 
             if(deltaX!=0 and deltaY!=0):
                 logging.error(f'[{__name__}] unable to move along 2 axis at the same time')
-                # FIXME hacer de ultima que capture el error y lo divida en 2 movimientos separados, ver
 
             #if(i != 0 and direction != directionAux): # ignore first iteration because i do not know the direction of the first movement 
                 # must perform a turn
@@ -340,8 +328,6 @@ class PathFinder:
             if(deltaX>0 and deltaX==1 and deltaY==0):
                 # move right
                 logging.info(f'[{__name__}] derecha')
-                #if(mustAppendTurn):
-                #    pathSequence.append(asdasd)
                 pathSequence.append([0.25, 0.25, 0, oneCellDistance])
                 direction = 1
             elif(deltaX<0 and deltaX==-1 and deltaY==0):

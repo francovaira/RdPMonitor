@@ -53,6 +53,7 @@ class RobotMachine(StateMachine):
 
             if(self.check_feedback_message(robotFeedback)):
                 # aca deberia avisarle al executor del feedback para que pueda actualizar el kalman y despues tomar la compensacion
+                self.__executor.updateRobotFeedback(robotFeedback)
                 return True
 
         except Exception as e:
