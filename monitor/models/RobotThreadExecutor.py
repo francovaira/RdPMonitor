@@ -79,14 +79,13 @@ class RobotThreadExecutor:
 
             monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
             if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
-                #nextTransitionIndex = transitionIndex + 1
-                nextTransitionIndex = currentJob.getTransitionIndex() + 1
-                currentJob.setTransitionIndex(nextTransitionIndex)
-                #logging.debug(f'[{self.__robotID}] || disparo monitor exitoso. Next coordinate @{currentJob.getCoordinatesPathSequence()[transitionIndex]}')
+                #nextTransitionIndex = currentJob.getTransitionIndex() + 1
+                #currentJob.setTransitionIndex(nextTransitionIndex)
                 logging.debug(f'[{self.__robotID}] || disparo monitor exitoso.')
+                #currentJob.updateNextTransitionToExecute()
 
-                #if(nextTransitionIndex >= len(transitionsSequence)):
-                if(nextTransitionIndex >= len(currentJob.getTransitionsPathSequence())):
+                # if(nextTransitionIndex >= len(currentJob.getTransitionsPathSequence())):
+                if(currentJob.updateNextTransitionToExecute()):
                     logging.debug(f'[{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
                     return "END"
@@ -125,5 +124,6 @@ class RobotThreadExecutor:
 
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
+            exit()
             return "NO_JOBS"
 

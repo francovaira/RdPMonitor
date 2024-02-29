@@ -66,11 +66,11 @@ class Job:
         return transitionsSequence[transitionIndex]
 
     # devuelve true si termino el camino, si no termino de recorrer retorna false
-    # def updateNextTransitionToExecute(self):
-    #     setTransitionIndex(self.getTransitionIndex() + 1)
-    #     if(self.getTransitionIndex() >= len(self.getTransitionsPathSequence())): # path finished
-    #         return True
-    #     return False
+    def updateNextTransitionToExecute(self):
+        self.setTransitionIndex(self.getTransitionIndex() + 1)
+        if(self.getTransitionIndex() >= len(self.getTransitionsPathSequence())): # path finished
+            return True
+        return False
 
     def setTransitionIndex(self, transitionIndex):
         self.__transitionIndex = transitionIndex
