@@ -1,4 +1,5 @@
 import logging
+
 # esta clase seria la encargada de distribuir los jobs - en teoria cualquier robot podria hacer cualquier job
 class JobManager:
     def __init__(self):
@@ -55,6 +56,21 @@ class Job:
 
     def getTransitionIndex(self):
         return self.__transitionIndex
+
+    def getNextTransitionToExecute(self):
+        transitionsSequence = self.getTransitionsPathSequence()
+        transitionIndex = self.getTransitionIndex()
+        if(not len(transitionsSequence)):
+            logging.error(f'[{__name__}] Transition sequence empty - must initialize paths')
+            return -1
+        return transitionsSequence[transitionIndex]
+
+    # devuelve true si termino el camino, si no termino de recorrer retorna false
+    # def updateNextTransitionToExecute(self):
+    #     setTransitionIndex(self.getTransitionIndex() + 1)
+    #     if(self.getTransitionIndex() >= len(self.getTransitionsPathSequence())): # path finished
+    #         return True
+    #     return False
 
     def setTransitionIndex(self, transitionIndex):
         self.__transitionIndex = transitionIndex

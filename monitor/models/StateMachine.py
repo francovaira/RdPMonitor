@@ -28,6 +28,7 @@ class RobotMachine(StateMachine):
 
     def run_monitor(self):
         status = self.__executor.run()
+        print(f'[STATE MACHINE] returned from RUN: {status}')
         if (status == "WORKING") or (status == "END"):
             return True
         elif status == "NO_JOBS":

@@ -68,22 +68,26 @@ class RobotThreadExecutor:
         # FIXME aca adentro se deberia hacer toda la parte de comunicacion de setpoints y compensacion de kalman, etc
         try:
             currentJob = self.__jobs[0]
-            transitionsSequence = currentJob.getTransitionsPathSequence()
-            transitionIndex = currentJob.getTransitionIndex()
 
-            if(not len(transitionsSequence)):
-                logging.error(f'[{__name__}] Transition sequence empty - must initialize paths')
-                exit()
+            # transitionsSequence = currentJob.getTransitionsPathSequence()
+            # transitionIndex = currentJob.getTransitionIndex()
+            # if(not len(transitionsSequence)):
+            #     logging.error(f'[{__name__}] Transition sequence empty - must initialize paths')
+            #     exit()
+            # transitionToExecute = transitionsSequence[transitionIndex]
+            transitionToExecute = currentJob.getNextTransitionToExecute()
 
-            transitionToExecute = transitionsSequence[transitionIndex]
             monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
             if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
-                nextTransitionIndex = transitionIndex + 1
+                #nextTransitionIndex = transitionIndex + 1
+                nextTransitionIndex = currentJob.getTransitionIndex() + 1
                 currentJob.setTransitionIndex(nextTransitionIndex)
-                logging.debug(f'[@{self.__robotID}] || disparo monitor exitoso. Next transition @{currentJob.getCoordinatesPathSequence()[transitionIndex]}')
+                #logging.debug(f'[{self.__robotID}] || disparo monitor exitoso. Next coordinate @{currentJob.getCoordinatesPathSequence()[transitionIndex]}')
+                logging.debug(f'[{self.__robotID}] || disparo monitor exitoso.')
 
-                if(nextTransitionIndex >= len(transitionsSequence)):
-                    logging.debug(f'[@{self.__robotID}] path sequence finished successfully.')
+                #if(nextTransitionIndex >= len(transitionsSequence)):
+                if(nextTransitionIndex >= len(currentJob.getTransitionsPathSequence())):
+                    logging.debug(f'[{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
                     return "END"
             elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
@@ -115,7 +119,11 @@ class RobotThreadExecutor:
 
             return "WORKING"
 
-        except:
-            # No hay jobs disponibles por lo tanto retorna False para mantener el estado
+        # except:
+        #     # No hay jobs disponibles por lo tanto retorna False para mantener el estado
+        #     return "NO_JOBS"
+
+        except Exception as e:
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
             return "NO_JOBS"
 
