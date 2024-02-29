@@ -15,7 +15,6 @@ class RobotThreadRun:
 
         self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
         self.stateMachine = RobotMachine(self.robotThreadExecutor, self.__robot)
-        # time.sleep(1.5) # esto es para que el hilo espere a que el visualizador inicie
 
         while(1):
             logging.debug(f'[{__name__}] {self.__robot.getRobotID()} blocked')

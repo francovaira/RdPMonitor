@@ -51,13 +51,12 @@ class RobotThreadExecutor:
 
     def getPathTuple(self):
         currentJob = self.__jobs[0]
-        transitionIndex = currentJob.getTransitionIndex()
-        previousPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
-        currentPath = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
+        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
         if (currentJob.getTransitionIndex() == 0):
             return tuple((0,0))
         else:
-            res = tuple(map(operator.sub, currentPath, previousPath))
+            res = tuple(map(operator.sub, currentCoordinate, previousCoordinate))
             # Normalizar tupla
             filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
             filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))

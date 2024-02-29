@@ -60,7 +60,7 @@ class Robot:
     def __setRobotID(self, robotID):
         self.__robotID = robotID
 
-    def traslatePath(self, path):
+    def traslatePathToMessage(self, path):
         if path == (1,0):
             json_path = str('{"setpoint" : 1, "vel_x" : 0.25, "vel_y" : 0, "vel_ang" : 0}')
             return json_path[:60]

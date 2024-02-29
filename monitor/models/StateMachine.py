@@ -23,7 +23,6 @@ class RobotMachine(StateMachine):
         self.__robotID = robot.getRobotID()
         self.__mqttClient = robot.getMqttClient()
         self.__msgQueue = robot.getMsgQueue()
-        self.__velocities = None
         super(RobotMachine, self).__init__()
 
     def run_monitor(self):
@@ -36,8 +35,8 @@ class RobotMachine(StateMachine):
 
     def send_setpoint(self):
         try:
-            self.__velocities = self.__robot.traslatePath(self.__executor.getPathTuple())
-            msg = self.__mqttClient.publish(self.__robot.getRobotTopic(), self.__velocities, qos=0)
+            setpoint_message = self.__robot.traslatePathToMessage(self.__executor.getPathTuple())
+            msg = self.__mqttClient.publish(self.__robot.getRobotTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
             return True
         except:
@@ -47,6 +46,7 @@ class RobotMachine(StateMachine):
     def wait_response(self):
         try:
             robotMsg = self.__msgQueue.get(timeout=15)
+            # aca deberia avisarle al executor sobre el feedback para que pueda actualizar el kalman y tomar la compensacion
             return True
         except:
             return False
