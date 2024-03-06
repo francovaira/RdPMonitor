@@ -1,4 +1,5 @@
 from .KalmanFilter import KalmanFilter
+import numpy as np
 import logging
 
 
@@ -18,11 +19,10 @@ class KalmanFilter2D:
         self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
         self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])
 
-    # devuelve una matriz de 2x2: *E*k = [Xk, VXk]
-    #                                    [Yk, VYk]
+    # devuelve una matriz de 2x2: *E*k = [[Xk, VXk]
+    #                                    [Yk, VYk]]
     def getEstimatedState(self):
-        logging.debug(f'[{__name__}] RETURNING ESTIMATED STATE {[self.__kalmanFilterX.getEstimatedState(), self.__kalmanFilterY.getEstimatedState()]}')
-        return [self.__kalmanFilterX.getEstimatedState(),self.__kalmanFilterY.getEstimatedState()]
+        return np.array([self.__kalmanFilterX.getEstimatedState(), self.__kalmanFilterY.getEstimatedState()])
 
 
 

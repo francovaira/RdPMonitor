@@ -8,16 +8,16 @@ class RobotMachine(StateMachine):
     disparo_monitor = State(initial=True)
     send_setpoint_robot = State()
     espera_respuesta = State()
-    finish_state = State()
+    finish_state = State(final=True)
 
     dispararMonitor = (
         disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
-        | disparo_monitor.to(disparo_monitor, unless="run_monitor")
+        | disparo_monitor.to(finish_state, unless="run_monitor")
         | send_setpoint_robot.to(espera_respuesta, cond="send_setpoint")
         | send_setpoint_robot.to(finish_state, unless="send_setpoint")
         | espera_respuesta.to(disparo_monitor, cond="wait_response")
         | espera_respuesta.to(finish_state, unless="wait_response")
-        | finish_state.to(disparo_monitor)
+        #| finish_state.to(finish_state)
     )
 
     def __init__(self, executor, robot):
@@ -29,11 +29,13 @@ class RobotMachine(StateMachine):
         super(RobotMachine, self).__init__()
 
     def run_monitor(self):
+        logging.debug(f'[{__name__} @ {self.__robotID}] entre a RUN_MONITOR')
         status = self.__executor.run()
-        print(f'[STATE MACHINE] returned from RUN: {status}')
-        if (status == "WORKING") or (status == "END"):
+        logging.debug(f'[{__name__} @ {self.__robotID}] returned from RUN: {status}')
+
+        if (status == "WORKING"):
             return True
-        elif status == "NO_JOBS":
+        elif ((status == "NO_JOBS") or (status == "END")):
             return False
 
     def send_setpoint(self):
@@ -43,7 +45,7 @@ class RobotMachine(StateMachine):
             msg.wait_for_publish()
             return True
         except:
-            print("[STATE MACHINE] No jobs available")
+            logging.debug(f'[{__name__} @ {self.__robotID}] no jobs available.')
             return False
 
     def wait_response(self):
@@ -61,7 +63,7 @@ class RobotMachine(StateMachine):
             return False
 
     def on_exit_finish_state(self):
-        print(f"@{self.__robotID} cycle completed")
+        logging.debug(f'[{__name__} @ {self.__robotID}] cycle completed')
 
     def check_feedback_message(self, feedback_message):
         # feedback: '{"dx":0.06, "vx":0.23, "dy":0.07, "vy":0.24}'
@@ -74,3 +76,9 @@ class RobotMachine(StateMachine):
             logging.error(f'[{__name__}] {self.__robotID} json contains invalid data')
             return False
         return True
+
+
+    def output_image_state_machine(self):
+        img_path = "./state_machine.png"
+        self._graph().write_png(img_path)
+

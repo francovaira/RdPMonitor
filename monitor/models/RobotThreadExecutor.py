@@ -77,12 +77,15 @@ class RobotThreadExecutor:
         vy = data['vy']
 
         self.__kalmanFilter.inputMeasurementUpdate([ [dx,vx], [dy,vy] ])
+        estimatedState = self.__kalmanFilter.getEstimatedState()
+        logging.debug(f'[{__name__} @ {self.__robotID}] estimated state <{estimatedState}>')
 
     def run(self):
 
-        # FIXME aca adentro se deberia hacer toda la parte de comunicacion de setpoints y compensacion de kalman, etc
         try:
+            logging.debug(f'[{self.__robotID}] ENTRE A BUSCAR LA PROXIMA TRANSICION A EJECUTAR!!')
             currentJob = self.__jobs[0]
+            logging.debug(f'[{self.__robotID}] job found!!')
 
             transitionToExecute = currentJob.getNextTransitionToExecute()
             monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
@@ -120,10 +123,6 @@ class RobotThreadExecutor:
                 currentJob.setCoordinatesPathSequence(coordinatesPathSequence)
 
             return "WORKING"
-
-        # except:
-        #     # No hay jobs disponibles por lo tanto retorna False para mantener el estado
-        #     return "NO_JOBS"
 
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')

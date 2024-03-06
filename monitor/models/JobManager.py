@@ -71,6 +71,10 @@ class Job:
         if(self.getTransitionIndex() >= len(self.getTransitionsPathSequence())): # path finished
             return True
         return False
+        # if(self.getTransitionIndex() < len(self.getTransitionsPathSequence())): # path not finished yet
+        #     self.setTransitionIndex(self.getTransitionIndex() + 1)
+        #     return False
+        # return True
 
     def setTransitionIndex(self, transitionIndex):
         self.__transitionIndex = transitionIndex
