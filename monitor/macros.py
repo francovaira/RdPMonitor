@@ -15,3 +15,5 @@ PATH_FINDER_MAX_ITERATIONS  = 1000
 NULL_TRANSITION             = -1
 
 WAIT_ROBOT_FEEDBACK         = 300 # tiempo que el MQTT espera el mensaje de feedback del robot antes de arrojar timeout
+
+KALMAN_ESTIMATED_STATE_PERIOD = 10

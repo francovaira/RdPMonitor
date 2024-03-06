@@ -40,7 +40,7 @@ class RobotMachine(StateMachine):
 
     def send_setpoint(self):
         try:
-            setpoint_message = self.__robot.traslatePathToMessage(self.__executor.getPathTuple())
+            setpoint_message = self.__robot.traslateMovementVectorToMessage(self.__executor.getMovementVector())
             msg = self.__mqttClient.publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
             return True

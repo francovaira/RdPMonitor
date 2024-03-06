@@ -52,20 +52,22 @@ class RobotThreadExecutor:
         except:
             logging.error(f'[{__name__}] path doesnt exist')
 
-    def getPathTuple(self):
+    def getMovementVector(self):
         # en esta funcion se podria hacer que tome la compensacion desde kalman, modificando las velocidades de setpoint
         # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
         currentJob = self.__jobs[0]
-        previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
-        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+
         if (currentJob.getTransitionIndex() == 0):
             return tuple((0,0))
-        else:
-            res = tuple(map(operator.sub, currentCoordinate, previousCoordinate))
-            # Normalizar tupla
-            filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
-            filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-            return filtro_positivo
+
+        previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
+        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+
+        res = tuple(map(operator.sub, currentCoordinate, previousCoordinate))
+        # Normalizar tupla
+        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
+        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+        return filtro_positivo
 
     def updateRobotFeedback(self, robotFeedback):
         logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')

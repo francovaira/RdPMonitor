@@ -1,4 +1,5 @@
 from .KalmanFilter import KalmanFilter
+import macros
 import numpy as np
 import logging
 
@@ -7,6 +8,8 @@ class KalmanFilter2D:
     def __init__(self):
         self.__kalmanFilterX = KalmanFilter()
         self.__kalmanFilterY = KalmanFilter()
+        self.__estimatedStatePeriodCount = 0
+        self.__periodicEstimatedState = np.array([[0,0], [0,0]])
 
     # recibe una matriz con el formato: [[deltaX, deltaVX], [deltaY, deltaVY]]
     def inputMeasurementUpdate(self, inputMeasurement):
@@ -18,6 +21,15 @@ class KalmanFilter2D:
         logging.debug(f'[{__name__}] | deltaX <{deltaX}> | deltaX <{deltaVX}> | deltaY <{deltaY}> | deltaVY <{deltaVY}>')
         self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
         self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])
+
+        self.__estimatedStatePeriodCount = self.__estimatedStatePeriodCount + 1
+        if(self.__estimatedStatePeriodCount > macros.KALMAN_ESTIMATED_STATE_PERIOD):
+            self.__periodicEstimatedState = self.getEstimatedState()
+            self.__estimatedStatePeriodCount = 0
+
+    # devuelve la medicion actualizada cada N actualizaciones de medicion
+    def getPeriodicEstimatedState(self):
+        return self.__periodicEstimatedState
 
     # devuelve una matriz de 2x2: *E*k = [[Xk, VXk]
     #                                    [Yk, VYk]]
