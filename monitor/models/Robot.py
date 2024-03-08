@@ -1,5 +1,6 @@
 from .MQTTClient import MQTTClient
 from .RobotThreadRun import RobotThreadRun
+import macros
 import random as rd
 import threading
 import queue
@@ -60,39 +61,20 @@ class Robot:
     def __setRobotID(self, robotID):
         self.__robotID = robotID
 
-    def traslateMovementVectorToMessage(self, path):
-        if path == (1,0):
-            json_path = str('{"setpoint" : 1, "vel_x" : 0.25, "vel_y" : 0, "vel_ang" : 0}')
-            return json_path[:60]
-        elif path == (-1,0):
-            json_path = str('{"setpoint" : 1, "vel_x" : -0.25, "vel_y" : 0, "vel_ang" : 0}')
-            return json_path[:61]
-        elif path == (0,1):
-            json_path = str('{"setpoint" : 1, "vel_x" : 0, "vel_y" : -0.25, "vel_ang" : 0}')
-            return json_path[:61]
-        elif path == (0,-1):
-            json_path = str('{"setpoint" : 1, "vel_x" : 0, "vel_y" : 0.25, "vel_ang" : 0}')
-            return json_path[:60]
-        elif path == (0,0):
-            json_path = str('{"setpoint" : 1, "vel_x" : 0, "vel_y" : 0, "vel_ang" : 0}')
-            return json_path[:58]
+    # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
+    def traslateMovementVectorToMessage(self, movementVector):
+        vectorMessage = {
+            # "distance": macros.DEFAULT_ROBOT_MOVE_DISTANCE,
+            # "vx": movementVector[0],
+            # "vy": movementVector[1],
+            # "vr": movementVector[2]
 
-        # FIXME
-        # import json
-
-        # x = {
-        #   "name": "John",
-        #   "age": 30,
-        #   "married": True,
-        #   "divorced": False,
-        #   "children": ("Ann","Billy"),
-        #   "pets": None,
-        #   "cars": [
-        #     {"model": "BMW 230", "mpg": 27.5},
-        #     {"model": "Ford Edge", "mpg": 24.1}
-        #   ]
-        # }
-        # print(json.dumps(x))
+            "distance": movementVector[0],
+            "vx": movementVector[1],
+            "vy": movementVector[2],
+            "vr": movementVector[3]
+        }
+        return json.dumps(vectorMessage)
 
     def getState(self):
         return self.robotThreadRun.getRobotState()

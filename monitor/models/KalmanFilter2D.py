@@ -18,7 +18,8 @@ class KalmanFilter2D:
         deltaY  = inputMeasurement[1][0]
         deltaVY = inputMeasurement[1][1]
 
-        logging.debug(f'[{__name__}] | deltaX <{deltaX}> | deltaX <{deltaVX}> | deltaY <{deltaY}> | deltaVY <{deltaVY}>')
+        logging.debug(f'[{__name__}] UPDATE MEASURE | asdasd 1: {inputMeasurement[0]} | asdasd 2: {inputMeasurement[1]} | ({deltaX}, {deltaVX}) | ({deltaY}, {deltaVY})')
+
         self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
         self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])
 
@@ -34,8 +35,13 @@ class KalmanFilter2D:
     # devuelve una matriz de 2x2: *E*k = [[Xk, VXk]
     #                                    [Yk, VYk]]
     def getEstimatedState(self):
-        return np.array([self.__kalmanFilterX.getEstimatedState(), self.__kalmanFilterY.getEstimatedState()])
+        x_est_state = self.__kalmanFilterX.getEstimatedState()
+        y_est_state = self.__kalmanFilterY.getEstimatedState()
+        return np.array([x_est_state, y_est_state])
 
+    def setInitialState(self, initialState):
+        self.__kalmanFilterX.setInitialState(initialState[0])
+        self.__kalmanFilterY.setInitialState(initialState[1])
 
 
 # def main():

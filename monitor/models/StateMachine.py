@@ -44,15 +44,13 @@ class RobotMachine(StateMachine):
             msg = self.__mqttClient.publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
             return True
-        except:
-            logging.debug(f'[{__name__} @ {self.__robotID}] no jobs available.')
+        except Exception as e:
+            logging.error(f'[{__name__} @ {self.__robotID}] EXCEPTION RAISED: {repr(e)}')
             return False
 
     def wait_response(self):
         try:
             robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
-            logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
-
             if(self.check_feedback_message(robotFeedback)):
                 # aca deberia avisarle al executor del feedback para que pueda actualizar el kalman y despues tomar la compensacion
                 self.__executor.updateRobotFeedback(robotFeedback)

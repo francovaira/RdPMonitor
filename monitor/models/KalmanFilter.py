@@ -1,4 +1,6 @@
 import numpy as np
+import logging
+
 
 # Filtro de Kalman >unidimensional<, modelando un sistema que realiza un movimiento rectilineo
 # uniforme con aceleracion inicial.
@@ -57,12 +59,16 @@ class KalmanFilter:
         self.__Pkm1 = Pk
 
     def getEstimatedState(self):
-        # returns a 2x1 matrix *X*k = [Xk, Vk]
-        return self.__Xkm1
+        # returns a vector *X*k = [Xk, Vk]
+        return [self.__Xkm1[0][0], self.__Xkm1[1][0]]
 
     # retorna un vector diciendo que tan desviado esta el estado estimado del predecido (el punto deseado en el DELTA_T)
     def getDeltaEstimatedAndPredictedState(self):
         return self.__Xkm1 - self.__Xkp
+
+    def setInitialState(self, initialState):
+        initState = [[initialState[0]], [initialState[1]]]
+        self.__Xkm1 = initState
 
     def __calculatePredictedState(self, Xkm1):
         # returns a 2x1 matrix  *X*kp = [Xkp, Vxkp]
