@@ -13,12 +13,10 @@ class KalmanFilter2D:
 
     # recibe una matriz con el formato: [[deltaX, deltaVX], [deltaY, deltaVY]]
     def inputMeasurementUpdate(self, inputMeasurement):
-        deltaX  = inputMeasurement[0][0]
-        deltaVX = inputMeasurement[0][1]
-        deltaY  = inputMeasurement[1][0]
-        deltaVY = inputMeasurement[1][1]
-
-        logging.debug(f'[{__name__}] UPDATE MEASURE | asdasd 1: {inputMeasurement[0]} | asdasd 2: {inputMeasurement[1]} | ({deltaX}, {deltaVX}) | ({deltaY}, {deltaVY})')
+        # deltaX  = inputMeasurement[0][0]
+        # deltaVX = inputMeasurement[0][1]
+        # deltaY  = inputMeasurement[1][0]
+        # deltaVY = inputMeasurement[1][1]
 
         self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
         self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])

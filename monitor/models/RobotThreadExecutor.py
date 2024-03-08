@@ -54,43 +54,6 @@ class RobotThreadExecutor:
         except:
             logging.error(f'[{__name__}] path doesnt exist')
 
-    # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
-    def getMovementVector(self):
-        # en esta funcion se podria hacer que tome la compensacion desde kalman, modificando las velocidades de setpoint
-        # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
-        currentJob = self.__jobs[0]
-
-        if (currentJob.getTransitionIndex() == 0):
-            return tuple((0,0))
-
-        previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
-        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
-
-        # normaliza la tupla
-        res = tuple(map(operator.sub, currentCoordinate, previousCoordinate)) # obtiene el delta entre ambas coordenadas
-        res_next_coordinate = tuple(map(operator.sub, currentCoordinate, nextCoordinate)) # obtiene el delta entre ambas coordenadas
-        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
-        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-        filtro_negativo_next_coordinate = tuple(map(lambda x: -1 if (x<0) else x, res_next_coordinate))
-        filtro_positivo_next_coordinate = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo_next_coordinate))
-
-        #unityVelocityVector = tuple((filtro_positivo[0], filtro_positivo[1], macros.DEFAULT_ROBOT_ANGULAR_VELOCITY)) # es un vector unitario de velocidad hacia donde se esta dirigiendo
-        #logging.debug(f'[{__name__} @ {self.__robotID}] vector de velocidad {velocityVector}')
-        unityVector = tuple((macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0], filtro_positivo[1], macros.DEFAULT_ROBOT_ANGULAR_VELOCITY)) # es un vector unitario de velocidad hacia donde se esta dirigiendo
-
-        # aplicar compensacion de kalman
-        expectedCurrentCoordinate = tuple((currentCoordinate[0] * macros.DEFAULT_CELL_SIZE, currentCoordinate[1] * macros.DEFAULT_CELL_SIZE))
-        logging.debug(f'[{__name__} @ {self.__robotID}] coordenada metrica expected {expectedCurrentCoordinate}')
-
-        if(nextCoordinate != None):
-            expectedNextCoordinate = tuple((nextCoordinate[0] * macros.DEFAULT_CELL_SIZE, nextCoordinate[1] * macros.DEFAULT_CELL_SIZE))
-            estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
-            self.getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate)
-
-        #return unityVelocityVector
-        return unityVector
-
     def updateRobotFeedback(self, robotFeedback):
         logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
 
@@ -103,6 +66,35 @@ class RobotThreadExecutor:
         self.__kalmanFilter.inputMeasurementUpdate([ [dx,vx], [dy,vy] ])
         estimatedState = self.__kalmanFilter.getEstimatedState()
         logging.debug(f'[{__name__} @ {self.__robotID}] kalman updated --> new estimated state <{estimatedState}>')
+
+    # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
+    def getMovementVector(self):
+        # en esta funcion se podria hacer que tome la compensacion desde kalman, modificando las velocidades de setpoint
+        # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
+        currentJob = self.__jobs[0]
+
+        if (currentJob.getTransitionIndex() == 0):
+            return tuple((0,0))
+
+        previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
+        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+
+        # normaliza la tupla
+        res = tuple(map(operator.sub, currentCoordinate, previousCoordinate)) # obtiene el delta entre ambas coordenadas
+        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
+        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+
+        unityVelocityVector = tuple((filtro_positivo[0], filtro_positivo[1])) # es un vector unitario de velocidad hacia donde se esta dirigiendo
+        unityVector = tuple((macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0], filtro_positivo[1], macros.DEFAULT_ROBOT_ANGULAR_VELOCITY)) # es un vector unitario de velocidad hacia donde se esta dirigiendo
+
+        # aplicar compensacion de kalman
+        expectedCurrentCoordinate = tuple((previousCoordinate[0] * macros.DEFAULT_CELL_SIZE, previousCoordinate[1] * macros.DEFAULT_CELL_SIZE))
+        expectedNextCoordinate = tuple((currentCoordinate[0] * macros.DEFAULT_CELL_SIZE, currentCoordinate[1] * macros.DEFAULT_CELL_SIZE))
+        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
+        self.getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate)
+
+        #return unityVelocityVector
+        return unityVector
 
     def getCompensatedVector(self, estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
         logging.debug(f'[{__name__} @ {self.__robotID}] INSIDE getCompensatedVector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}')
@@ -123,13 +115,14 @@ class RobotThreadExecutor:
 
         x_delta_dist_cmpstd = x_est_curr - x_exp_curr
         y_delta_dist_cmpstd = y_exp_next - y_est_curr
-        alpha = np.arctan([x_delta_dist_cmpstd / y_delta_dist_cmpstd])
 
-        vx_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
-        vy_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
-        compensationVelocityVector = tuple((vx_cmpstd[0], vy_cmpstd[0]))
+        if(x_delta_dist_cmpstd != 0 and y_delta_dist_cmpstd != 0):
+            alpha = np.arctan([x_delta_dist_cmpstd / y_delta_dist_cmpstd])
+            vx_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+            vy_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+            compensationVelocityVector = tuple((vx_cmpstd[0], vy_cmpstd[0]))
 
-        logging.debug(f'[{__name__} @ {self.__robotID}] INSIDE getCompensatedVector | alpha: {alpha} | comp distance: {compensationDistance} | comp vector: {compensationVelocityVector}')
+            logging.debug(f'[{__name__} @ {self.__robotID}] INSIDE getCompensatedVector | alpha: {alpha} | comp distance: {compensationDistance} | comp vector: {compensationVelocityVector}')
 
 
     def run(self):
