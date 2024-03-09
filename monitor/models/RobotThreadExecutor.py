@@ -33,7 +33,7 @@ class RobotThreadExecutor:
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
         self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
-        self.__kalmanFilter.setInitialState([ [coordinatesSequence[1][0],0], [coordinatesSequence[1][1],0] ]) # FIXME se debe poner coordinatesSequence[0] cuando se arregle el problema de que se dispara el monitor apenas empieza sin haberse movido
+        self.__kalmanFilter.setInitialState([ [coordinatesSequence[0][0],0], [coordinatesSequence[0][1],0] ])
 
         logging.debug(f'[{__name__} @ {self.__robotID}] STARTED PATHS | COORDINATES SEQUENCE = {coordinatesSequence} | TRANSITIONS SEQUENCE = {transitionsSequence}')
 
@@ -63,7 +63,7 @@ class RobotThreadExecutor:
         dy = data['dy']
         vy = data['vy']
 
-        self.__kalmanFilter.inputMeasurementUpdate([ [dx,vx], [dy,vy] ])
+        self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]])
         estimatedState = self.__kalmanFilter.getEstimatedState()
         logging.debug(f'[{__name__} @ {self.__robotID}] kalman updated --> new estimated state <{estimatedState}>')
 

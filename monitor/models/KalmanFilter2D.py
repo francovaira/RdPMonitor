@@ -10,16 +10,19 @@ class KalmanFilter2D:
         self.__kalmanFilterY = KalmanFilter()
         self.__estimatedStatePeriodCount = 0
         self.__periodicEstimatedState = np.array([[0,0], [0,0]])
+        self.__measurementAccum = np.array([[0,0], [0,0]])
 
     # recibe una matriz con el formato: [[deltaX, deltaVX], [deltaY, deltaVY]]
     def inputMeasurementUpdate(self, inputMeasurement):
-        # deltaX  = inputMeasurement[0][0]
-        # deltaVX = inputMeasurement[0][1]
-        # deltaY  = inputMeasurement[1][0]
-        # deltaVY = inputMeasurement[1][1]
+        self.__measurementAccum = np.array(inputMeasurement) + np.array(self.__measurementAccum) # FIXME esta logica meterla dentro de cada filtro de kalman, no en el 2D
 
-        self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
-        self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])
+        #self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
+        #self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])
+
+        self.__kalmanFilterX.inputMeasurementUpdate(self.__measurementAccum[0])
+        self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1])
+        logging.debug(f'[{__name__}] new measurement       <{inputMeasurement}>')
+        logging.debug(f'[{__name__}] new measurement accum <{self.__measurementAccum}>')
 
         self.__estimatedStatePeriodCount = self.__estimatedStatePeriodCount + 1
         if(self.__estimatedStatePeriodCount > macros.KALMAN_ESTIMATED_STATE_PERIOD):
@@ -38,6 +41,7 @@ class KalmanFilter2D:
         return np.array([x_est_state, y_est_state])
 
     def setInitialState(self, initialState):
+        self.__measurementAccum = initialState
         self.__kalmanFilterX.setInitialState(initialState[0])
         self.__kalmanFilterY.setInitialState(initialState[1])
 

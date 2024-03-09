@@ -41,12 +41,7 @@ class KalmanFilter:
         self.__R = np.array([[self.__delta_x**2, 0], [0, self.__delta_vx**2]])
 
     def inputMeasurementUpdate(self, inputMeasurement):
-        Ykmx = 0
-        Ykmvx = 0
-
-        Ykmx = Ykmx + inputMeasurement[0] # acumulativo de distancia - FIXME no deberia hacerse aca, deberia llegar desde afuera asi
-        Ykmvx = inputMeasurement[1]
-        Yk = np.array([[Ykmx], [Ykmvx]])
+        Yk = np.array([[inputMeasurement[0]], [inputMeasurement[1]]])
 
         self.__Xkp = self.__calculatePredictedState(self.__Xkm1)
         Pkp = self.__calculateProcessCovarianceMatrix(self.__Pkm1)
@@ -61,10 +56,6 @@ class KalmanFilter:
     def getEstimatedState(self):
         # returns a vector *X*k = [Xk, Vk]
         return [self.__Xkm1[0][0], self.__Xkm1[1][0]]
-
-    # retorna un vector diciendo que tan desviado esta el estado estimado del predecido (el punto deseado en el DELTA_T)
-    def getDeltaEstimatedAndPredictedState(self):
-        return self.__Xkm1 - self.__Xkp
 
     def setInitialState(self, initialState):
         initState = [[initialState[0]], [initialState[1]]]
@@ -157,7 +148,6 @@ class KalmanFilter:
 #         kalmanFilter.inputMeasurementUpdate(inputMeasurement)
 #         print(f"INPUT MEASUREMENT {measurements[i%len(measurements)]} || INPUT MEASUREMENT ACUMULADO {inputMeasurement}")
 #         print(f"KALMAN ESTIMATED:\n{kalmanFilter.getEstimatedState()}\n")
-#         print(f"DELTA ESTIMATED/PREDICTED:\n{kalmanFilter.getDeltaEstimatedAndPredictedState()}\n")
 #         print("====================================")
 
 # if __name__ == "__main__":
