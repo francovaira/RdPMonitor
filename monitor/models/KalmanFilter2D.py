@@ -19,7 +19,11 @@ class KalmanFilter2D:
     def inputMeasurementUpdate(self, inputMeasurement):
         logging.debug(f'[{__name__}] MEASUREMENT UPDATE - new measurement <{inputMeasurement}>')
 
-        distanceMeasurementAccum = np.array([inputMeasurement[0][0] + self.__measurementAccum[0][0], inputMeasurement[1][0] + self.__measurementAccum[1][0]])
+        x_measure_accum = inputMeasurement[0][0] * (-1 if inputMeasurement[0][1] < 0 else 1) + self.__measurementAccum[0][0]
+        y_measure_accum = inputMeasurement[1][0] * (-1 if inputMeasurement[1][1] < 0 else 1) + self.__measurementAccum[1][0]
+
+        #distanceMeasurementAccum = np.array([inputMeasurement[0][0] + self.__measurementAccum[0][0], inputMeasurement[1][0] + self.__measurementAccum[1][0]])
+        distanceMeasurementAccum = np.array([x_measure_accum, y_measure_accum])
         self.__measurementAccum[0][0] = distanceMeasurementAccum[0]
         self.__measurementAccum[1][0] = distanceMeasurementAccum[1]
         self.__measurementAccum[0][1] = inputMeasurement[0][1]
@@ -156,6 +160,7 @@ def main():
                         level=logging.DEBUG)
 
     coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
+    #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (4, 7), (3, 7), (2, 7), (1, 7), (1, 6), (1, 5), (1, 4)]
     initCoordinate = coordinatesSequence[0]
     initVelocities = [0.00, 0.00]
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
@@ -171,9 +176,11 @@ def main():
     desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
 
     #                 [dx]  [vx]       [dy]  [vy]
-    measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
+    #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
 
     while(1):
+
+        measurements = [ [ 0.25*(1 if desiredVector[1] != 0 else 0), desiredVector[1]] , [ 0.25*(1 if desiredVector[2] != 0 else 0), desiredVector[2]] ]
 
         kalmanFilter.inputMeasurementUpdate(measurements)
         #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
@@ -190,14 +197,38 @@ def main():
             do_compensate = True
             measurementCount = 0
 
-        if(expectedCurrentCoordinate[1] > coordinatesSequence[index+1][1]): # evalua si en el eje Y pasamos a otra celda
-            #do_compensate = True
-            index = index + 1
-            logging.debug(f'[{__name__}] pasando a la siguiente celda...')
+        #if(expectedCurrentCoordinate[1] >= coordinatesSequence[index+1][1]): # evalua si en el eje X o Y pasamos a otra celda
+        if(desiredVector[2] > 0): # el robot se esta moviendo en el eje Y
+            if(expectedCurrentCoordinate[1] >= coordinatesSequence[index+1][1]): # evalua si en el eje Y pasamos a otra celda dado el estado estimado
+                index = index + 1
+                logging.debug(f'[{__name__}] pasando a la siguiente celda...')
 
-            if(index >= (len(coordinatesSequence)-1)):
-                logging.debug(f'[{__name__}] fin de celdas...\n\n')
-                exit()
+                if(index >= (len(coordinatesSequence)-1)):
+                    logging.debug(f'[{__name__}] fin de celdas...\n\n')
+                    exit()
+
+                # normaliza la tupla
+                res = tuple(map(operator.sub, coordinatesSequence[index+1], coordinatesSequence[index])) # obtiene el delta entre coordenada actual y la siguiente
+                filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
+                filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+                desiredVector = [1.00, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+                logging.debug(f'[{__name__}] NEW DESIRED VECTOR!!: {desiredVector}\n\n')
+
+        elif(desiredVector[1] > 0): # el robot se esta moviendo en el eje X
+            if(expectedCurrentCoordinate[0] >= coordinatesSequence[index+1][0]): # evalua si en el eje X pasamos a otra celda dado el estado estimado
+                index = index + 1
+                logging.debug(f'[{__name__}] pasando a la siguiente celda...')
+
+                if(index >= (len(coordinatesSequence)-1)):
+                    logging.debug(f'[{__name__}] fin de celdas...\n\n')
+                    exit()
+
+                # normaliza la tupla
+                res = tuple(map(operator.sub, coordinatesSequence[index+1], coordinatesSequence[index])) # obtiene el delta entre coordenada actual y la siguiente
+                filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
+                filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+                desiredVector = [1.00, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+                logging.debug(f'[{__name__}] NEW DESIRED VECTOR!!: {desiredVector}\n\n')
 
         if(do_compensate):
             expectedNextCoordinate = coordinatesSequence[index+1]
