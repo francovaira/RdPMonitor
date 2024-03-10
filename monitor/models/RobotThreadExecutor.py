@@ -62,10 +62,7 @@ class RobotThreadExecutor:
         vx = data['vx']
         dy = data['dy']
         vy = data['vy']
-
         self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]])
-        estimatedState = self.__kalmanFilter.getEstimatedState()
-        logging.debug(f'[{__name__} @ {self.__robotID}] kalman updated --> new estimated state <{estimatedState}>')
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):

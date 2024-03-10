@@ -57,7 +57,7 @@ class KalmanFilter:
         # returns a vector *X*k = [Xk, Vk]
         return [self.__Xkm1[0][0], self.__Xkm1[1][0]]
 
-    def setInitialState(self, initialState):
+    def setInitialState(self, initialState): # FIXME hacer que use el __x_0 y __vx_0
         initState = [[initialState[0]], [initialState[1]]]
         self.__Xkm1 = initState
 

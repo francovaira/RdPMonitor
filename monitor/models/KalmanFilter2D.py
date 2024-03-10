@@ -16,22 +16,21 @@ class KalmanFilter2D:
     def inputMeasurementUpdate(self, inputMeasurement):
         self.__measurementAccum = np.array(inputMeasurement) + np.array(self.__measurementAccum) # FIXME esta logica meterla dentro de cada filtro de kalman, no en el 2D
 
-        #self.__kalmanFilterX.inputMeasurementUpdate(inputMeasurement[0])
-        #self.__kalmanFilterY.inputMeasurementUpdate(inputMeasurement[1])
-
         self.__kalmanFilterX.inputMeasurementUpdate(self.__measurementAccum[0])
         self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1])
         logging.debug(f'[{__name__}] new measurement       <{inputMeasurement}>')
         logging.debug(f'[{__name__}] new measurement accum <{self.__measurementAccum}>')
 
         self.__estimatedStatePeriodCount = self.__estimatedStatePeriodCount + 1
-        if(self.__estimatedStatePeriodCount > macros.KALMAN_ESTIMATED_STATE_PERIOD):
+        if(self.__estimatedStatePeriodCount >= macros.KALMAN_ESTIMATED_STATE_PERIOD):
             self.__periodicEstimatedState = self.getEstimatedState()
             self.__estimatedStatePeriodCount = 0
 
     # devuelve la medicion actualizada cada N actualizaciones de medicion
     def getPeriodicEstimatedState(self):
-        return self.__periodicEstimatedState
+        returnValue = self.__periodicEstimatedState
+        self.__periodicEstimatedState = np.array([[0,0], [0,0]])
+        return returnValue
 
     # devuelve una matriz de 2x2: *E*k = [[Xk, VXk]
     #                                    [Yk, VYk]]
