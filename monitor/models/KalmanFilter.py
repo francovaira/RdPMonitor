@@ -33,7 +33,7 @@ class KalmanFilter:
         self.__delta_x = 2
         self.__delta_vx = 1
 
-        self.__Xkm1 = np.array([[self.__x_0], [self.__vx_0]]) # estado inicial de posicion y velocidad 
+        self.__Xkm1 = np.array([[self.__x_0], [self.__vx_0]]) # estado inicial de posicion y velocidad
         self.__Pkm1 = np.array([[self.__delta_Px**2, 0], [0, self.__delta_Pvx**2]]) # estado inicial de la matriz de covarianza de proceso
         self.__Xkp = self.__Xkm1
 
@@ -57,9 +57,11 @@ class KalmanFilter:
         # returns a vector *X*k = [Xk, Vk]
         return [self.__Xkm1[0][0], self.__Xkm1[1][0]]
 
-    def setInitialState(self, initialState): # FIXME hacer que use el __x_0 y __vx_0
-        initState = [[initialState[0]], [initialState[1]]]
-        self.__Xkm1 = initState
+    def setInitialState(self, initialState):
+        self.__x_0 = initialState[0]
+        self.__vx_0 = initialState[1]
+        self.__Xkm1 = np.array([[self.__x_0], [self.__vx_0]])
+        self.__Xkp = self.__Xkm1
 
     def __calculatePredictedState(self, Xkm1):
         # returns a 2x1 matrix  *X*kp = [Xkp, Vxkp]
