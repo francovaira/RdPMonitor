@@ -59,7 +59,7 @@ def main():
 
     coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
     initCoordinate = coordinatesSequence[0]
-    initVelocities = [0.00, 0.25]
+    initVelocities = [0.00, 0.00]
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
 
     measurements = []
@@ -73,15 +73,7 @@ def main():
     for i in range(len(measurements)):
         kalmanFilter.inputMeasurementUpdate(measurements[i])
         estimatedState = kalmanFilter.getEstimatedState()
-        logging.debug(f'[{__name__}] estimated state: {estimatedState}')
-
-        #expectedCurrentCoordinate = tuple((coordinatesSequence[i][0]*macros.DEFAULT_CELL_SIZE+(i*initVelocities[0]), coordinatesSequence[i][1]*macros.DEFAULT_CELL_SIZE+(i*initVelocities[1])))
-        #if(i < len(measurements)-1):
-            #expectedNextCoordinate = tuple((coordinatesSequence[i+1][0]*macros.DEFAULT_CELL_SIZE+(i*initVelocities[0]), coordinatesSequence[i+1][1]*macros.DEFAULT_CELL_SIZE+(i*initVelocities[1])))
-            #estimatedCurrentState = kalmanFilter.getEstimatedState()
-            #compensatedVector = getCompensatedVectorA(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate)
-
-        logging.debug(f'\n\n')
+        logging.debug(f'[{__name__}] estimated state: {estimatedState}\n\n')
 
 if __name__ == "__main__":
     main()
