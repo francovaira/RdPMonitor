@@ -20,7 +20,7 @@ import logging
 
 class KalmanFilter:
     def __init__(self):
-        self.__DELTA_T = 0.5 # expresado en segundos
+        self.__DELTA_T = 1.0 # expresado en segundos
 
         self.__x_0  = 0 # Posicion inicial - expresado en metros
         self.__vx_0 = 0 # Velocidad inicial - expresado en m/seg

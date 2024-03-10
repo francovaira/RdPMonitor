@@ -17,7 +17,6 @@ class RobotMachine(StateMachine):
         | send_setpoint_robot.to(finish_state, unless="send_setpoint")
         | espera_respuesta.to(disparo_monitor, cond="wait_response")
         | espera_respuesta.to(finish_state, unless="wait_response")
-        #| finish_state.to(finish_state)
     )
 
     def __init__(self, executor, robot):
