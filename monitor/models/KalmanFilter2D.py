@@ -81,6 +81,51 @@ def getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expec
         logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
         return compensationVelocityVector
 
+def getCompensatedVectorAutomagic(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
+    logging.debug(f'[{__name__}] compensation vector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}\n')
+
+    # posicion estimada actual
+    x_est_curr = estimatedCurrentState[0][0]
+    y_est_curr = estimatedCurrentState[1][0]
+
+    # posicion expected actual
+    x_exp_curr = expectedCurrentCoordinate[0]
+    y_exp_curr = expectedCurrentCoordinate[1]
+
+    # posicion expected siguiente
+    x_exp_next = expectedNextCoordinate[0]
+    y_exp_next = expectedNextCoordinate[1]
+
+    compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
+
+    if(np.abs(x_exp_next - x_est_curr) > 0): # desplazamiento en X
+        dist_comp_x = x_exp_next - x_est_curr
+        dist_comp_y = y_est_curr - y_exp_curr
+
+        if(dist_comp_x != 0):
+            alpha = np.arctan([dist_comp_y / dist_comp_x])
+            vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+            vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+
+            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
+            logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
+            return compensationVelocityVector
+
+    elif(np.abs(y_exp_next - y_est_curr) > 0): # desplazamiento en Y
+        dist_comp_x = x_est_curr - x_exp_curr
+        dist_comp_y = y_exp_next - y_est_curr
+
+        if(dist_comp_y != 0):
+            alpha = np.arctan([dist_comp_x / dist_comp_y])
+            vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+            vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+
+            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
+            logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
+            return compensationVelocityVector
+
+
+
 # se debe mandar el deltaT que es el tiempo total acumulado transcurrido, el vector deseado tal cual se envio al robot, la coordenada expected previa
 def getExpectedCurrentCoordinate(deltaT, desiredVector, expectedPreviousCoordinate):
     vx = desiredVector[1]
@@ -154,13 +199,12 @@ def main():
                 logging.debug(f'[{__name__}] fin de celdas...\n\n')
                 exit()
 
-        # FIXME proximo paso: hacer que funcione para un desplazamiento en el eje X
-
         if(do_compensate):
             expectedNextCoordinate = coordinatesSequence[index+1]
-            compensatedVector = getCompensatedVector(estimatedState, expectedCurrentCoordinate, expectedNextCoordinate)
+            #compensatedVector = getCompensatedVector(estimatedState, expectedCurrentCoordinate, expectedNextCoordinate)
+            compensatedVector = getCompensatedVectorAutomagic(estimatedState, expectedCurrentCoordinate, expectedNextCoordinate)
             logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}\n\n')
-            desiredVector = [compensatedVector[0], compensatedVector[1], compensatedVector[2], 0.00]
+            #desiredVector = [compensatedVector[0], compensatedVector[1], compensatedVector[2], 0.00]
 
             do_compensate = False
 
