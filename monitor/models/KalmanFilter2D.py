@@ -13,16 +13,16 @@ class KalmanFilter2D:
         self.__periodicEstimatedState = np.array([[0,0], [0,0]])
         self.__measurementAccum = np.array([[0,0], [0,0]])
 
-    # recibe una matriz con el formato: [[deltaX, deltaVX], [deltaY, deltaVY]]
+    # recibe una matriz con el formato: [[deltaX, VX], [deltaY, VY]]
     def inputMeasurementUpdate(self, inputMeasurement):
-        logging.debug(f'[{__name__}] new measurement <{inputMeasurement}>')
+        logging.debug(f'[{__name__}] MEASUREMENT UPDATE - new measurement <{inputMeasurement}>')
 
         distanceMeasurementAccum = np.array([inputMeasurement[0][0] + self.__measurementAccum[0][0], inputMeasurement[1][0] + self.__measurementAccum[1][0]])
         self.__measurementAccum[0][0] = distanceMeasurementAccum[0]
         self.__measurementAccum[1][0] = distanceMeasurementAccum[1]
         self.__measurementAccum[0][1] = inputMeasurement[0][1]
         self.__measurementAccum[1][1] = inputMeasurement[1][1]
-        logging.debug(f'[{__name__}] new measurement accum <{self.__measurementAccum}>')
+        logging.debug(f'[{__name__}] MEASUREMENT UPDATE - new measurement accum <{self.__measurementAccum}>')
 
         self.__kalmanFilterX.inputMeasurementUpdate(self.__measurementAccum[0])
         self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1])
@@ -49,6 +49,45 @@ class KalmanFilter2D:
         self.__kalmanFilterX.setInitialState(initialState[0])
         self.__kalmanFilterY.setInitialState(initialState[1])
 
+# devuelve el vector de compensacion en formato [dist_comp, vx_comp, vy_comp]
+def getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
+    logging.debug(f'[{__name__}] compensation vector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}\n')
+
+    # posicion estimada actual
+    x_est_curr = estimatedCurrentState[0][0]
+    y_est_curr = estimatedCurrentState[1][0]
+
+    # posicion expected actual
+    x_exp_curr = expectedCurrentCoordinate[0]
+    y_exp_curr = expectedCurrentCoordinate[1]
+
+    # posicion expected siguiente
+    x_exp_next = expectedNextCoordinate[0]
+    y_exp_next = expectedNextCoordinate[1]
+
+    compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
+
+    x_delta_dist_cmpstd = x_est_curr - x_exp_curr
+    y_delta_dist_cmpstd = y_exp_next - y_est_curr
+
+    if(x_delta_dist_cmpstd != 0 or y_delta_dist_cmpstd != 0):
+        alpha = np.arctan([x_delta_dist_cmpstd / y_delta_dist_cmpstd])
+        vx_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+        vy_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+        compensationVelocityVector = [compensationDistance[0], vx_cmpstd[0], vy_cmpstd[0]]
+
+        logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
+        return compensationVelocityVector
+
+# se debe mandar el deltaT que es el tiempo total acumulado transcurrido, el vector deseado tal cual se envio al robot, la coordenada expected previa
+def getExpectedCurrentCoordinate(deltaT, desiredVector, expectedPreviousCoordinate):
+    vx = desiredVector[1]
+    vy = desiredVector[2]
+
+    expected_x = expectedPreviousCoordinate[0] + (vx * deltaT)
+    expected_y = expectedPreviousCoordinate[1] + (vy * deltaT)
+
+    return np.array([expected_x, expected_y])
 
 def main():
     kalmanFilter = KalmanFilter2D()
@@ -62,18 +101,51 @@ def main():
     initVelocities = [0.00, 0.00]
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
 
-    measurements = []
-    #                       [dx]   [vx]        [dy]   [vy]
-    measurements.append([[  0.00,  0.00 ] , [  0.25,  0.25]])
-    measurements.append([[  0.00,  0.00 ] , [  0.22,  0.23]])
-    measurements.append([[  0.00,  0.00 ] , [  0.24,  0.25]])
-    measurements.append([[  0.00,  0.00 ] , [  0.26,  0.27]])
-    measurements.append([[  0.00,  0.00 ] , [  0.25,  0.26]])
+    deltaT = 0
+    expectedCurrentCoordinate = []
+    lastExpectedCurrentCoordinate = initCoordinate
+    index = 0
+    do_compensate = False
 
-    for i in range(len(measurements)):
-        kalmanFilter.inputMeasurementUpdate(measurements[i])
+    #                 [dist]  [vx]   [vy]   [vr]
+    desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
+
+    #                 [dx]  [vx]       [dy]  [vy]
+    measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
+
+    while(1):
+
+        kalmanFilter.inputMeasurementUpdate(measurements)
         estimatedState = kalmanFilter.getEstimatedState()
-        logging.debug(f'[{__name__}] estimated state: {estimatedState}\n\n')
+        logging.debug(f'[{__name__}] estimated state: {estimatedState}\n')
+        deltaT = 1.0 # esto despues seria tomado desde el timestamp de la ultima medicion recibida
+
+        expectedCurrentCoordinate = getExpectedCurrentCoordinate(deltaT, desiredVector, lastExpectedCurrentCoordinate)
+        lastExpectedCurrentCoordinate = expectedCurrentCoordinate
+        logging.debug(f'[{__name__}] expected current coordinate <{expectedCurrentCoordinate}>')
+
+        if(expectedCurrentCoordinate[1] > coordinatesSequence[index+1][1]): # evalua si en el eje Y pasamos a otra celda
+            do_compensate = True
+            index = index + 1
+            logging.debug(f'[{__name__}] pasando a la siguiente celda...')
+
+            if(index >= (len(coordinatesSequence)-1)):
+                logging.debug(f'[{__name__}] fin de celdas...\n\n')
+                exit()
+
+
+        if(do_compensate):
+            expectedNextCoordinate = coordinatesSequence[index+1]
+            compensatedVector = getCompensatedVector(estimatedState, expectedCurrentCoordinate, expectedNextCoordinate)
+            logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}\n\n')
+            desiredVector = [compensatedVector[0], compensatedVector[1], compensatedVector[2], 0.00]
+
+            do_compensate = False
+
+        logging.debug(f'[{__name__}] ----------------------------\n\n')
+
+
+
 
 if __name__ == "__main__":
     main()
