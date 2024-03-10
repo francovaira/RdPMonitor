@@ -3,6 +3,7 @@ from KalmanFilter import KalmanFilter
 import macros
 import numpy as np
 import logging
+import random
 
 
 class KalmanFilter2D:
@@ -89,6 +90,18 @@ def getExpectedCurrentCoordinate(deltaT, desiredVector, expectedPreviousCoordina
 
     return np.array([expected_x, expected_y])
 
+def getMeasurementWithNoise(perfectMeasurement):
+    porcentajeError = 10
+    imperfectMeasurement = [[0,0], [0,0]]
+
+    for i in range(2):
+        for j in range(2):
+            sign = -1 if random.random() < 0.5 else 1
+            noise = sign * random.random() * (porcentajeError/100)
+            imperfectMeasurement[i][j] = perfectMeasurement[i][j] + noise
+    return imperfectMeasurement
+
+
 def main():
     kalmanFilter = KalmanFilter2D()
 
@@ -115,7 +128,8 @@ def main():
 
     while(1):
 
-        kalmanFilter.inputMeasurementUpdate(measurements)
+        #kalmanFilter.inputMeasurementUpdate(measurements)
+        kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
         estimatedState = kalmanFilter.getEstimatedState()
         logging.debug(f'[{__name__}] estimated state: {estimatedState}\n')
         deltaT = 1.0 # esto despues seria tomado desde el timestamp de la ultima medicion recibida
