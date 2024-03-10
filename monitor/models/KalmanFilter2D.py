@@ -118,6 +118,7 @@ def main():
     expectedCurrentCoordinate = []
     lastExpectedCurrentCoordinate = initCoordinate
     index = 0
+    measurementCount = 0
     do_compensate = False
 
     #                 [dist]  [vx]   [vy]   [vr]
@@ -128,18 +129,23 @@ def main():
 
     while(1):
 
-        #kalmanFilter.inputMeasurementUpdate(measurements)
-        kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
+        kalmanFilter.inputMeasurementUpdate(measurements)
+        #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
         estimatedState = kalmanFilter.getEstimatedState()
         logging.debug(f'[{__name__}] estimated state: {estimatedState}\n')
         deltaT = 1.0 # esto despues seria tomado desde el timestamp de la ultima medicion recibida
+        measurementCount = measurementCount + 1
 
         expectedCurrentCoordinate = getExpectedCurrentCoordinate(deltaT, desiredVector, lastExpectedCurrentCoordinate)
         lastExpectedCurrentCoordinate = expectedCurrentCoordinate
         logging.debug(f'[{__name__}] expected current coordinate <{expectedCurrentCoordinate}>')
 
-        if(expectedCurrentCoordinate[1] > coordinatesSequence[index+1][1]): # evalua si en el eje Y pasamos a otra celda
+        if(measurementCount >= 3):
             do_compensate = True
+            measurementCount = 0
+
+        if(expectedCurrentCoordinate[1] > coordinatesSequence[index+1][1]): # evalua si en el eje Y pasamos a otra celda
+            #do_compensate = True
             index = index + 1
             logging.debug(f'[{__name__}] pasando a la siguiente celda...')
 
@@ -147,6 +153,7 @@ def main():
                 logging.debug(f'[{__name__}] fin de celdas...\n\n')
                 exit()
 
+        # FIXME proximo paso: hacer que funcione para un desplazamiento en el eje X
 
         if(do_compensate):
             expectedNextCoordinate = coordinatesSequence[index+1]
