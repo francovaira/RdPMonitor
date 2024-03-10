@@ -1,6 +1,7 @@
 #from .KalmanFilter import KalmanFilter
 from KalmanFilter import KalmanFilter
 import macros
+import operator
 import numpy as np
 import logging
 import random
@@ -68,14 +69,14 @@ def getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expec
 
     compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
 
-    x_delta_dist_cmpstd = x_est_curr - x_exp_curr
-    y_delta_dist_cmpstd = y_exp_next - y_est_curr
+    dist_comp_x = x_est_curr - x_exp_curr
+    dist_comp_y = y_exp_next - y_est_curr
 
-    if(x_delta_dist_cmpstd != 0 or y_delta_dist_cmpstd != 0):
-        alpha = np.arctan([x_delta_dist_cmpstd / y_delta_dist_cmpstd])
-        vx_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
-        vy_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
-        compensationVelocityVector = [compensationDistance[0], vx_cmpstd[0], vy_cmpstd[0]]
+    if(dist_comp_x != 0 or dist_comp_y != 0):
+        alpha = np.arctan([dist_comp_x / dist_comp_y])
+        vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+        vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+        compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
 
         logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
         return compensationVelocityVector
