@@ -11,8 +11,8 @@ class KalmanFilter2D:
     def __init__(self):
         self.__kalmanFilterX = KalmanFilter()
         self.__kalmanFilterY = KalmanFilter()
-        self.__estimatedStatePeriodCount = 0
-        self.__periodicEstimatedState = np.array([[0,0], [0,0]])
+        self.__measurementCount = 0
+        self.__isCompensationTime = False
         self.__measurementAccum = np.array([[0,0], [0,0]])
 
     # recibe una matriz con el formato: [[deltaX, VX], [deltaY, VY]]
@@ -32,17 +32,14 @@ class KalmanFilter2D:
 
         self.__kalmanFilterX.inputMeasurementUpdate(self.__measurementAccum[0])
         self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1])
+        self.__measurementCount = self.__measurementCount + 1
 
-        self.__estimatedStatePeriodCount = self.__estimatedStatePeriodCount + 1
-        if(self.__estimatedStatePeriodCount >= macros.KALMAN_ESTIMATED_STATE_PERIOD):
-            self.__periodicEstimatedState = self.getEstimatedState()
-            self.__estimatedStatePeriodCount = 0
-
-    # devuelve la medicion actualizada cada N actualizaciones de medicion
-    def getPeriodicEstimatedState(self):
-        returnValue = self.__periodicEstimatedState
-        self.__periodicEstimatedState = np.array([[0,0], [0,0]])
-        return returnValue
+    # retorna True si se actualizo el estado tras N mediciones
+    def isCompensationTime(self):
+        if(self.__measurementCount >= macros.KALMAN_ESTIMATED_STATE_PERIOD):
+            self.__measurementCount = 0
+            return True
+        return False
 
     # devuelve una matriz de 2x2: *E*k = [[Xk, VXk],[Yk, VYk]]
     def getEstimatedState(self):
@@ -56,45 +53,12 @@ class KalmanFilter2D:
         self.__kalmanFilterY.setInitialState(initialState[1])
 
 # devuelve el vector de compensacion en formato [dist_comp, vx_comp, vy_comp]
-def getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
-    logging.debug(f'[{__name__}] compensation vector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}\n')
+def getCompensatedVectorAutomagic(estimatedCurrentState, expectedNextCoordinate):
+    logging.debug(f'[{__name__}] entre a calcular vector comp | estimated curr state :{estimatedCurrentState} | expected next coordinate: {expectedNextCoordinate}\n')
 
     # posicion estimada actual
     x_est_curr = estimatedCurrentState[0][0]
     y_est_curr = estimatedCurrentState[1][0]
-
-    # posicion expected actual
-    x_exp_curr = expectedCurrentCoordinate[0]
-    y_exp_curr = expectedCurrentCoordinate[1]
-
-    # posicion expected siguiente
-    x_exp_next = expectedNextCoordinate[0]
-    y_exp_next = expectedNextCoordinate[1]
-
-    compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
-
-    dist_comp_x = x_est_curr - x_exp_curr
-    dist_comp_y = y_exp_next - y_est_curr
-
-    if(dist_comp_x != 0 or dist_comp_y != 0):
-        alpha = np.arctan([dist_comp_x / dist_comp_y])
-        vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
-        vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
-        compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
-
-        logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
-        return compensationVelocityVector
-
-def getCompensatedVectorAutomagic(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
-    logging.debug(f'[{__name__}] compensation vector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}\n')
-
-    # posicion estimada actual
-    x_est_curr = estimatedCurrentState[0][0]
-    y_est_curr = estimatedCurrentState[1][0]
-
-    # posicion expected actual
-    x_exp_curr = expectedCurrentCoordinate[0]
-    y_exp_curr = expectedCurrentCoordinate[1]
 
     # posicion expected siguiente
     x_exp_next = expectedNextCoordinate[0]
@@ -104,19 +68,19 @@ def getCompensatedVectorAutomagic(estimatedCurrentState, expectedCurrentCoordina
 
     if(np.abs(x_exp_next - x_est_curr) > 0): # desplazamiento en X
         dist_comp_x = x_exp_next - x_est_curr
-        dist_comp_y = y_est_curr - y_exp_curr
+        dist_comp_y = y_est_curr - y_exp_next
 
         if(dist_comp_x != 0):
             alpha = np.arctan([dist_comp_y / dist_comp_x])
             vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
             vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
 
-            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
-            logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
+            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
+            logging.debug(f'[{__name__}] compensacion vector DESP X | alpha: {alpha} | comp distance: {compensationDistance}')
             return compensationVelocityVector
 
     elif(np.abs(y_exp_next - y_est_curr) > 0): # desplazamiento en Y
-        dist_comp_x = x_est_curr - x_exp_curr
+        dist_comp_x = x_est_curr - x_exp_next
         dist_comp_y = y_exp_next - y_est_curr
 
         if(dist_comp_y != 0):
@@ -124,24 +88,12 @@ def getCompensatedVectorAutomagic(estimatedCurrentState, expectedCurrentCoordina
             vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
             vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
 
-            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
-            logging.debug(f'[{__name__}] compensation vector | alpha: {alpha} | comp distance: {compensationDistance}')
+            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
+            logging.debug(f'[{__name__}] compensacion vector DESP Y | dcx {dist_comp_x} | dcy {dist_comp_y} | alpha: {alpha} | comp distance: {compensationDistance}')
             return compensationVelocityVector
 
-
-
-# se debe mandar el deltaT que es el tiempo total acumulado transcurrido, el vector deseado tal cual se envio al robot, la coordenada expected previa
-def getExpectedCurrentCoordinate(deltaT, desiredVector, expectedPreviousCoordinate):
-    vx = desiredVector[1]
-    vy = desiredVector[2]
-
-    expected_x = expectedPreviousCoordinate[0] + (vx * deltaT)
-    expected_y = expectedPreviousCoordinate[1] + (vy * deltaT)
-
-    return np.array([expected_x, expected_y])
-
 def getMeasurementWithNoise(perfectMeasurement):
-    porcentajeError = 10
+    porcentajeError = 5
     imperfectMeasurement = [[0,0], [0,0]]
 
     for i in range(2):
@@ -151,6 +103,16 @@ def getMeasurementWithNoise(perfectMeasurement):
             imperfectMeasurement[i][j] = perfectMeasurement[i][j] + noise
     return imperfectMeasurement
 
+def getDesiredMovementVector(currentCoordinate, nextCoordinate):
+    res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
+    filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
+    filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+    desiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+    return desiredVector
+
+def coordinateIsNearCoordinate(currentCoordinate, destinationCoordinate, radius):
+    dist = np.linalg.norm(currentCoordinate - destinationCoordinate)
+    return (dist <= radius)
 
 def main():
     kalmanFilter = KalmanFilter2D()
@@ -166,81 +128,75 @@ def main():
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
 
     deltaT = 0
-    expectedCurrentCoordinate = []
-    lastExpectedCurrentCoordinate = initCoordinate
-    index = 0
-    measurementCount = 0
-    do_compensate = False
+    robotSentFinishedState = False
+    radius = 0.05 # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
 
     #                 [dist]  [vx]   [vy]   [vr]
     desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
 
     #                 [dx]  [vx]       [dy]  [vy]
-    #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
+    measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
 
     while(1):
 
-        measurements = [ [ 0.25*(1 if desiredVector[1] != 0 else 0), desiredVector[1]] , [ 0.25*(1 if desiredVector[2] != 0 else 0), desiredVector[2]] ]
+        for index_coordinate in range(len(coordinatesSequence)-1):
 
-        kalmanFilter.inputMeasurementUpdate(measurements)
-        #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
-        estimatedState = kalmanFilter.getEstimatedState()
-        logging.debug(f'[{__name__}] estimated state: {estimatedState}\n')
-        deltaT = 1.0 # esto despues seria tomado desde el timestamp de la ultima medicion recibida
-        measurementCount = measurementCount + 1
+            currentCoordinate = coordinatesSequence[index_coordinate]
+            nextCoordinate = coordinatesSequence[index_coordinate+1]
+            logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
 
-        expectedCurrentCoordinate = getExpectedCurrentCoordinate(deltaT, desiredVector, lastExpectedCurrentCoordinate)
-        lastExpectedCurrentCoordinate = expectedCurrentCoordinate
-        logging.debug(f'[{__name__}] expected current coordinate <{expectedCurrentCoordinate}>')
+            # 1) generar vector para ir de [currentCoordinate] a [nextCoordinate]
+            desiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
+            estimatedCurrentState = kalmanFilter.getEstimatedState()
+            estimatedCurrentCoordinate = np.array([estimatedCurrentState[0][0], estimatedCurrentState[1][0]])
 
-        if(measurementCount >= 3):
-            do_compensate = True
-            measurementCount = 0
+            # 2) se envia el vector deseado al robot, ahora el robot empieza a mandar feedback cada X tiempo y va acercandose al destino
 
-        #if(expectedCurrentCoordinate[1] >= coordinatesSequence[index+1][1]): # evalua si en el eje X o Y pasamos a otra celda
-        if(desiredVector[2] > 0): # el robot se esta moviendo en el eje Y
-            if(expectedCurrentCoordinate[1] >= coordinatesSequence[index+1][1]): # evalua si en el eje Y pasamos a otra celda dado el estado estimado
-                index = index + 1
-                logging.debug(f'[{__name__}] pasando a la siguiente celda...')
+            # 3) se espera que las mediciones completen el trayecto para ir de la coordenada [currentCoordinate] a [nextCoordinate]
+            while(not coordinateIsNearCoordinate(estimatedCurrentCoordinate, nextCoordinate, radius)):
 
-                if(index >= (len(coordinatesSequence)-1)):
-                    logging.debug(f'[{__name__}] fin de celdas...\n\n')
-                    exit()
+                # 4) espera que llegue una medicion o que el robot mande un mensaje que llego
+                if(robotSentFinishedState):
+                    break
 
-                # normaliza la tupla
-                res = tuple(map(operator.sub, coordinatesSequence[index+1], coordinatesSequence[index])) # obtiene el delta entre coordenada actual y la siguiente
-                filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
-                filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-                desiredVector = [1.00, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
-                logging.debug(f'[{__name__}] NEW DESIRED VECTOR!!: {desiredVector}\n\n')
+                # 5) espera una medicion, toma el deltaT entre la ultima medicion y la actual
+                deltaT = 1.0
 
-        elif(desiredVector[1] > 0): # el robot se esta moviendo en el eje X
-            if(expectedCurrentCoordinate[0] >= coordinatesSequence[index+1][0]): # evalua si en el eje X pasamos a otra celda dado el estado estimado
-                index = index + 1
-                logging.debug(f'[{__name__}] pasando a la siguiente celda...')
+                # 6) actualiza kalman
+                #measurements = [ [ 0.25*(1 if desiredVector[1] != 0 else 0), desiredVector[1]], [ 0.25*(1 if desiredVector[2] != 0 else 0), desiredVector[2]] ]
+                kalmanFilter.inputMeasurementUpdate(measurements)
 
-                if(index >= (len(coordinatesSequence)-1)):
-                    logging.debug(f'[{__name__}] fin de celdas...\n\n')
-                    exit()
+                # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
+                estimatedCurrentState = kalmanFilter.getEstimatedState()
+                estimatedCurrentCoordinate = np.array([estimatedCurrentState[0][0], estimatedCurrentState[1][0]])
+                logging.debug(f'[{__name__}] estimated state: {estimatedCurrentState}\n')
 
-                # normaliza la tupla
-                res = tuple(map(operator.sub, coordinatesSequence[index+1], coordinatesSequence[index])) # obtiene el delta entre coordenada actual y la siguiente
-                filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
-                filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-                desiredVector = [1.00, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
-                logging.debug(f'[{__name__}] NEW DESIRED VECTOR!!: {desiredVector}\n\n')
+                if(coordinateIsNearCoordinate(estimatedCurrentCoordinate, nextCoordinate, radius)):
+                    # 7.1) llego a la coordenada esperada, busco la siguiente coordenada y actualizo el vector a enviar
+                    logging.debug(f'[{__name__}] llegue a la coordenada <{nextCoordinate}> | busco la siguiente...')
+                    break
 
-        if(do_compensate):
-            expectedNextCoordinate = coordinatesSequence[index+1]
-            #compensatedVector = getCompensatedVector(estimatedState, expectedCurrentCoordinate, expectedNextCoordinate)
-            compensatedVector = getCompensatedVectorAutomagic(estimatedState, expectedCurrentCoordinate, expectedNextCoordinate)
-            logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}\n\n')
-            #desiredVector = [compensatedVector[0], compensatedVector[1], compensatedVector[2], 0.00]
+                # 8) no llego a la coordenada aun, veo si kalman quiere compensar o no
+                if(kalmanFilter.isCompensationTime()):
+                    # 8.1) kalman nos devuelve el nuevo vector de movimiento para llegar a nextCoordinate
+                    compensatedVector = getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
+                    logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}')
 
-            do_compensate = False
+                    # siendo que: compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
+                    #desiredVector = [compensatedVector[0], compensatedVector[1], compensatedVector[2], 0.00]
+                    desiredVector = compensatedVector
 
-        logging.debug(f'[{__name__}] ----------------------------\n\n')
+                else:
+                    # 8.2) kalman no va a compensar, sigo esperando mediciones
+                    continue
 
+                logging.debug(f'[{__name__}] ------------------------------------------------\n\n')
+
+            logging.debug(f'[{__name__}] ###############################################################\n')
+        # end foreach(coordinatesSequence)
+
+        logging.debug(f'[{__name__}] fin de celdas...\n\n')
+        exit()
 
 
 
