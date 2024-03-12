@@ -52,45 +52,46 @@ class KalmanFilter2D:
         self.__kalmanFilterX.setInitialState(initialState[0])
         self.__kalmanFilterY.setInitialState(initialState[1])
 
-# devuelve el vector de compensacion en formato [dist_comp, vx_comp, vy_comp]
-def getCompensatedVectorAutomagic(estimatedCurrentState, expectedNextCoordinate):
-    logging.debug(f'[{__name__}] entre a calcular vector comp | estimated curr state :{estimatedCurrentState} | expected next coordinate: {expectedNextCoordinate}\n')
+    # devuelve el vector de compensacion en formato [dist_comp, vx_comp, vy_comp, vr_comp]
+    def getCompensatedVectorAutomagic(self, estimatedCurrentState, expectedNextCoordinate):
+        logging.debug(f'[{__name__}] entre a calcular vector comp | estimated curr state :{estimatedCurrentState} | expected next coordinate: {expectedNextCoordinate}\n')
 
-    # posicion estimada actual
-    x_est_curr = estimatedCurrentState[0][0]
-    y_est_curr = estimatedCurrentState[1][0]
+        # posicion estimada actual
+        x_est_curr = estimatedCurrentState[0][0]
+        y_est_curr = estimatedCurrentState[1][0]
 
-    # posicion expected siguiente
-    x_exp_next = expectedNextCoordinate[0]
-    y_exp_next = expectedNextCoordinate[1]
+        # posicion expected siguiente
+        x_exp_next = expectedNextCoordinate[0]
+        y_exp_next = expectedNextCoordinate[1]
 
-    compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
+        compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
 
-    if(np.abs(x_exp_next - x_est_curr) > 0): # desplazamiento en X
-        dist_comp_x = x_exp_next - x_est_curr
-        dist_comp_y = y_est_curr - y_exp_next
+        if(np.abs(x_exp_next - x_est_curr) > 0): # desplazamiento en X
+            dist_comp_x = x_exp_next - x_est_curr
+            dist_comp_y = y_est_curr - y_exp_next
 
-        if(dist_comp_x != 0):
-            alpha = np.arctan([dist_comp_y / dist_comp_x])
-            vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
-            vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+            if(dist_comp_x != 0):
+                alpha = np.arctan([dist_comp_y / dist_comp_x])
+                vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+                vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
 
-            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-            logging.debug(f'[{__name__}] compensacion vector DESP X | alpha: {alpha} | comp distance: {compensationDistance}')
-            return compensationVelocityVector
+                compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
+                logging.debug(f'[{__name__}] compensacion vector DESP X | alpha: {alpha} | comp distance: {compensationDistance}')
+                return compensationVelocityVector
 
-    elif(np.abs(y_exp_next - y_est_curr) > 0): # desplazamiento en Y
-        dist_comp_x = x_est_curr - x_exp_next
-        dist_comp_y = y_exp_next - y_est_curr
+        elif(np.abs(y_exp_next - y_est_curr) > 0): # desplazamiento en Y
+            dist_comp_x = x_est_curr - x_exp_next
+            dist_comp_y = y_exp_next - y_est_curr
 
-        if(dist_comp_y != 0):
-            alpha = np.arctan([dist_comp_x / dist_comp_y])
-            vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
-            vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+            if(dist_comp_y != 0):
+                alpha = np.arctan([dist_comp_x / dist_comp_y])
+                vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+                vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
 
-            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-            logging.debug(f'[{__name__}] compensacion vector DESP Y | dcx {dist_comp_x} | dcy {dist_comp_y} | alpha: {alpha} | comp distance: {compensationDistance}')
-            return compensationVelocityVector
+                compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
+                logging.debug(f'[{__name__}] compensacion vector DESP Y | dcx {dist_comp_x} | dcy {dist_comp_y} | alpha: {alpha} | comp distance: {compensationDistance}')
+                return compensationVelocityVector
+
 
 def getMeasurementWithNoise(perfectMeasurement):
     porcentajeError = 5
@@ -113,6 +114,7 @@ def getDesiredMovementVector(currentCoordinate, nextCoordinate):
 def coordinateIsNearCoordinate(currentCoordinate, destinationCoordinate, radius):
     dist = np.linalg.norm(currentCoordinate - destinationCoordinate)
     return (dist <= radius)
+
 
 def main():
     kalmanFilter = KalmanFilter2D()
@@ -179,7 +181,7 @@ def main():
                 # 8) no llego a la coordenada aun, veo si kalman quiere compensar o no
                 if(kalmanFilter.isCompensationTime()):
                     # 8.1) kalman nos devuelve el nuevo vector de movimiento para llegar a nextCoordinate
-                    compensatedVector = getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
+                    compensatedVector = kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
                     logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}')
 
                     # siendo que: compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
