@@ -115,6 +115,8 @@ def coordinateIsNearCoordinate(currentCoordinate, destinationCoordinate, radius)
     dist = np.linalg.norm(currentCoordinate - destinationCoordinate)
     return (dist <= radius)
 
+# PROXIMO A HACER: hacer que ande cuando tiene mediciones con ruido - es basicamente modificar la funcion coordinateIsNearCoordinate
+
 
 def main():
     kalmanFilter = KalmanFilter2D()
@@ -132,6 +134,7 @@ def main():
     deltaT = 0
     robotSentFinishedState = False
     radius = 0.05 # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
+    isRobotInTravel = False
 
     #                 [dist]  [vx]   [vy]   [vr]
     desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
@@ -149,13 +152,12 @@ def main():
 
             # 1) generar vector para ir de [currentCoordinate] a [nextCoordinate]
             desiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
-            estimatedCurrentState = kalmanFilter.getEstimatedState()
-            estimatedCurrentCoordinate = np.array([estimatedCurrentState[0][0], estimatedCurrentState[1][0]])
 
             # 2) se envia el vector deseado al robot, ahora el robot empieza a mandar feedback cada X tiempo y va acercandose al destino
 
             # 3) se espera que las mediciones completen el trayecto para ir de la coordenada [currentCoordinate] a [nextCoordinate]
-            while(not coordinateIsNearCoordinate(estimatedCurrentCoordinate, nextCoordinate, radius)):
+            isRobotInTravel = True
+            while(isRobotInTravel):
 
                 # 4) espera que llegue una medicion o que el robot mande un mensaje que llego
                 if(robotSentFinishedState):
@@ -176,17 +178,15 @@ def main():
                 if(coordinateIsNearCoordinate(estimatedCurrentCoordinate, nextCoordinate, radius)):
                     # 7.1) llego a la coordenada esperada, busco la siguiente coordenada y actualizo el vector a enviar
                     logging.debug(f'[{__name__}] llegue a la coordenada <{nextCoordinate}> | busco la siguiente...')
-                    break
+                    isRobotInTravel = False
+                    continue
 
                 # 8) no llego a la coordenada aun, veo si kalman quiere compensar o no
                 if(kalmanFilter.isCompensationTime()):
                     # 8.1) kalman nos devuelve el nuevo vector de movimiento para llegar a nextCoordinate
                     compensatedVector = kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
-                    logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}')
-
-                    # siendo que: compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0]]
-                    #desiredVector = [compensatedVector[0], compensatedVector[1], compensatedVector[2], 0.00]
                     desiredVector = compensatedVector
+                    logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}')
 
                 else:
                     # 8.2) kalman no va a compensar, sigo esperando mediciones
