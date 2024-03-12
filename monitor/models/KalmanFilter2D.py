@@ -75,8 +75,10 @@ class KalmanFilter2D:
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
 
+                alpha = np.round(np.degrees(alpha)[0], decimals=3)
+
                 compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-                logging.debug(f'[{__name__}] compensacion vector DESP X | alpha: {alpha} | comp distance: {compensationDistance}')
+                logging.debug(f'[{__name__}] compensacion vector DESP X | alpha: {alpha}° | comp distance: {compensationDistance}')
                 return compensationVelocityVector
 
         elif(np.abs(y_exp_next - y_est_curr) > 0): # desplazamiento en Y
@@ -88,8 +90,10 @@ class KalmanFilter2D:
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
 
+                alpha = np.round(np.degrees(alpha)[0], decimals=3)
+
                 compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-                logging.debug(f'[{__name__}] compensacion vector DESP Y | dcx {dist_comp_x} | dcy {dist_comp_y} | alpha: {alpha} | comp distance: {compensationDistance}')
+                logging.debug(f'[{__name__}] compensacion vector DESP Y | alpha: {alpha}° | comp distance: {compensationDistance}')
                 return compensationVelocityVector
 
 
@@ -102,7 +106,7 @@ def getMeasurementWithNoise(perfectMeasurement):
             sign = -1 if random.random() < 0.5 else 1
             noise = sign * random.random() * (porcentajeError/100)
             imperfectMeasurement[i][j] = perfectMeasurement[i][j] + noise
-    return imperfectMeasurement
+    return np.round(imperfectMeasurement, decimals=3)
 
 def getDesiredMovementVector(currentCoordinate, nextCoordinate):
     res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
@@ -115,7 +119,39 @@ def coordinateIsNearCoordinate(currentCoordinate, destinationCoordinate, radius)
     dist = np.linalg.norm(currentCoordinate - destinationCoordinate)
     return (dist <= radius)
 
-# PROXIMO A HACER: hacer que ande cuando tiene mediciones con ruido - es basicamente modificar la funcion coordinateIsNearCoordinate
+def coordinateIsNearOrPassOverCoordinate(desiredVector, estimatedCurrentCoordinate, nextCoordinate, radius):
+    # desiredVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
+    # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
+    # radius es el radio que se toma "llegando" a nextCoordinate
+
+    vx = desiredVector[1]
+    vy = desiredVector[2]
+
+    if(vx != 0):
+        x_est_curr = estimatedCurrentCoordinate[0]
+        x_exp_next = nextCoordinate[0]
+        x_delta = np.abs(x_est_curr-x_exp_next)
+
+        if(x_delta <= radius):
+            return True
+        if((vx > 0) and (x_est_curr >= x_exp_next)):
+            return True
+        elif((vx < 0) and (x_est_curr <= x_exp_next)):
+            return True
+
+    elif(vy != 0):
+        y_est_curr = estimatedCurrentCoordinate[1]
+        y_exp_next = nextCoordinate[1]
+        y_delta = np.abs(y_est_curr-y_exp_next)
+
+        if(y_delta <= radius):
+            return True
+        elif((vy > 0) and (y_est_curr >= y_exp_next)):
+            return True
+        elif((vy < 0) and (y_est_curr <= y_exp_next)):
+            return True
+
+    return False
 
 
 def main():
@@ -167,15 +203,16 @@ def main():
                 deltaT = 1.0
 
                 # 6) actualiza kalman
-                #measurements = [ [ 0.25*(1 if desiredVector[1] != 0 else 0), desiredVector[1]], [ 0.25*(1 if desiredVector[2] != 0 else 0), desiredVector[2]] ]
-                kalmanFilter.inputMeasurementUpdate(measurements)
+                #measurements = [ [ 0.25*(1 if compensatedDesiredVector[1] != 0 else 0), compensatedDesiredVector[1]], [ 0.25*(1 if compensatedDesiredVector[2] != 0 else 0), compensatedDesiredVector[2]] ]
+                #kalmanFilter.inputMeasurementUpdate(measurements)
+                kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
                 estimatedCurrentState = kalmanFilter.getEstimatedState()
                 estimatedCurrentCoordinate = np.array([estimatedCurrentState[0][0], estimatedCurrentState[1][0]])
                 logging.debug(f'[{__name__}] estimated state: {estimatedCurrentState}\n')
 
-                if(coordinateIsNearCoordinate(estimatedCurrentCoordinate, nextCoordinate, radius)):
+                if(coordinateIsNearOrPassOverCoordinate(desiredVector, estimatedCurrentCoordinate, nextCoordinate, radius)):
                     # 7.1) llego a la coordenada esperada, busco la siguiente coordenada y actualizo el vector a enviar
                     logging.debug(f'[{__name__}] llegue a la coordenada <{nextCoordinate}> | busco la siguiente...')
                     isRobotInTravel = False
@@ -185,11 +222,13 @@ def main():
                 if(kalmanFilter.isCompensationTime()):
                     # 8.1) kalman nos devuelve el nuevo vector de movimiento para llegar a nextCoordinate
                     compensatedVector = kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
-                    desiredVector = compensatedVector
+                    compensatedDesiredVector = compensatedVector
                     logging.debug(f'[{__name__}] vector de compensacion: {compensatedVector}')
 
+                    # 8.2) debe enviar el nuevo vector compensado
+
                 else:
-                    # 8.2) kalman no va a compensar, sigo esperando mediciones
+                    # 8.3) kalman no va a compensar, sigo esperando mediciones
                     continue
 
                 logging.debug(f'[{__name__}] ------------------------------------------------\n\n')
