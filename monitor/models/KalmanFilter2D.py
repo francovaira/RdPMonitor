@@ -101,12 +101,20 @@ def getMeasurementWithNoise(perfectMeasurement):
     porcentajeError = 5
     imperfectMeasurement = [[0,0], [0,0]]
 
+    # noise for velocities
     for i in range(2):
-        for j in range(2):
-            sign = -1 if random.random() < 0.5 else 1
-            noise = sign * random.random() * (porcentajeError/100)
-            imperfectMeasurement[i][j] = perfectMeasurement[i][j] + noise
-    return np.round(imperfectMeasurement, decimals=3)
+        sign = -1 if random.random() < 0.7 else 1
+        noise = sign * random.random() * (porcentajeError/100)
+        imperfectMeasurement[i][1] = perfectMeasurement[i][1] + noise
+
+    # noise for delta distance
+    for i in range(2):
+        noise = (random.random()/2) * (porcentajeError/100)
+        imperfectMeasurement[i][0] = perfectMeasurement[i][0] + noise
+
+    returnValue = np.round(imperfectMeasurement, decimals=3)
+    logging.debug(f'[{__name__}] measurement with noise <{returnValue}>')
+    return returnValue
 
 def getDesiredMovementVector(currentCoordinate, nextCoordinate):
     res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
@@ -153,6 +161,20 @@ def coordinateIsNearOrPassOverCoordinate(desiredVector, estimatedCurrentCoordina
 
     return False
 
+def getMeasurementsFromVector(desiredVector):
+    #                  [dx]  [vx]       [dy]  [vy]
+    #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
+
+    # SE ASUME deltaT = 1.00
+
+    #dx = desiredVector[1] if desiredVector[1] != 0 else 0
+    #dy = desiredVector[2] if desiredVector[2] != 0 else 0
+    dx = np.abs(desiredVector[1])
+    dy = np.abs(desiredVector[2])
+    returnValue = [[dx, desiredVector[1]], [dy, desiredVector[2]]]
+    logging.debug(f'[{__name__}] perfect measurement <{returnValue}>')
+    return returnValue
+
 
 def main():
     kalmanFilter = KalmanFilter2D()
@@ -162,7 +184,17 @@ def main():
                         level=logging.DEBUG)
 
     coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
-    #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (4, 7), (3, 7), (2, 7), (1, 7), (1, 6), (1, 5), (1, 4)]
+    #coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
+    #                        (4, 7), (3, 7), (2, 7), (1, 7),
+    #                        (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
+
+
+    # measurements = []
+    # measurements.append([[0.00, 0.00], [0.25, 0.25]])
+    # measurements.append([[0.25,-0.25], [0.00, 0.00]])
+    # measurements.append([[0.00, 0.00], [0.25,-0.25]])
+
+
     initCoordinate = coordinatesSequence[0]
     initVelocities = [0.00, 0.00]
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
@@ -171,6 +203,8 @@ def main():
     robotSentFinishedState = False
     radius = 0.05 # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
     isRobotInTravel = False
+    compensatedDesiredVector = []
+    measure_index = 0
 
     #                 [dist]  [vx]   [vy]   [vr]
     desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
@@ -188,6 +222,8 @@ def main():
 
             # 1) generar vector para ir de [currentCoordinate] a [nextCoordinate]
             desiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
+            compensatedDesiredVector = desiredVector
+            logging.debug(f'[{__name__}] nuevo vector de desplazamiento <{desiredVector}>\n\n')
 
             # 2) se envia el vector deseado al robot, ahora el robot empieza a mandar feedback cada X tiempo y va acercandose al destino
 
@@ -203,9 +239,8 @@ def main():
                 deltaT = 1.0
 
                 # 6) actualiza kalman
-                #measurements = [ [ 0.25*(1 if compensatedDesiredVector[1] != 0 else 0), compensatedDesiredVector[1]], [ 0.25*(1 if compensatedDesiredVector[2] != 0 else 0), compensatedDesiredVector[2]] ]
-                #kalmanFilter.inputMeasurementUpdate(measurements)
-                kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
+                kalmanFilter.inputMeasurementUpdate(measurements)
+                #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
                 estimatedCurrentState = kalmanFilter.getEstimatedState()
@@ -227,9 +262,9 @@ def main():
 
                     # 8.2) debe enviar el nuevo vector compensado
 
-                else:
+                #else:
                     # 8.3) kalman no va a compensar, sigo esperando mediciones
-                    continue
+                    #continue
 
                 logging.debug(f'[{__name__}] ------------------------------------------------\n\n')
 
