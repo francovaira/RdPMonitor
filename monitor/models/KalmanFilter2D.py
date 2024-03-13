@@ -190,16 +190,17 @@ def main():
                         datefmt='%m/%d/%Y %I:%M:%S',
                         level=logging.DEBUG)
 
+    coordinatesSequence = [(7, 3), (6, 3), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3)]
     #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
-    coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
-                            (4, 7), (3, 7), (2, 7), (1, 7),
-                            (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
+    # coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
+    #                         (4, 7), (3, 7), (2, 7), (1, 7),
+    #                         (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
 
 
-    measurements = []
-    measurements.append([[0.00, 0.00], [0.25, 0.25]])
-    measurements.append([[0.25,-0.25], [0.00, 0.00]])
-    measurements.append([[0.00, 0.00], [0.25,-0.25]])
+    # measurements = []
+    # measurements.append([[0.00, 0.00], [0.25, 0.25]])
+    # measurements.append([[0.25,-0.25], [0.00, 0.00]])
+    # measurements.append([[0.00, 0.00], [0.25,-0.25]])
 
 
     initCoordinate = coordinatesSequence[0]
@@ -214,10 +215,15 @@ def main():
     measure_index = 0
 
     #                 [dist]  [vx]   [vy]   [vr]
-    desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
+    #desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
+    desiredVector = [  1.00,  -0.25,  0.00,  0.00  ]
 
     #                 [dx]  [vx]       [dy]  [vy]
     #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
+    measurements = [[ 0.25, -0.25], [ 0.00, 0.00 ]]
+
+
+    # PROXIMO PASO: probar las distintas combinaciones de movimiento en 1 sola direccion con velocidades +/-
 
     while(1):
 
@@ -252,7 +258,7 @@ def main():
                 deltaT = 1.0
 
                 # 6) actualiza kalman
-                kalmanFilter.inputMeasurementUpdate(measurements[measure_index])
+                kalmanFilter.inputMeasurementUpdate(measurements)
                 #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
