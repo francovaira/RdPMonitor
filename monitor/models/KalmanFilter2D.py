@@ -176,6 +176,13 @@ def getMeasurementsFromVector(desiredVector):
     return returnValue
 
 
+def cambioDireccion(desiredVector, newDesiredVector):
+    if(desiredVector[1] != newDesiredVector[1] or desiredVector[2] != newDesiredVector[2]):
+        return True
+    return False
+
+
+
 def main():
     kalmanFilter = KalmanFilter2D()
 
@@ -183,16 +190,16 @@ def main():
                         datefmt='%m/%d/%Y %I:%M:%S',
                         level=logging.DEBUG)
 
-    coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
-    #coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
-    #                        (4, 7), (3, 7), (2, 7), (1, 7),
-    #                        (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
+    #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
+    coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
+                            (4, 7), (3, 7), (2, 7), (1, 7),
+                            (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
 
 
-    # measurements = []
-    # measurements.append([[0.00, 0.00], [0.25, 0.25]])
-    # measurements.append([[0.25,-0.25], [0.00, 0.00]])
-    # measurements.append([[0.00, 0.00], [0.25,-0.25]])
+    measurements = []
+    measurements.append([[0.00, 0.00], [0.25, 0.25]])
+    measurements.append([[0.25,-0.25], [0.00, 0.00]])
+    measurements.append([[0.00, 0.00], [0.25,-0.25]])
 
 
     initCoordinate = coordinatesSequence[0]
@@ -210,7 +217,7 @@ def main():
     desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
 
     #                 [dx]  [vx]       [dy]  [vy]
-    measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
+    #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
 
     while(1):
 
@@ -221,9 +228,15 @@ def main():
             logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
 
             # 1) generar vector para ir de [currentCoordinate] a [nextCoordinate]
-            desiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
-            compensatedDesiredVector = desiredVector
-            logging.debug(f'[{__name__}] nuevo vector de desplazamiento <{desiredVector}>\n\n')
+            newDesiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
+            compensatedDesiredVector = newDesiredVector
+            logging.debug(f'[{__name__}] nuevo vector de desplazamiento <{newDesiredVector}>\n')
+
+            if(index_coordinate != 0 and cambioDireccion(desiredVector, newDesiredVector)):
+                logging.debug(f'[{__name__}] CAMBIO DE DIRECCION!!!!!!!!!\n\n\n')
+                measure_index = measure_index + 1
+
+            desiredVector = newDesiredVector
 
             # 2) se envia el vector deseado al robot, ahora el robot empieza a mandar feedback cada X tiempo y va acercandose al destino
 
@@ -239,7 +252,7 @@ def main():
                 deltaT = 1.0
 
                 # 6) actualiza kalman
-                kalmanFilter.inputMeasurementUpdate(measurements)
+                kalmanFilter.inputMeasurementUpdate(measurements[measure_index])
                 #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
