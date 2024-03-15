@@ -21,9 +21,8 @@ class KalmanFilter2D:
 
         x_measure_accum = inputMeasurement[0][0] * (-1 if inputMeasurement[0][1] < 0 else 1) + self.__measurementAccum[0][0]
         y_measure_accum = inputMeasurement[1][0] * (-1 if inputMeasurement[1][1] < 0 else 1) + self.__measurementAccum[1][0]
-
-        #distanceMeasurementAccum = np.array([inputMeasurement[0][0] + self.__measurementAccum[0][0], inputMeasurement[1][0] + self.__measurementAccum[1][0]])
         distanceMeasurementAccum = np.array([x_measure_accum, y_measure_accum])
+
         self.__measurementAccum[0][0] = distanceMeasurementAccum[0]
         self.__measurementAccum[1][0] = distanceMeasurementAccum[1]
         self.__measurementAccum[0][1] = inputMeasurement[0][1]
@@ -79,6 +78,9 @@ class KalmanFilter2D:
                 alpha = np.arctan([dist_comp_x/dist_comp_y])
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
+
+                # keep sign of velocity vector
+                #vx_comp = np.copysign([vx_comp], )
 
             alphaDegrees = np.round(np.degrees(alpha)[0], decimals=3)
 
@@ -194,7 +196,7 @@ def main():
     #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
     #coordinatesSequence = [(5, 10), (5, 9), (5, 8), (5, 7), (5, 6), (5, 5), (5, 4)]
     #coordinatesSequence = [(7, 6), (8, 6), (9, 6), (10, 6), (11, 6), (12, 6), (13, 6)]
-    coordinatesSequence = [(7, 3), (6, 3), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3)]
+    #coordinatesSequence = [(7, 3), (6, 3), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3)]
 
     #                 [dx]  [vx]       [dy]  [vy]
     #measurements = [[ 0.00,  0.00], [ 0.25,  0.25]]
@@ -204,14 +206,18 @@ def main():
     '''---------------------------------------------------------------------------------------'''
 
     '''--------------------------- CASO IDEAL, MOVIMIENTO EN 2 EJES POR VEZ ------------------'''
-    coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
-                         (4, 7), (3, 7), (2, 7), (1, 7),
-                         (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
+    coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),     # desplazamiento + Y
+                            (4, 7), (3, 7), (2, 7), (1, 7),                             # desplazamiento - X
+                            (1, 6), (1, 5), (1, 4), (1, 3), (1, 2),                     # desplazamiento - Y
+                            (2, 2), (3, 2),                                             # desplazamiento + X
+                            (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8)]             # desplazamiento + Y
 
     measurements = []
     measurements.append([[ 0.00, 0.00], [ 0.25, 0.25]])
     measurements.append([[ 0.25,-0.25], [ 0.00, 0.00]])
     measurements.append([[ 0.00, 0.00], [ 0.25,-0.25]])
+    measurements.append([[ 0.25, 0.25], [ 0.00, 0.00]])
+    measurements.append([[ 0.00, 0.00], [ 0.25, 0.25]])
 
 
     #                 [dist]  [vx]   [vy]   [vr]
@@ -231,10 +237,7 @@ def main():
     compensatedDesiredVector = []
     measure_index = 0
 
-
-    # PROXIMO PASO: probar las distintas combinaciones de movimiento en 1 sola direccion con velocidades +/-
-    # tambien probar con tiempo de medicion random
-
+    # FIXME probar con tiempo de medicion random
 
     while(1):
 
@@ -250,7 +253,7 @@ def main():
             logging.debug(f'[{__name__}] nuevo vector de desplazamiento <{newDesiredVector}>\n')
 
             if(index_coordinate != 0 and cambioDireccion(desiredVector, newDesiredVector)):
-                logging.debug(f'[{__name__}] cambio de direccion (!)\n\n\n############################################################\n\n\n')
+                logging.debug(f'[{__name__}] cambio de direccion (!) {measure_index}\n\n\n############################################################\n\n\n')
                 measure_index = measure_index + 1
                 kalmanFilter.notifyDirectionChange()
 
