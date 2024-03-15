@@ -64,42 +64,39 @@ class KalmanFilter2D:
         x_exp_next = expectedNextCoordinate[0]
         y_exp_next = expectedNextCoordinate[1]
 
-        compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
+        # desplazamiento
+        dist_comp_x = x_exp_next - x_est_curr
+        dist_comp_y = y_exp_next - y_est_curr
 
-        if(np.abs(x_exp_next - x_est_curr) > 0): # desplazamiento en X
-            dist_comp_x = x_exp_next - x_est_curr
-            dist_comp_y = y_est_curr - y_exp_next
+        compensationDistance = np.hypot([dist_comp_x], [dist_comp_y])
 
-            if(dist_comp_x != 0):
-                alpha = np.arctan([dist_comp_y / dist_comp_x])
+        if (compensationDistance > 0):
+            if (np.abs(dist_comp_x) > np.abs(dist_comp_y)): # desplazamiento en X
+                alpha = np.arctan([dist_comp_y/dist_comp_x])
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
-
-                alpha = np.round(np.degrees(alpha)[0], decimals=3)
-
-                compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-                logging.debug(f'[{__name__}] compensacion vector DESP X | alpha: {alpha}° | comp distance: {compensationDistance}')
-                return compensationVelocityVector
-
-        elif(np.abs(y_exp_next - y_est_curr) > 0): # desplazamiento en Y
-            dist_comp_x = x_est_curr - x_exp_next
-            dist_comp_y = y_exp_next - y_est_curr
-
-            if(dist_comp_y != 0):
-                alpha = np.arctan([dist_comp_x / dist_comp_y])
+            else: # desplazamiento en Y
+                alpha = np.arctan([dist_comp_x/dist_comp_y])
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
 
-                alpha = np.round(np.degrees(alpha)[0], decimals=3)
+            alphaDegrees = np.round(np.degrees(alpha)[0], decimals=3)
 
-                compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-                logging.debug(f'[{__name__}] compensacion vector DESP Y | alpha: {alpha}° | comp distance: {compensationDistance}')
-                return compensationVelocityVector
+            compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
+            logging.debug(f'[{__name__}] compensacion vector | alpha = {alpha} rad ({alphaDegrees}°) | comp distance: {compensationDistance}')
+            return compensationVelocityVector
 
 
 def getMeasurementWithNoise(perfectMeasurement):
-    porcentajeError = 5
+    porcentajeError = 4
     imperfectMeasurement = [[0,0], [0,0]]
+
+    # for i in range(2):
+    #     for j in range(2):
+    #         sign = -1 if random.random() < 0.5 else 1
+    #         noise = sign * random.random() * (porcentajeError/100)
+    #         imperfectMeasurement[i][j] = perfectMeasurement[i][j] + noise
+    # return np.round(imperfectMeasurement, decimals=3)
 
     # noise for velocities
     for i in range(2):
@@ -112,9 +109,7 @@ def getMeasurementWithNoise(perfectMeasurement):
         noise = (random.random()/2) * (porcentajeError/100)
         imperfectMeasurement[i][0] = perfectMeasurement[i][0] + noise
 
-    returnValue = np.round(imperfectMeasurement, decimals=3)
-    logging.debug(f'[{__name__}] measurement with noise <{returnValue}>')
-    return returnValue
+    return np.round(imperfectMeasurement, decimals=3)
 
 def getDesiredMovementVector(currentCoordinate, nextCoordinate):
     res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
@@ -127,13 +122,13 @@ def coordinateIsNearCoordinate(currentCoordinate, destinationCoordinate, radius)
     dist = np.linalg.norm(currentCoordinate - destinationCoordinate)
     return (dist <= radius)
 
-def coordinateIsNearOrPassOverCoordinate(desiredVector, estimatedCurrentCoordinate, nextCoordinate, radius):
-    # desiredVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
+def coordinateIsNearOrPassOverCoordinate(movementVector, estimatedCurrentCoordinate, nextCoordinate, radius):
+    # movementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
     # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
     # radius es el radio que se toma "llegando" a nextCoordinate
 
-    vx = desiredVector[1]
-    vy = desiredVector[2]
+    vx = movementVector[1]
+    vy = movementVector[2]
 
     if(vx != 0):
         x_est_curr = estimatedCurrentCoordinate[0]
@@ -190,17 +185,26 @@ def main():
                         datefmt='%m/%d/%Y %I:%M:%S',
                         level=logging.DEBUG)
 
-    coordinatesSequence = [(7, 3), (6, 3), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3)]
     #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
+    #coordinatesSequence = [(5, 10), (5, 9), (5, 8), (5, 7), (5, 6), (5, 5), (5, 4)]
+    #coordinatesSequence = [(7, 6), (8, 6), (9, 6), (10, 6), (11, 6), (12, 6), (13, 6)]
+    coordinatesSequence = [(7, 3), (6, 3), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3)]
+
     # coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
     #                         (4, 7), (3, 7), (2, 7), (1, 7),
     #                         (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
 
+    #                 [dist]  [vx]   [vy]   [vr]
+    #desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
+    #desiredVector = [  1.00,  0.00, -0.25,  0.00  ]
+    #desiredVector = [  1.00,  0.25,  0.00,  0.00  ]
+    #desiredVector = [  1.00, -0.25,  0.00,  0.00  ]
 
-    # measurements = []
-    # measurements.append([[0.00, 0.00], [0.25, 0.25]])
-    # measurements.append([[0.25,-0.25], [0.00, 0.00]])
-    # measurements.append([[0.00, 0.00], [0.25,-0.25]])
+    #                 [dx]  [vx]       [dy]  [vy]
+    #measurements = [[ 0.00,  0.00], [ 0.25,  0.25]]
+    #measurements = [[ 0.00,  0.00], [ 0.25, -0.25]]
+    #measurements = [[ 0.25,  0.25], [ 0.00,  0.00]]
+    measurements = [[ 0.25, -0.25], [ 0.00,  0.00]]
 
 
     initCoordinate = coordinatesSequence[0]
@@ -214,16 +218,10 @@ def main():
     compensatedDesiredVector = []
     measure_index = 0
 
-    #                 [dist]  [vx]   [vy]   [vr]
-    #desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
-    desiredVector = [  1.00,  -0.25,  0.00,  0.00  ]
-
-    #                 [dx]  [vx]       [dy]  [vy]
-    #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
-    measurements = [[ 0.25, -0.25], [ 0.00, 0.00 ]]
-
 
     # PROXIMO PASO: probar las distintas combinaciones de movimiento en 1 sola direccion con velocidades +/-
+    # tambien probar con tiempo de medicion random
+
 
     while(1):
 
@@ -239,7 +237,7 @@ def main():
             logging.debug(f'[{__name__}] nuevo vector de desplazamiento <{newDesiredVector}>\n')
 
             if(index_coordinate != 0 and cambioDireccion(desiredVector, newDesiredVector)):
-                logging.debug(f'[{__name__}] CAMBIO DE DIRECCION!!!!!!!!!\n\n\n')
+                logging.debug(f'[{__name__}] cambio de direccion (!)\n\n\n')
                 measure_index = measure_index + 1
 
             desiredVector = newDesiredVector
@@ -258,8 +256,8 @@ def main():
                 deltaT = 1.0
 
                 # 6) actualiza kalman
-                kalmanFilter.inputMeasurementUpdate(measurements)
-                #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
+                #kalmanFilter.inputMeasurementUpdate(measurements)
+                kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
                 estimatedCurrentState = kalmanFilter.getEstimatedState()
