@@ -219,7 +219,7 @@ def main():
     initVelocities = [0.00, 0.00]
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
 
-    deltaT = 0
+    # deltaT = 0
     robotSentFinishedState = False
     radius = 0.05 # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
     isRobotInTravel = False
@@ -261,7 +261,7 @@ def main():
                     break
 
                 # 5) espera una medicion, toma el deltaT entre la ultima medicion y la actual
-                deltaT = 1.0
+                # deltaT = 1.0
 
                 # 6) actualiza kalman
                 #kalmanFilter.inputMeasurementUpdate(measurements)
