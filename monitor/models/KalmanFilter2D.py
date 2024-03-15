@@ -185,27 +185,35 @@ def main():
                         datefmt='%m/%d/%Y %I:%M:%S',
                         level=logging.DEBUG)
 
+    '''------------------------- CASO IDEAL, MOVIMIENTO EN 1 SOLO EJE POR VEZ ----------------'''
     #coordinatesSequence = [(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7)]
     #coordinatesSequence = [(5, 10), (5, 9), (5, 8), (5, 7), (5, 6), (5, 5), (5, 4)]
     #coordinatesSequence = [(7, 6), (8, 6), (9, 6), (10, 6), (11, 6), (12, 6), (13, 6)]
     coordinatesSequence = [(7, 3), (6, 3), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3)]
 
-    # coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
-    #                         (4, 7), (3, 7), (2, 7), (1, 7),
-    #                         (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
+    #                 [dx]  [vx]       [dy]  [vy]
+    #measurements = [[ 0.00,  0.00], [ 0.25,  0.25]]
+    #measurements = [[ 0.00,  0.00], [ 0.25, -0.25]]
+    #measurements = [[ 0.25,  0.25], [ 0.00,  0.00]]
+    #measurements = [[ 0.25, -0.25], [ 0.00,  0.00]]
+    '''---------------------------------------------------------------------------------------'''
+
+    '''--------------------------- CASO IDEAL, MOVIMIENTO EN 2 EJES POR VEZ ------------------'''
+    coordinatesSequence = [ (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7),
+                         (4, 7), (3, 7), (2, 7), (1, 7),
+                         (1, 6), (1, 5), (1, 4), (1, 3), (1, 2)]
+
+    measurements = []
+    measurements.append([[ 0.00, 0.00], [ 0.25, 0.25]])
+    measurements.append([[ 0.25,-0.25], [ 0.00, 0.00]])
+    measurements.append([[ 0.00, 0.00], [ 0.25,-0.25]])
+
 
     #                 [dist]  [vx]   [vy]   [vr]
     #desiredVector = [  1.00,  0.00,  0.25,  0.00  ]
     #desiredVector = [  1.00,  0.00, -0.25,  0.00  ]
     #desiredVector = [  1.00,  0.25,  0.00,  0.00  ]
     #desiredVector = [  1.00, -0.25,  0.00,  0.00  ]
-
-    #                 [dx]  [vx]       [dy]  [vy]
-    #measurements = [[ 0.00,  0.00], [ 0.25,  0.25]]
-    #measurements = [[ 0.00,  0.00], [ 0.25, -0.25]]
-    #measurements = [[ 0.25,  0.25], [ 0.00,  0.00]]
-    measurements = [[ 0.25, -0.25], [ 0.00,  0.00]]
-
 
     initCoordinate = coordinatesSequence[0]
     initVelocities = [0.00, 0.00]
@@ -237,7 +245,7 @@ def main():
             logging.debug(f'[{__name__}] nuevo vector de desplazamiento <{newDesiredVector}>\n')
 
             if(index_coordinate != 0 and cambioDireccion(desiredVector, newDesiredVector)):
-                logging.debug(f'[{__name__}] cambio de direccion (!)\n\n\n')
+                logging.debug(f'[{__name__}] cambio de direccion (!)\n\n\n############################################################\n\n\n')
                 measure_index = measure_index + 1
 
             desiredVector = newDesiredVector
@@ -257,7 +265,8 @@ def main():
 
                 # 6) actualiza kalman
                 #kalmanFilter.inputMeasurementUpdate(measurements)
-                kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
+                kalmanFilter.inputMeasurementUpdate(measurements[measure_index])
+                #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
                 estimatedCurrentState = kalmanFilter.getEstimatedState()
@@ -285,7 +294,7 @@ def main():
 
                 logging.debug(f'[{__name__}] ------------------------------------------------\n\n')
 
-            logging.debug(f'[{__name__}] ###############################################################\n')
+            logging.debug(f'[{__name__}] >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n')
         # end foreach(coordinatesSequence)
 
         logging.debug(f'[{__name__}] fin de celdas...\n\n')
