@@ -45,13 +45,10 @@ class KalmanFilter:
 
         self.__Xkp = self.__calculatePredictedState(self.__Xkm1)
         Pkp = self.__calculateProcessCovarianceMatrix(self.__Pkm1)
-        K = self.__calculateKalmanGain(Pkp, self.__R)
+        self.__K = self.__calculateKalmanGain(Pkp, self.__R)
 
-        Xk = self.__calculateNewEstimatedState(self.__Xkp, K, Yk)
-        Pk = self.__calculateNewProcessCovarianceMatrix(Pkp, K)
-
-        self.__Xkm1 = Xk
-        self.__Pkm1 = Pk
+        self.__Xkm1 = self.__calculateNewEstimatedState(self.__Xkp, self.__K, Yk)
+        self.__Pkm1 = self.__calculateNewProcessCovarianceMatrix(Pkp, self.__K)
 
     def getEstimatedState(self):
         # returns a vector *X*k = [Xk, Vk]
@@ -62,6 +59,12 @@ class KalmanFilter:
         self.__vx_0 = initialState[1]
         self.__Xkm1 = np.array([[self.__x_0], [self.__vx_0]])
         self.__Xkp = self.__Xkm1
+
+    def notifyDirectionChange(self):
+        # resets the covariance matrices, so it is like a clean start but keeping the estimated state
+        self.__delta_Px  = 20 # valor inicial de la varianza de proceso - expresado en metros
+        self.__delta_Pvx = 5 # valor inicial de la varianza de proceso - expresado en m/seg
+        self.__Pkm1 = np.array([[self.__delta_Px**2, 0], [0, self.__delta_Pvx**2]]) # estado inicial de la matriz de covarianza de proceso
 
     def __calculatePredictedState(self, Xkm1):
         # returns a 2x1 matrix  *X*kp = [Xkp, Vxkp]

@@ -82,10 +82,15 @@ class KalmanFilter2D:
 
             alphaDegrees = np.round(np.degrees(alpha)[0], decimals=3)
 
+            # FIXMEEE signo de las velocidades de desplazamiento no se mantiene respecto al vector deseado
+
             compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
             logging.debug(f'[{__name__}] compensacion vector | alpha = {alpha} rad ({alphaDegrees}°) | comp distance: {compensationDistance}')
             return compensationVelocityVector
 
+    def notifyDirectionChange(self):
+        self.__kalmanFilterX.notifyDirectionChange()
+        self.__kalmanFilterY.notifyDirectionChange()
 
 def getMeasurementWithNoise(perfectMeasurement):
     porcentajeError = 4
@@ -219,7 +224,7 @@ def main():
     initVelocities = [0.00, 0.00]
     kalmanFilter.setInitialState([[initCoordinate[0], initVelocities[0]], [initCoordinate[1], initVelocities[1]]])
 
-    # deltaT = 0
+    deltaT = 0
     robotSentFinishedState = False
     radius = 0.05 # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
     isRobotInTravel = False
@@ -247,6 +252,7 @@ def main():
             if(index_coordinate != 0 and cambioDireccion(desiredVector, newDesiredVector)):
                 logging.debug(f'[{__name__}] cambio de direccion (!)\n\n\n############################################################\n\n\n')
                 measure_index = measure_index + 1
+                kalmanFilter.notifyDirectionChange()
 
             desiredVector = newDesiredVector
 
@@ -260,8 +266,8 @@ def main():
                 if(robotSentFinishedState):
                     break
 
-                # 5) espera una medicion, toma el deltaT entre la ultima medicion y la actual
-                # deltaT = 1.0
+                # 5) espera una medicion, toma el deltaT entre la ultima medicion y la actual - Esto ingresaria al kalman luego
+                deltaT = 1.0
 
                 # 6) actualiza kalman
                 #kalmanFilter.inputMeasurementUpdate(measurements)
