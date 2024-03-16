@@ -274,7 +274,8 @@ def main():
 
                 # 6) actualiza kalman
                 #kalmanFilter.inputMeasurementUpdate(measurements)
-                kalmanFilter.inputMeasurementUpdate(measurements[measure_index])
+                #kalmanFilter.inputMeasurementUpdate(measurements[measure_index])
+                kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements[measure_index]))
                 #kalmanFilter.inputMeasurementUpdate(getMeasurementWithNoise(measurements))
 
                 # 7) obtiene el estado esperado y el real y verifica si llego a la coordenada
