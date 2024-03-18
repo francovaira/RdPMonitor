@@ -9,11 +9,14 @@ import time
 import json
 
 class RobotThreadExecutor:
-    def __init__(self, robotID, monitor):
+    def __init__(self, robot, monitor):
         self.__monitor = monitor
-        self.__robotID = robotID
+        self.__robot = robot
+        self.__robotID = robot.getRobotID()
         self.__jobs = []
         self.__kalmanFilter = KalmanFilter2D()
+
+        self.__currentMovementVector = []
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -64,8 +67,22 @@ class RobotThreadExecutor:
         vy = data['vy']
         self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]])
 
-    # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
+        # desiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
+
+        currentJob = self.__jobs[0]
+        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+        logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
+
+        res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
+        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
+        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+        desiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+        return desiredVector
+
+    # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
+    def getMovementVector_OLD(self):
         # en esta funcion se podria hacer que tome la compensacion desde kalman, modificando las velocidades de setpoint
         # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
         currentJob = self.__jobs[0]
@@ -125,6 +142,95 @@ class RobotThreadExecutor:
 
             logging.debug(f'[{__name__} @ {self.__robotID}] INSIDE getCompensatedVector | alpha: {alpha} | comp distance: {compensationDistance} | comp vector: {compensationVelocityVector}')
             return compensationVelocityVector
+
+    def isCompensationTime(self):
+        return self.__kalmanFilter.isCompensationTime()
+
+    def getCompensatedVectorAutomagic(self):
+        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
+        currentJob = self.__jobs[0]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        return self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
+
+    # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
+    def traslateMovementVectorToMessage(self, movementVector):
+        vectorMessage = {
+            # "distance": macros.DEFAULT_ROBOT_MOVE_DISTANCE,
+            # "vx": movementVector[0],
+            # "vy": movementVector[1],
+            # "vr": movementVector[2]
+
+            "distance": movementVector[0],
+            "vx": movementVector[1],
+            "vy": movementVector[2],
+            "vr": movementVector[3]
+        }
+        return json.dumps(vectorMessage)
+
+    def sendSetpointToRobot(self):
+        try:
+            movementVector = self.getMovementVector()
+            self.__currentMovementVector = movementVector
+
+            setpoint_message = self.traslateMovementVectorToMessage(movementVector)
+            msg = self.__robot.getMqttClient().publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
+            msg.wait_for_publish()
+            return True
+        except Exception as e:
+            logging.error(f'[{__name__} @ {self.__robotID}] EXCEPTION RAISED: {repr(e)}')
+            return False
+
+    def robotIsNearOrPassOverDestinationCoordinate(self):
+    #def robotIsNearOrPassOverDestinationCoordinate(movementVector, estimatedCurrentCoordinate, nextCoordinate, radius):
+        # robotIsNearOrPassOverDestinationCoordinate(movementVector, estimatedCurrentCoordinate, nextCoordinate, radius):
+
+        # movementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
+        # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
+        # radius es el radio que se toma "llegando" a nextCoordinate
+
+        radius = macros.DEFAULT_CELL_ARRIVE_RADIUS
+
+        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
+        estimatedCurrentCoordinate = []
+        estimatedCurrentCoordinate.append(0)
+        estimatedCurrentCoordinate.append(0)
+        estimatedCurrentCoordinate[0] = estimatedCurrentState[0][0]
+        estimatedCurrentCoordinate[1] = estimatedCurrentState[1][0]
+
+
+        #vx = movementVector[1]
+        #vy = movementVector[2]
+        vx = self.__currentMovementVector[1]
+        vy = self.__currentMovementVector[2]
+
+        currentJob = self.__jobs[0]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+
+        if(vx != 0):
+            x_est_curr = estimatedCurrentCoordinate[0]
+            x_exp_next = nextCoordinate[0]
+            x_delta = np.abs(x_est_curr-x_exp_next)
+
+            if(x_delta <= radius):
+                return True
+            if((vx > 0) and (x_est_curr >= x_exp_next)):
+                return True
+            elif((vx < 0) and (x_est_curr <= x_exp_next)):
+                return True
+
+        elif(vy != 0):
+            y_est_curr = estimatedCurrentCoordinate[1]
+            y_exp_next = nextCoordinate[1]
+            y_delta = np.abs(y_est_curr-y_exp_next)
+
+            if(y_delta <= radius):
+                return True
+            elif((vy > 0) and (y_est_curr >= y_exp_next)):
+                return True
+            elif((vy < 0) and (y_est_curr <= y_exp_next)):
+                return True
+
+        return False
 
     def run(self):
 

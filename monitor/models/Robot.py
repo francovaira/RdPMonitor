@@ -4,7 +4,6 @@ import macros
 import random as rd
 import threading
 import queue
-import json
 from threading import Thread
 import logging
 
@@ -60,21 +59,6 @@ class Robot:
 
     def __setRobotID(self, robotID):
         self.__robotID = robotID
-
-    # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
-    def traslateMovementVectorToMessage(self, movementVector):
-        vectorMessage = {
-            # "distance": macros.DEFAULT_ROBOT_MOVE_DISTANCE,
-            # "vx": movementVector[0],
-            # "vy": movementVector[1],
-            # "vr": movementVector[2]
-
-            "distance": movementVector[0],
-            "vx": movementVector[1],
-            "vy": movementVector[2],
-            "vr": movementVector[3]
-        }
-        return json.dumps(vectorMessage)
 
     def getState(self):
         return self.robotThreadRun.getRobotState()

@@ -16,9 +16,11 @@ NULL_TRANSITION             = -1
 
 WAIT_ROBOT_FEEDBACK         = 300 # tiempo que el MQTT espera el mensaje de feedback del robot antes de arrojar timeout
 
-KALMAN_ESTIMATED_STATE_PERIOD = 10
+KALMAN_ESTIMATED_STATE_PERIOD = 3
 
 DEFAULT_ROBOT_LINEAR_VELOCITY   = 0.25  # expresado en metros/seg
 DEFAULT_ROBOT_ANGULAR_VELOCITY  = 0     # expresado en rad/seg ????
 DEFAULT_ROBOT_MOVE_DISTANCE     = 1.0   # expresado en metros
 DEFAULT_CELL_SIZE               = 1.0   # expresado en metros - es cuanto mide el lado de una celda fisica real
+
+DEFAULT_CELL_ARRIVE_RADIUS      = 0.05  # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada

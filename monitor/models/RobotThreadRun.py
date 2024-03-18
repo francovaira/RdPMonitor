@@ -13,7 +13,7 @@ class RobotThreadRun:
 
     def threadRun(self):
 
-        self.robotThreadExecutor = RobotThreadExecutor(self.__robot.getRobotID(), self.__robot.getMonitor())
+        self.robotThreadExecutor = RobotThreadExecutor(self.__robot, self.__robot.getMonitor())
         self.stateMachine = RobotMachine(self.robotThreadExecutor, self.__robot)
 
         self.stateMachine.output_image_state_machine()
@@ -30,9 +30,32 @@ class RobotThreadRun:
 
             self.__isRunning = True
             while(self.__isRunning):
-                self.stateMachine.dispararMonitor() # Dispara la transición que desemboca en la ejecución del ciclo de estados
-                if self.stateMachine.finish_state.is_active == True:
+                #logging.debug(f'[{__name__}] {self.__robot.getRobotID()} RUNNING StateMachine {self.stateMachine.current_state}')
+
+                if (self.stateMachine.finish_state.is_active == True):
                     self.__isRunning = False
+                    continue
+
+                if(self.stateMachine.disparo_monitor.is_active == True):
+                    self.stateMachine.dispararMonitor()
+                    continue
+
+                if(self.stateMachine.send_setpoint_robot.is_active == True):
+                    self.stateMachine.sendSetpointToRobot()
+                    continue
+
+                if(self.stateMachine.espera_respuesta.is_active == True):
+                    self.stateMachine.esperaRespuesta()
+                    continue
+
+                if(self.stateMachine.compensacion_kalman.is_active == True):
+                    logging.debug(f'[{self.__robot.getRobotID()}] AAAAAAAA ME FUI A CALCULARRRRR !!!!')
+                    self.stateMachine.compensationCalculation()
+                    continue
+
+                if(self.stateMachine.espera_respuesta.is_active == True):
+                    logging.debug(f'[{self.__robot.getRobotID()}] AAAAAAAA NUEVO VECTOR COMPENSADO A ENVIARRRRR!!!!')
+                    continue
 
     def getRobotState(self):
         return self.__isRunning

@@ -1,5 +1,4 @@
-#from .KalmanFilter import KalmanFilter
-from KalmanFilter import KalmanFilter
+from .KalmanFilter import KalmanFilter
 import macros
 import operator
 import numpy as np
@@ -163,21 +162,6 @@ def coordinateIsNearOrPassOverCoordinate(movementVector, estimatedCurrentCoordin
 
     return False
 
-def getMeasurementsFromVector(desiredVector):
-    #                  [dx]  [vx]       [dy]  [vy]
-    #measurements = [[ 0.00, 0.00 ] , [ 0.25, 0.25]]
-
-    # SE ASUME deltaT = 1.00
-
-    #dx = desiredVector[1] if desiredVector[1] != 0 else 0
-    #dy = desiredVector[2] if desiredVector[2] != 0 else 0
-    dx = np.abs(desiredVector[1])
-    dy = np.abs(desiredVector[2])
-    returnValue = [[dx, desiredVector[1]], [dy, desiredVector[2]]]
-    logging.debug(f'[{__name__}] perfect measurement <{returnValue}>')
-    return returnValue
-
-
 def cambioDireccion(desiredVector, newDesiredVector):
     if(desiredVector[1] != newDesiredVector[1] or desiredVector[2] != newDesiredVector[2]):
         return True
@@ -312,6 +296,6 @@ def main():
 
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
