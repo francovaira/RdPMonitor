@@ -67,9 +67,8 @@ class RobotThreadExecutor:
         vy = data['vy']
         self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]])
 
+    # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
-        # desiredVector = getDesiredMovementVector(currentCoordinate, nextCoordinate)
-
         currentJob = self.__jobs[0]
         currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
@@ -81,41 +80,8 @@ class RobotThreadExecutor:
         desiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
         return desiredVector
 
-    # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
-    def getMovementVector_OLD(self):
-        # en esta funcion se podria hacer que tome la compensacion desde kalman, modificando las velocidades de setpoint
-        # hay que ver bien que pasa con el kalman en los casos donde el robot cambia de direccion (dobla)
-        currentJob = self.__jobs[0]
-
-        if (currentJob.getTransitionIndex() == 0):
-            return tuple((0,0))
-
-        previousCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()-1]
-        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-
-        # normaliza la tupla
-        res = tuple(map(operator.sub, currentCoordinate, previousCoordinate)) # obtiene el delta entre ambas coordenadas
-        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res))
-        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-
-        #unityVelocityVector = tuple((filtro_positivo[0], filtro_positivo[1])) # es un vector unitario de velocidad hacia donde se esta dirigiendo
-        #unityVector = tuple((macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0], filtro_positivo[1], macros.DEFAULT_ROBOT_ANGULAR_VELOCITY)) # es un vector unitario de velocidad hacia donde se esta dirigiendo
-
-        # aplicar compensacion de kalman
-        expectedCurrentCoordinate = tuple((previousCoordinate[0] * macros.DEFAULT_CELL_SIZE, previousCoordinate[1] * macros.DEFAULT_CELL_SIZE))
-        expectedNextCoordinate = tuple((currentCoordinate[0] * macros.DEFAULT_CELL_SIZE, currentCoordinate[1] * macros.DEFAULT_CELL_SIZE))
-        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
-        compensatedVector = self.getCompensatedVector(estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate)
-
-        if(compensatedVector != None):
-            compensatedVector = np.round(compensatedVector, decimals=3)
-            compensatedMovementVector = np.array([compensatedVector[0], compensatedVector[1], compensatedVector[2], macros.DEFAULT_ROBOT_ANGULAR_VELOCITY])
-        else:
-            compensatedMovementVector = np.array([macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, macros.DEFAULT_ROBOT_ANGULAR_VELOCITY])
-        return compensatedMovementVector
-
     def getCompensatedVector(self, estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
-        logging.debug(f'[{__name__} @ {self.__robotID}] INSIDE getCompensatedVector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}')
+        logging.debug(f'[{__name__} @ {self.__robotID}] inside getCompensatedVector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}')
 
         # posicion estimada actual
         x_est_curr = estimatedCurrentState[0][0]
@@ -155,11 +121,6 @@ class RobotThreadExecutor:
     # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def traslateMovementVectorToMessage(self, movementVector):
         vectorMessage = {
-            # "distance": macros.DEFAULT_ROBOT_MOVE_DISTANCE,
-            # "vx": movementVector[0],
-            # "vy": movementVector[1],
-            # "vr": movementVector[2]
-
             "distance": movementVector[0],
             "vx": movementVector[1],
             "vy": movementVector[2],
@@ -181,10 +142,7 @@ class RobotThreadExecutor:
             return False
 
     def robotIsNearOrPassOverDestinationCoordinate(self):
-    #def robotIsNearOrPassOverDestinationCoordinate(movementVector, estimatedCurrentCoordinate, nextCoordinate, radius):
-        # robotIsNearOrPassOverDestinationCoordinate(movementVector, estimatedCurrentCoordinate, nextCoordinate, radius):
-
-        # movementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
+        # currentMovementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
         # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
         # radius es el radio que se toma "llegando" a nextCoordinate
 
@@ -197,9 +155,6 @@ class RobotThreadExecutor:
         estimatedCurrentCoordinate[0] = estimatedCurrentState[0][0]
         estimatedCurrentCoordinate[1] = estimatedCurrentState[1][0]
 
-
-        #vx = movementVector[1]
-        #vy = movementVector[2]
         vx = self.__currentMovementVector[1]
         vy = self.__currentMovementVector[2]
 

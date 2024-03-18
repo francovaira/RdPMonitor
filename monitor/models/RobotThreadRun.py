@@ -30,7 +30,6 @@ class RobotThreadRun:
 
             self.__isRunning = True
             while(self.__isRunning):
-                #logging.debug(f'[{__name__}] {self.__robot.getRobotID()} RUNNING StateMachine {self.stateMachine.current_state}')
 
                 if (self.stateMachine.finish_state.is_active == True):
                     self.__isRunning = False

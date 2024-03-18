@@ -1,5 +1,4 @@
 from statemachine import StateMachine, State
-import time
 import json
 import logging
 import macros
@@ -9,7 +8,6 @@ class RobotMachine(StateMachine):
         self.__executor = executor
         self.__robot = robot
         self.__robotID = robot.getRobotID()
-        #self.__mqttClient = robot.getMqttClient()
         self.__robotFeedbackQueue = robot.getFeedbackQueue()
         super(RobotMachine, self).__init__()
 
@@ -18,30 +16,6 @@ class RobotMachine(StateMachine):
     espera_respuesta = State()
     compensacion_kalman = State()
     finish_state = State(final=True)
-
-    # dispararMonitor = (
-    #     disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
-    #     | disparo_monitor.to(finish_state, unless="run_monitor")
-    #     | send_setpoint_robot.to(espera_respuesta, cond="send_setpoint")
-    #     | send_setpoint_robot.to(finish_state, unless="send_setpoint")
-    #     | espera_respuesta.to(disparo_monitor, cond="wait_response")
-    #     | espera_respuesta.to(finish_state, unless="wait_response")
-    # )
-
-    # dispararMonitor = (
-    #     disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
-    #     | disparo_monitor.to(finish_state, unless="run_monitor")
-
-    #     | send_setpoint_robot.to(espera_respuesta, cond="send_setpoint")
-    #     | send_setpoint_robot.to(finish_state, unless="send_setpoint")
-
-    #     | espera_respuesta.to(espera_respuesta, cond="wait_response")
-    #     | espera_respuesta.to(disparo_monitor, unless="wait_response")
-    #     | espera_respuesta.to(compensacion_kalman, cond="is_compensation_time")
-    #     | espera_respuesta.to(espera_respuesta, unless="is_compensation_time")
-
-    #     | compensacion_kalman.to(send_setpoint_robot, cond="calculo_compensacion")
-    # )
 
     dispararMonitor = (
         disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
@@ -83,7 +57,6 @@ class RobotMachine(StateMachine):
             logging.debug(f'[{__name__} @ {self.__robotID}] waiting next feedback')
             robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
             if(self.check_feedback_message(robotFeedback)):
-                # aca deberia avisarle al executor del feedback para que pueda actualizar el kalman y despues tomar la compensacion
                 self.__executor.updateRobotFeedback(robotFeedback)
                 return True
             return False
@@ -105,38 +78,6 @@ class RobotMachine(StateMachine):
     def robot_has_arrived(self):
         return self.__executor.robotIsNearOrPassOverDestinationCoordinate()
 
-
-    #def run_monitor(self):
-        # logging.debug(f'[{__name__} @ {self.__robotID}] entre a RUN_MONITOR')
-        # status = self.__executor.run()
-        # logging.debug(f'[{__name__} @ {self.__robotID}] returned from RUN: {status}')
-
-        # if (status == "WORKING"):
-        #     return True
-        # elif ((status == "NO_JOBS") or (status == "END")):
-        #     return False
-
-    # def send_setpoint(self):
-        # try:
-        #     setpoint_message = self.__robot.traslateMovementVectorToMessage(self.__executor.getMovementVector())
-        #     msg = self.__mqttClient.publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
-        #     msg.wait_for_publish()
-        #     return True
-        # except Exception as e:
-        #     logging.error(f'[{__name__} @ {self.__robotID}] EXCEPTION RAISED: {repr(e)}')
-        #     return False
-
-    # def wait_response(self):
-    #     try:
-    #         robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
-    #         if(self.check_feedback_message(robotFeedback)):
-    #             # aca deberia avisarle al executor del feedback para que pueda actualizar el kalman y despues tomar la compensacion
-    #             self.__executor.updateRobotFeedback(robotFeedback)
-    #             return True
-
-    #     except Exception as e:
-    #         logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
-    #         return False
 
     def on_exit_finish_state(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] cycle completed')

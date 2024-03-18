@@ -97,13 +97,6 @@ def getMeasurementWithNoise(perfectMeasurement):
     porcentajeError = 4
     imperfectMeasurement = [[0,0], [0,0]]
 
-    # for i in range(2):
-    #     for j in range(2):
-    #         sign = -1 if random.random() < 0.5 else 1
-    #         noise = sign * random.random() * (porcentajeError/100)
-    #         imperfectMeasurement[i][j] = perfectMeasurement[i][j] + noise
-    # return np.round(imperfectMeasurement, decimals=3)
-
     # noise for velocities
     for i in range(2):
         sign = -1 if random.random() < 0.7 else 1
