@@ -94,7 +94,7 @@ class KalmanFilter2D:
             alphaDegrees = np.round(np.degrees(alpha)[0], decimals=3)
 
             compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-            logging.debug(f'[{__name__}] compensacion vector | alpha = {alpha} ({alphaDegrees}°) | comp distance: {compensationDistance}')
+            logging.debug(f'[{__name__}] compensacion vector {compensationVelocityVector} | alpha = {alpha} ({alphaDegrees}°)')
             return compensationVelocityVector
 
     def notifyDirectionChange(self):

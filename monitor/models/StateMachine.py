@@ -12,14 +12,20 @@ class RobotMachine(StateMachine):
         super(RobotMachine, self).__init__()
 
     disparo_monitor = State(initial=True)
+    calculate_move_vector = State()
     send_setpoint_robot = State()
     espera_respuesta = State()
     compensacion_kalman = State()
     finish_state = State(final=True)
 
     dispararMonitor = (
-        disparo_monitor.to(send_setpoint_robot, cond="run_monitor")
+        disparo_monitor.to(calculate_move_vector, cond="run_monitor")
         | disparo_monitor.to(finish_state, unless="run_monitor")
+    )
+
+    calculateMovementVector = (
+        calculate_move_vector.to(send_setpoint_robot, cond="calculate_movement_vector")
+        | calculate_move_vector.to(finish_state, unless="calculate_movement_vector")
     )
 
     sendSetpointToRobot = (
@@ -48,6 +54,10 @@ class RobotMachine(StateMachine):
         elif ((status == "NO_JOBS") or (status == "END")):
             return False
 
+    def calculate_movement_vector(self):
+        logging.debug(f'[{__name__} @ {self.__robotID}] calculating setpoint')
+        return self.__executor.calculateMovementVector()
+
     def send_setpoint(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] sending setpoint to robot')
         return self.__executor.sendSetpointToRobot()
@@ -68,8 +78,8 @@ class RobotMachine(StateMachine):
         return isCompensationTime
 
     def calculo_compensacion(self):
-        compensatedVector = self.__executor.getCompensatedVectorAutomagic()
-        logging.debug(f'[{__name__} @ {self.__robotID}] vector de compensacion {compensatedVector}')
+        logging.debug(f'[{__name__} @ {self.__robotID}] calculo del vector de compensacion')
+        self.__executor.calculateCompensatedVector()
         return True
 
     def robot_has_arrived(self):

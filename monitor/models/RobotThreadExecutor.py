@@ -74,54 +74,26 @@ class RobotThreadExecutor:
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
-        currentJob = self.__jobs[0]
-        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
-        logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
+        # currentJob = self.__jobs[0]
+        # currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        # nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+        # logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
 
-        res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
-        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
-        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-        desiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
-        return desiredVector
-
-    def getCompensatedVector(self, estimatedCurrentState, expectedCurrentCoordinate, expectedNextCoordinate):
-        logging.debug(f'[{__name__} @ {self.__robotID}] inside getCompensatedVector | estimated curr state :{estimatedCurrentState} | expected curr coordinate: {expectedCurrentCoordinate} | expected next coordinate: {expectedNextCoordinate}')
-
-        # posicion estimada actual
-        x_est_curr = estimatedCurrentState[0][0]
-        y_est_curr = estimatedCurrentState[1][0]
-
-        # posicion expected actual
-        x_exp_curr = expectedCurrentCoordinate[0]
-        y_exp_curr = expectedCurrentCoordinate[1]
-
-        # posicion expected siguiente
-        x_exp_next = expectedNextCoordinate[0]
-        y_exp_next = expectedNextCoordinate[1]
-
-        compensationDistance = np.hypot([x_exp_next-x_est_curr], [y_exp_next-y_est_curr])
-
-        x_delta_dist_cmpstd = x_est_curr - x_exp_curr
-        y_delta_dist_cmpstd = y_exp_next - y_est_curr
-
-        if(x_delta_dist_cmpstd != 0 and y_delta_dist_cmpstd != 0):
-            alpha = np.arctan([x_delta_dist_cmpstd / y_delta_dist_cmpstd])
-            vx_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
-            vy_cmpstd = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
-            compensationVelocityVector = [compensationDistance[0], vx_cmpstd[0], vy_cmpstd[0]]
-
-            logging.debug(f'[{__name__} @ {self.__robotID}] INSIDE getCompensatedVector | alpha: {alpha} | comp distance: {compensationDistance} | comp vector: {compensationVelocityVector}')
-            return compensationVelocityVector
+        # res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
+        # filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
+        # filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+        # desiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+        # return desiredVector
+        return self.__currentMovementVector
 
     def isCompensationTime(self):
         return self.__kalmanFilter.isCompensationTime()
 
-    def getCompensatedVectorAutomagic(self):
+    def calculateCompensatedVector(self):
         estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
         currentJob = self.__jobs[0]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        return self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
+        self.__currentMovementVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
 
     # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def traslateMovementVectorToMessage(self, movementVector):
@@ -132,6 +104,18 @@ class RobotThreadExecutor:
             "vr": movementVector[3]
         }
         return json.dumps(vectorMessage)
+
+    def calculateMovementVector(self):
+        currentJob = self.__jobs[0]
+        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+        logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
+
+        res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
+        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
+        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+        self.__currentMovementVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+        return (self.__currentMovementVector != None)
 
     def sendSetpointToRobot(self):
         try:

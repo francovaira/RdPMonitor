@@ -39,6 +39,10 @@ class RobotThreadRun:
                     self.stateMachine.dispararMonitor()
                     continue
 
+                if(self.stateMachine.calculate_move_vector.is_active == True):
+                    self.stateMachine.calculateMovementVector()
+                    continue
+
                 if(self.stateMachine.send_setpoint_robot.is_active == True):
                     self.stateMachine.sendSetpointToRobot()
                     continue
