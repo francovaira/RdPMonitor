@@ -15,7 +15,6 @@ class RobotThreadExecutor:
         self.__robotID = robot.getRobotID()
         self.__jobs = []
         self.__kalmanFilter = KalmanFilter2D()
-
         self.__currentMovementVector = []
 
     def addJob(self, job):
@@ -74,16 +73,6 @@ class RobotThreadExecutor:
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
-        # currentJob = self.__jobs[0]
-        # currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        # nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
-        # logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
-
-        # res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
-        # filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
-        # filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-        # desiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
-        # return desiredVector
         return self.__currentMovementVector
 
     def isCompensationTime(self):
