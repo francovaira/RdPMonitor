@@ -56,10 +56,7 @@ class RobotMachine(StateMachine):
         try:
             logging.debug(f'[{__name__} @ {self.__robotID}] waiting next feedback')
             robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
-            if(self.check_feedback_message(robotFeedback)):
-                self.__executor.updateRobotFeedback(robotFeedback)
-                return True
-            return False
+            return self.__executor.updateRobotFeedback(robotFeedback)
 
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
@@ -81,18 +78,6 @@ class RobotMachine(StateMachine):
 
     def on_exit_finish_state(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] cycle completed')
-
-    def check_feedback_message(self, feedback_message):
-        # feedback: '{"dx":0.06, "vx":0.23, "dy":0.07, "vy":0.24}'
-        data = json.loads(feedback_message)
-        dx = data['dx']
-        vx = data['vx']
-        dy = data['dy']
-        vy = data['vy']
-        if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
-            logging.error(f'[{__name__}] {self.__robotID} json contains invalid data')
-            return False
-        return True
 
     def output_image_state_machine(self):
         img_path = "./state_machine.png"

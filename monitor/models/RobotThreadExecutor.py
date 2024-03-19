@@ -65,7 +65,12 @@ class RobotThreadExecutor:
         vx = data['vx']
         dy = data['dy']
         vy = data['vy']
+        if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
+            logging.error(f'[{__name__}] {self.__robotID} json contains invalid data')
+            return False
+
         self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]])
+        return True
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):

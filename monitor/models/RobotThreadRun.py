@@ -52,9 +52,5 @@ class RobotThreadRun:
                     self.stateMachine.compensationCalculation()
                     continue
 
-                if(self.stateMachine.espera_respuesta.is_active == True):
-                    logging.debug(f'[{self.__robot.getRobotID()}] AAAAAAAA NUEVO VECTOR COMPENSADO A ENVIARRRRR!!!!')
-                    continue
-
     def getRobotState(self):
         return self.__isRunning
