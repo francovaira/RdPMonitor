@@ -44,6 +44,29 @@ class RobotMachine(StateMachine):
         compensacion_kalman.to(send_setpoint_robot, cond="calculo_compensacion")
     )
 
+    def run(self):
+        if (self.finish_state.is_active == True):
+            return False
+
+        if(self.disparo_monitor.is_active == True):
+            self.dispararMonitor()
+            return True
+
+        if(self.calculate_move_vector.is_active == True):
+            self.calculateMovementVector()
+            return True
+
+        if(self.send_setpoint_robot.is_active == True):
+            self.sendSetpointToRobot()
+            return True
+
+        if(self.espera_respuesta.is_active == True):
+            self.esperaRespuesta()
+            return True
+
+        if(self.compensacion_kalman.is_active == True):
+            self.compensationCalculation()
+            return True
 
     def run_monitor(self):
         status = self.__executor.run()

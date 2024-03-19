@@ -30,31 +30,7 @@ class RobotThreadRun:
 
             self.__isRunning = True
             while(self.__isRunning):
-
-                if (self.stateMachine.finish_state.is_active == True):
-                    self.__isRunning = False
-                    continue
-
-                if(self.stateMachine.disparo_monitor.is_active == True):
-                    self.stateMachine.dispararMonitor()
-                    continue
-
-                if(self.stateMachine.calculate_move_vector.is_active == True):
-                    self.stateMachine.calculateMovementVector()
-                    continue
-
-                if(self.stateMachine.send_setpoint_robot.is_active == True):
-                    self.stateMachine.sendSetpointToRobot()
-                    continue
-
-                if(self.stateMachine.espera_respuesta.is_active == True):
-                    self.stateMachine.esperaRespuesta()
-                    continue
-
-                if(self.stateMachine.compensacion_kalman.is_active == True):
-                    logging.debug(f'[{self.__robot.getRobotID()}] AAAAAAAA ME FUI A CALCULARRRRR !!!!')
-                    self.stateMachine.compensationCalculation()
-                    continue
+                self.__isRunning = self.stateMachine.run()
 
     def getRobotState(self):
         return self.__isRunning
