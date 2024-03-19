@@ -16,6 +16,7 @@ class RobotThreadExecutor:
         self.__jobs = []
         self.__kalmanFilter = KalmanFilter2D()
         self.__currentMovementVector = []
+        self.__lastMovementVector = []
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -96,15 +97,30 @@ class RobotThreadExecutor:
 
     def calculateMovementVector(self):
         currentJob = self.__jobs[0]
-        currentCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
-        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
-        logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}>')
+        transitionIndex = currentJob.getTransitionIndex()
+        currentCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex+1]
+        logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}> | transicion <{transitionIndex}>')
 
         res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
         filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
         filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-        self.__currentMovementVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+        newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+
+        if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
+            if(self.cambioDireccion(self.__lastMovementVector, newDesiredVector)):
+                logging.debug(f'[{__name__}] cambio de direccion (!)')
+                self.__kalmanFilter.notifyDirectionChange()
+
+        self.__currentMovementVector = newDesiredVector
+        self.__lastMovementVector = newDesiredVector
+
         return (self.__currentMovementVector != None)
+
+    def cambioDireccion(self, desiredVector, newDesiredVector):
+        if(desiredVector[1] != newDesiredVector[1] or desiredVector[2] != newDesiredVector[2]):
+            return True
+        return False
 
     def sendSetpointToRobot(self):
         try:
