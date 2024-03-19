@@ -1,4 +1,5 @@
 from .KalmanFilter import KalmanFilter
+#from KalmanFilter import KalmanFilter
 import macros
 import operator
 import numpy as np
@@ -73,20 +74,27 @@ class KalmanFilter2D:
                 alpha = np.arctan([dist_comp_y/dist_comp_x])
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
+
+                # keep the sign of the movement vector
+                if(dist_comp_x >= 0):
+                    vx_comp = vx_comp
+                else:
+                    vx_comp = -vx_comp
             else: # desplazamiento en Y
                 alpha = np.arctan([dist_comp_x/dist_comp_y])
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
                 vy_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.cos(alpha)
 
-                # keep sign of velocity vector
-                #vx_comp = np.copysign([vx_comp], )
+                # keep the sign of the movement vector
+                if(dist_comp_y >= 0):
+                    vy_comp = vy_comp
+                else:
+                    vy_comp = -vy_comp
 
             alphaDegrees = np.round(np.degrees(alpha)[0], decimals=3)
 
-            # FIXMEEE signo de las velocidades de desplazamiento no se mantiene respecto al vector deseado
-
             compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
-            logging.debug(f'[{__name__}] compensacion vector | alpha = {alpha} rad ({alphaDegrees}°) | comp distance: {compensationDistance}')
+            logging.debug(f'[{__name__}] compensacion vector | alpha = {alpha} ({alphaDegrees}°) | comp distance: {compensationDistance}')
             return compensationVelocityVector
 
     def notifyDirectionChange(self):
@@ -289,6 +297,6 @@ def main():
 
 
 
-# if __name__ == "__main__":
-#     main()
+#if __name__ == "__main__":
+#    main()
 
