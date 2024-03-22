@@ -187,16 +187,16 @@ class RobotThreadExecutor:
         logging.debug(f'[{__name__}] SETTING COORD CONFIRMATION ...')
         currentJob = self.__jobs[0]
         destinationCoordinateTransition = currentJob.getTransitionsPathSequence()[currentJob.getTransitionIndex()]
-        self.__monitor.setCoordinateConfirmation(self.__robotID, destinationCoordinateTransition, confirmationValue)
+        logging.debug(f'[{__name__} @ {self.__robotID}] confirmation of transition {destinationCoordinateTransition}')
+        return self.__monitor.setCoordinateConfirmation(self.__robotID, destinationCoordinateTransition, confirmationValue)
 
     def run(self):
 
         try:
-            logging.debug(f'[{self.__robotID}] ENTRE A BUSCAR LA PROXIMA TRANSICION A EJECUTAR!!')
             currentJob = self.__jobs[0]
-            logging.debug(f'[{self.__robotID}] job found!!')
-
             transitionToExecute = currentJob.getNextTransitionToExecute()
+            logging.debug(f'[{self.__robotID}] proxima transicion a ejecutar en el monitor <{transitionToExecute}>')
+
             monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
 
             if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_REQUEST_WAITING_CONFIRMATION): # si pudo solicitar el movimiento a la celda y esta esperando confirmacion
@@ -208,6 +208,9 @@ class RobotThreadExecutor:
                     logging.debug(f'[{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
                     return "END"
+
+                nextTransitionToExecute = currentJob.getNextTransitionToExecute()
+                monitorReturnStatus = self.__monitor.monitorDisparar(nextTransitionToExecute, self.__robotID)
 
             elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
                 blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]

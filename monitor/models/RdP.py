@@ -65,16 +65,18 @@ class RdP:
     def redDispararWaitConfirmation(self, transition, robotID):
         if(self.solicitudDisparo(transition)):
 
+            # FIXME mejorar esta logica para que no agregue sino que checkee primero si existe y si esta en estado wait
             # si esta habilitado para ejecutar la transicion (hay suficientes lugares libres en la celda destino), se bloquea hasta esperar confirmacion
             threadInCell = self.addRobotToCell(robotID, transition)
 
             if(threadInCell.isWaitingConfirmation == True):
                 return 2 # FIXME aca deberia devolver un estado como "BLOQUEADO_ESPERANDO_CONFIRMACION"
 
+
             # si llego hasta aca es porque se desbloqueo y por ende puede terminar el disparo
+            print(f'[RED_DE_PETRI] transicion {transition} confirmada. Impacta estado.\n')
+            self.removeRobotInCell(robotID, transition)
 
-
-            print(f'[RED_DE_PETRI] DISPARO EFECTIVOOOOOOO\n\n')
             for placeID in range(0, self.__placesCount):
                 self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + self.__incidence[placeID][transition]
 
@@ -112,6 +114,16 @@ class RdP:
         self.__threadsWaitingConfirmation[transition].append(RobotInRDPCell(threadID))
         print(f'adding robot <{threadID}> to ({transition}) to wait for confirmation')
         return self.__threadsWaitingConfirmation[transition][len(self.__threadsWaitingConfirmation[transition])-1]
+
+    def removeRobotInCell(self, threadID, transition):
+        # retorna true si lo pudo borrar, false caso contrario
+
+        for i in range(len(self.__threadsWaitingConfirmation[transition])):
+            if(self.__threadsWaitingConfirmation[transition][i].threadID == threadID):
+                print(f'removing robot <{self.__threadsWaitingConfirmation[transition][i].threadID}> of transition <{transition}>')
+                self.__threadsWaitingConfirmation[transition].pop(i)
+                return True
+        return False
 
     def setRobotInCoordinate(self, coordinate, robotID): # Forces the marking to set a robot in a place
         placeID = self.__map.getPlaceIDFromMapCoordinate(coordinate)

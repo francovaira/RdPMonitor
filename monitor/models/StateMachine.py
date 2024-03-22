@@ -35,8 +35,8 @@ class RobotMachine(StateMachine):
     )
 
     esperaRespuesta = (
-        espera_respuesta.to(compensacion_kalman, cond="is_compensation_time")
-        | espera_respuesta.to(impactar_cambio_de_estado, cond="robot_has_arrived")
+        espera_respuesta.to(impactar_cambio_de_estado, cond="robot_has_arrived")
+        | espera_respuesta.to(compensacion_kalman, cond="is_compensation_time")
         | espera_respuesta.to(espera_respuesta, cond="wait_response")
         | espera_respuesta.to(disparo_monitor, unless="wait_response")
     )
@@ -78,6 +78,7 @@ class RobotMachine(StateMachine):
             return True
 
     def run_monitor(self):
+        logging.debug(f'[{__name__} @ {self.__robotID}] running monitor')
         status = self.__executor.run()
         logging.debug(f'[{__name__} @ {self.__robotID}] returned from RUN: {status}')
 
@@ -122,8 +123,8 @@ class RobotMachine(StateMachine):
         return value
 
     def send_confirmacion_monitor(self):
-        self.__executor.setCoordinateConfirmation(False)
-        return True
+        logging.debug(f'[{__name__} @ {self.__robotID}] sending confirmation to monitor')
+        return self.__executor.setCoordinateConfirmation(False)
 
     def on_exit_finish_state(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] cycle completed')

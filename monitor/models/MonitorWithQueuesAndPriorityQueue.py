@@ -268,9 +268,10 @@ class MonitorWithQueuesAndPriorityQueue:
 
     def setCoordinateConfirmation(self, threadID, transition, confirmationValue):
         with self.__directRdPAccessCondition:
-            print("[MONITOR_PETRI] setting conf valueee !!!\n")
-            self.__petriNet.setCoordinateConfirmation(threadID, transition, confirmationValue)
+            print(f'[MONITOR_PETRI] setting confirm valueee | {threadID} | {transition} | {confirmationValue}\n')
+            result = self.__petriNet.setCoordinateConfirmation(threadID, transition, confirmationValue)
             self.__directRdPAccessCondition.notify_all()
+            return result
 
     def calculatePath(self, startX, startY, endX, endY):
         with self.__directPathFinderAccessCondition:
