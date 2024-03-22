@@ -16,6 +16,7 @@ class RobotMachine(StateMachine):
     send_setpoint_robot = State()
     espera_respuesta = State()
     compensacion_kalman = State()
+    impactar_cambio_de_estado = State()
     finish_state = State(final=True)
 
     dispararMonitor = (
@@ -35,9 +36,13 @@ class RobotMachine(StateMachine):
 
     esperaRespuesta = (
         espera_respuesta.to(compensacion_kalman, cond="is_compensation_time")
-        | espera_respuesta.to(disparo_monitor, cond="robot_has_arrived")
+        | espera_respuesta.to(impactar_cambio_de_estado, cond="robot_has_arrived")
         | espera_respuesta.to(espera_respuesta, cond="wait_response")
         | espera_respuesta.to(disparo_monitor, unless="wait_response")
+    )
+
+    impactarCambioEstado = (
+        impactar_cambio_de_estado.to(disparo_monitor, cond="send_confirmacion_monitor")
     )
 
     compensationCalculation = (
@@ -62,6 +67,10 @@ class RobotMachine(StateMachine):
 
         if(self.espera_respuesta.is_active == True):
             self.esperaRespuesta()
+            return True
+
+        if(self.impactar_cambio_de_estado.is_active == True):
+            self.impactarCambioEstado()
             return True
 
         if(self.compensacion_kalman.is_active == True):
@@ -89,7 +98,7 @@ class RobotMachine(StateMachine):
 
     def wait_response(self):
         try:
-            logging.debug(f'[{__name__} @ {self.__robotID}] waiting next feedback')
+            logging.debug(f'[{__name__} @ {self.__robotID}] waiting next feedback\n\n\n\n')
             robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
             return self.__executor.updateRobotFeedback(robotFeedback)
 
@@ -110,11 +119,11 @@ class RobotMachine(StateMachine):
     def robot_has_arrived(self):
         value = self.__executor.robotIsNearOrPassOverDestinationCoordinate()
         logging.debug(f'[{__name__} @ {self.__robotID}] robot has arrived ? {value}')
-
-        if(value):
-            self.__executor.setCoordinateConfirmation(False)
         return value
 
+    def send_confirmacion_monitor(self):
+        self.__executor.setCoordinateConfirmation(False)
+        return True
 
     def on_exit_finish_state(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] cycle completed')

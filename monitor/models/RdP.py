@@ -106,7 +106,7 @@ class RdP:
 
         for i in range(len(self.__threadsWaitingConfirmation[transition])):
             if(self.__threadsWaitingConfirmation[transition][i].threadID == threadID):
-                print(f'trying to add robot but exists. <{self.__threadsWaitingConfirmation[transition][i].threadID}>')
+                print(f'trying to add robot to transition <{transition}> but exists @ {i}. <{self.__threadsWaitingConfirmation[transition][i].threadID}>')
                 return self.__threadsWaitingConfirmation[transition][i]
 
         self.__threadsWaitingConfirmation[transition].append(RobotInRDPCell(threadID))
