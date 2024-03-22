@@ -82,7 +82,7 @@ class RobotThreadExecutor:
     def calculateCompensatedVector(self):
         estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
         currentJob = self.__jobs[0]
-        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
         self.__currentMovementVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
 
     # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
@@ -132,7 +132,7 @@ class RobotThreadExecutor:
             msg.wait_for_publish()
             return True
         except Exception as e:
-            logging.error(f'[{__name__} @ {self.__robotID}] EXCEPTION RAISED: {repr(e)}')
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
             return False
 
     def robotIsNearOrPassOverDestinationCoordinate(self):
@@ -153,7 +153,9 @@ class RobotThreadExecutor:
         vy = self.__currentMovementVector[2]
 
         currentJob = self.__jobs[0]
-        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+
+        logging.debug(f'[{__name__}] radius {radius} | estCurrCoord {estimatedCurrentCoordinate} | nextCoord {nextCoordinate} | vector ({vx},{vy})')
 
         if(vx != 0):
             x_est_curr = estimatedCurrentCoordinate[0]
@@ -181,6 +183,12 @@ class RobotThreadExecutor:
 
         return False
 
+    def setCoordinateConfirmation(self, confirmationValue):
+        logging.debug(f'[{__name__}] SETTING COORD CONFIRMATION ...')
+        currentJob = self.__jobs[0]
+        destinationCoordinateTransition = currentJob.getTransitionsPathSequence()[currentJob.getTransitionIndex()]
+        self.__monitor.setCoordinateConfirmation(self.__robotID, destinationCoordinateTransition, confirmationValue)
+
     def run(self):
 
         try:
@@ -190,12 +198,17 @@ class RobotThreadExecutor:
 
             transitionToExecute = currentJob.getNextTransitionToExecute()
             monitorReturnStatus = self.__monitor.monitorDisparar(transitionToExecute, self.__robotID)
-            if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
+
+            if(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_REQUEST_WAITING_CONFIRMATION): # si pudo solicitar el movimiento a la celda y esta esperando confirmacion
+                return "WAIT_CONF"
+
+            elif(monitorReturnStatus == MonitorReturnStatus.SUCCESSFUL_FIRING): # si pudo disparar, busco la siguiente transicion
                 logging.debug(f'[{self.__robotID}] || disparo monitor exitoso.')
                 if(currentJob.updateNextTransitionToExecute()):
                     logging.debug(f'[{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
                     return "END"
+
             elif(monitorReturnStatus == MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED):
                 blockedPosition = currentJob.getCoordinatesPathSequence()[transitionIndex]
                 remainingPathCoordinates = currentJob.getCoordinatesPathSequence()[transitionIndex+1:]
@@ -226,7 +239,7 @@ class RobotThreadExecutor:
             return "WORKING"
 
         except Exception as e:
-            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
             exit()
             return "NO_JOBS"
 

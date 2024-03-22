@@ -77,9 +77,9 @@ class KalmanFilter2D:
 
                 # keep the sign of the movement vector
                 if(dist_comp_x >= 0):
-                    vx_comp = vx_comp
+                    vx_comp[0] = vx_comp[0]
                 else:
-                    vx_comp = -vx_comp
+                    vx_comp[0] = -vx_comp[0]
             else: # desplazamiento en Y
                 alpha = np.arctan([dist_comp_x/dist_comp_y])
                 vx_comp = macros.DEFAULT_ROBOT_LINEAR_VELOCITY * np.sin(alpha)
@@ -87,9 +87,9 @@ class KalmanFilter2D:
 
                 # keep the sign of the movement vector
                 if(dist_comp_y >= 0):
-                    vy_comp = vy_comp
+                    vy_comp[0] = vy_comp[0]
                 else:
-                    vy_comp = -vy_comp
+                    vy_comp[0] = -vy_comp[0]
 
             alphaDegrees = np.round(np.degrees(alpha)[0], decimals=3)
 

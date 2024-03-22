@@ -11,7 +11,8 @@ TIMEOUT_THREAD_WAITING = 10
 class MonitorReturnStatus(Enum):
     SUCCESSFUL_FIRING = 0
     UNABLE_TO_FIRE = 1
-    TIMEOUT_WAITING_BLOCKED = 2
+    SUCCESSFUL_REQUEST_WAITING_CONFIRMATION = 2
+    TIMEOUT_WAITING_BLOCKED = 3
 
 class TransitionMonitorQueue:
 
@@ -107,89 +108,72 @@ class MonitorWithQueuesAndPriorityQueue:
     def monitorDisparar(self, transition, threadID):
 
         if(self.__fireCount >= ITERATION_COUNT):
-            self.__fileWrite(self.__accumLog, "LOG_OUTPUT.txt")
+            #self.__fileWrite(self.__accumLog, "LOG_OUTPUT.txt")
             print("Leaving...")
             exit()
 
         with self.__monitorEntranceLock:
             if(self.__priorityThread != "" and self.__priorityThread != threadID):
-                #print(f"==== THREAD {threadID} || LIBERO EL LOCK DE ENTRADA, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
                 return MonitorReturnStatus.UNABLE_TO_FIRE
             else:
                 self.__monitorLock.acquire()
                 if(self.__priorityThread != "" and self.__priorityThread != threadID):
                     self.__monitorLock.release()
-                    #print(f"==== THREAD {threadID} || LIBERO EL LOCK, HAY ALGUIEN EN PRIORIDAD <{self.__priorityThread}> // CANT DISPAROS {self.__fireCount}")
                     return MonitorReturnStatus.UNABLE_TO_FIRE
 
         try:
             k = True
             self.__transitionQueues[transition].request(threadID)
-            #print(f"==== THREAD {threadID} || REQUESTED TRANSITION {transition}")
-            self.__accumLog = self.__accumLog + f"{time.time()},{threadID},1\n"
 
             while(k == True):
-                # 0) intenta disparar de una
-                k = self.__petriNet.redDisparar(transition, threadID)
-                if(k): # si pudo disparar, ...
+                # k = self.__petriNet.redDisparar(transition, threadID)
+                k = self.__petriNet.redDispararWaitConfirmation(transition, threadID)
+
+                if(k == 2): # esta bloqueado esperando la confirmacion de disparo, me voy del monitor
+                    return MonitorReturnStatus.SUCCESSFUL_REQUEST_WAITING_CONFIRMATION
+
+                #if(k):
+                elif(k == 1): # pudo disparar
 
                     if(self.__priorityThread == threadID):
-                        #print(f"==== THREAD {threadID} || LA PRIORIDAD SOY YO, YA DISPARE Y CLEAR EL PRIORITY THREAD // CANT DISPAROS {self.__fireCount}")
                         self.__priorityThread = ""
 
                     if(self.__threadBlockedExistsInList(threadID, self.__blockedThreadsQueue)): # si ya dispare y estaba en la cola de bloqueados, me voy
                         for thrBlocked in self.__blockedThreadsQueue:
                             if(thrBlocked.threadID == threadID):
                                 self.__blockedThreadsQueue.remove(thrBlocked)
-                                print(f"{threadID} || ME BORRE DE LOS BLOQUEADOSSSSS")
 
                     self.__fireCountIncrement()
-                    #print(f"==== THREAD {threadID} || PUDE DISPARAR LA TRANSICION {transition} // CANT DISPAROS {self.__fireCount}")
-                    self.__accumLog = self.__accumLog + f"{time.time()},{threadID},2\n"
 
                     # 0.5) me desencolo de la transicion porque ya dispare
                     self.__transitionQueues[transition].releaseRequest(threadID)
-                    #print(f"==== THREAD {threadID} || UNREQUESTED TRANSITION {transition}")
-                    self.__accumLog = self.__accumLog + f"{time.time()},{threadID},3\n"
 
                     # 1) obtener las sensibilizadas luego del cambio de estado
                     sensibilizadas = self.__petriNet.getSensibilizadas() # devuelve algo como [12, 4, 83, 67, ...]
-                    #print(f"==== THREAD {threadID} || SENSIBILIZADAS DESPUES DEL DISPARO MONITOR - {sensibilizadas} // CANT DISPAROS {self.__fireCount}")
-                    self.__accumLog = self.__accumLog + f"{time.time()},{threadID},4\n"
 
                     if(len(sensibilizadas) > 0):
 
                         # 2) matchear sensibilizadas con colas de transiciones
                         transitionCandidates = self.__getTransitionCandidates(sensibilizadas)
-                        #print(f"==== THREAD {threadID} || TRANSICIONES CANDIDATOS MONITOR - {transitionCandidates} // CANT DISPAROS {self.__fireCount}")
-                        self.__accumLog = self.__accumLog + f"{time.time()},{threadID},5\n"
 
                         # 3) si hay sensibilizadas con requests preguntar a la politica que transicion
                         if(len(transitionCandidates) > 0):
                             transitionDecision = self.__policy.resolve(transitionCandidates) # aca ver que hay que pasarle a la politica para que resuelva
-                            #print(f"==== THREAD {threadID} || SOLUCION POLITICA MONITOR - {transitionDecision} // CANT DISPAROS {self.__fireCount}")
-                            self.__accumLog = self.__accumLog + f"{time.time()},{threadID},10\n"
-
                             self.__priorityThread = self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]
-                            print(f"==== THREAD {threadID} || SETTING PRIORITY THREAD TO {self.__transitionQueues[transitionDecision].getThreadsRequesting()[0]} // CANT DISPAROS {self.__fireCount}")
 
                             # 4) se determino que debe ser la Tj, se pone un token en el semaforo de la transicion
                             self.__transitionQueues[transitionDecision].getSemaphore().release()
-                            k=False # se va del monitor por haber disparado
+                            k = False # se va del monitor por haber disparado
                         else:
-                            # se va del monitor por no haber ninguna transicion con requests
-                            k = False
+                            k = False # se va del monitor por no haber ninguna transicion con requests
                     else:
-                        # se va del monitor por no haber ninguna transicion sensibilizada
-                        k = False
+                        k = False # se va del monitor por no haber ninguna transicion sensibilizada
 
-                    #return True
                     return MonitorReturnStatus.SUCCESSFUL_FIRING
                 else:
                     # put myself as thread into according queue
                     # importante, el thread solo se va a encolar en caso que haya intentado disparar la transicion pero no pudo
                     print(f"==== THREAD {threadID} || TRANSICION NO SENSIBILIZADA, ME ENCOLO EN LA TRANSICION {transition}")
-                    self.__accumLog = self.__accumLog + f"{time.time()},{threadID},20\n"
 
                     # decide por politica quien recalcula -- el que recalcula se le cambian las transiciones, sale del monitor y se va a recalcular y pelear por otras transiciones (no deberia bloquearse en la transicion actual, tiene que obtener una nueva por haber recalculado)
                     # el que no recalcula debe bloquearse hasta que el que recalcula se mueva -- en definitiva haria el acquire
@@ -198,17 +182,10 @@ class MonitorWithQueuesAndPriorityQueue:
                         # the loop completed without finding an object with the given name, the object does not exist in the list
                         newThreadBlocked = ThreadBlocked(threadID, transition, self.__getTransitionTranslation(transition))
                         self.__blockedThreadsQueue.append(newThreadBlocked)
-                        print(f"{threadID} || ME AGREGUE A LA COLA DE BLOQUEADOS || {newThreadBlocked.transitionTranslated}")
-
-                        strin = "LISTA DE BLOQUEADOS || "
-                        for thrBlocked in self.__blockedThreadsQueue:
-                            strin = strin + f"{thrBlocked.threadID} - {thrBlocked.transition} - {thrBlocked.transitionTranslated} || "
-                        print(strin)
 
                     elif(self.__threadBlockedExistsInList(threadID, self.__threadsInConflict)): # si me desperte y resulta que debo recalcular
                         for threadBlockedInList in self.__threadsInConflict:
                             if(threadBlockedInList.threadID == threadID and threadBlockedInList.mustRecalculatePath):
-                                print(f"{threadID} || EN EL PRINCIPIOOOO --- ME VOY A RECALCULARRRR")
                                 self.__transitionQueues[transition].releaseRequest(threadID)
                                 self.__threadsInConflict = []
                                 return MonitorReturnStatus.TIMEOUT_WAITING_BLOCKED
@@ -219,7 +196,6 @@ class MonitorWithQueuesAndPriorityQueue:
                         self.__threadsInConflict.append(threadInConflictB)
 
                         threadDecision = self.__pathRecalculationPolicy.resolve(self.__threadsInConflict) # decide que thread debe recalcular
-                        print(f"{threadID} || LA POLITICA DECIDIOOOO {threadDecision.threadID}")
 
                         threadDecision.mustRecalculatePath = True
                         if(threadDecision.threadID == threadID): # si la politica decidio por mi que debo recalcular
@@ -233,12 +209,12 @@ class MonitorWithQueuesAndPriorityQueue:
                             self.__monitorLock.release()
                             self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                             self.__monitorLock.acquire()
-                            k=True
+                            k = True
                     else:
                         self.__monitorLock.release()
                         self.__transitionQueues[transition].getSemaphore().acquire(blocking=True)
                         self.__monitorLock.acquire()
-                        k=True
+                        k = True
 
         finally:
             self.__monitorLock.release()
@@ -287,7 +263,13 @@ class MonitorWithQueuesAndPriorityQueue:
     def setRobotInCoordinate(self, coordinate, robotID):
         with self.__directRdPAccessCondition:
             if(self.__petriNet.setRobotInCoordinate(coordinate, robotID)):
-                print("ERROR INSIDE MONITOR unable to set robot in coordinate")
+                print("ERROR INSIDE MONITOR unable to set robot in coordinate\n")
+            self.__directRdPAccessCondition.notify_all()
+
+    def setCoordinateConfirmation(self, threadID, transition, confirmationValue):
+        with self.__directRdPAccessCondition:
+            print("[MONITOR_PETRI] setting conf valueee !!!\n")
+            self.__petriNet.setCoordinateConfirmation(threadID, transition, confirmationValue)
             self.__directRdPAccessCondition.notify_all()
 
     def calculatePath(self, startX, startY, endX, endY):

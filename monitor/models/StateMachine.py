@@ -72,7 +72,9 @@ class RobotMachine(StateMachine):
         status = self.__executor.run()
         logging.debug(f'[{__name__} @ {self.__robotID}] returned from RUN: {status}')
 
-        if (status == "WORKING"):
+        if (status == "WAIT_CONF"):
+            return True
+        elif (status == "WORKING"):
             return True
         elif ((status == "NO_JOBS") or (status == "END")):
             return False
@@ -106,7 +108,12 @@ class RobotMachine(StateMachine):
         return True
 
     def robot_has_arrived(self):
-        return self.__executor.robotIsNearOrPassOverDestinationCoordinate()
+        value = self.__executor.robotIsNearOrPassOverDestinationCoordinate()
+        logging.debug(f'[{__name__} @ {self.__robotID}] robot has arrived ? {value}')
+
+        if(value):
+            self.__executor.setCoordinateConfirmation(False)
+        return value
 
 
     def on_exit_finish_state(self):
