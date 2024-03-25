@@ -16,7 +16,7 @@ class RobotThreadExecutor:
         self.__jobs = []
         self.__kalmanFilter = KalmanFilter2D()
         self.__currentMovementVector = []
-        self.__lastMovementVector = []
+        self.__lastDesiredMovementVector = []
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -108,12 +108,12 @@ class RobotThreadExecutor:
         newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
 
         if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
-            if(self.cambioDireccion(self.__lastMovementVector, newDesiredVector)):
+            if(self.cambioDireccion(self.__lastDesiredMovementVector, newDesiredVector)):
                 logging.debug(f'[{__name__}] cambio de direccion (!)')
                 self.__kalmanFilter.notifyDirectionChange()
 
         self.__currentMovementVector = newDesiredVector
-        self.__lastMovementVector = newDesiredVector
+        self.__lastDesiredMovementVector = newDesiredVector
 
         return (self.__currentMovementVector != None)
 
@@ -125,8 +125,6 @@ class RobotThreadExecutor:
     def sendSetpointToRobot(self):
         try:
             movementVector = self.getMovementVector()
-            self.__currentMovementVector = movementVector
-
             setpoint_message = self.traslateMovementVectorToMessage(movementVector)
             msg = self.__robot.getMqttClient().publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
@@ -149,8 +147,8 @@ class RobotThreadExecutor:
         estimatedCurrentCoordinate[0] = estimatedCurrentState[0][0]
         estimatedCurrentCoordinate[1] = estimatedCurrentState[1][0]
 
-        vx = self.__currentMovementVector[1]
-        vy = self.__currentMovementVector[2]
+        vx = self.__lastDesiredMovementVector[1]
+        vy = self.__lastDesiredMovementVector[2]
 
         currentJob = self.__jobs[0]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]

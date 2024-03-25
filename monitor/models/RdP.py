@@ -5,6 +5,7 @@ from Enums import MapCellOccupationStates, MapCellOccupationActions
 import numpy as np
 
 # FIXME refactorizar esta clase en una que sea la RDP sola y conectado tenga la interfaz para con el mapa y hacia el monitor
+# FIXME la parte de confirmacion de disparo se podria simplificar modelandolo como brazos inhibidores
 
 class RobotInRDPCell:
     def __init__(self, threadID):
