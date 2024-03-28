@@ -18,9 +18,30 @@ import logging
 # Recordar que el Filtro de Kalman solo estima el estado en base a las mediciones, despues para la compensacion
 # deberia involucrarse el vector deseado y comparar para obtener el vector que se debe mandar efectivamente
 
+# esta clase es temporal y solo es para permitir switchear rapido entre deltaT = 1.0 o que tome la medicion
+class DeltaT:
+    def __init__(self):
+        self.__defaultEnabled = True
+        self.deltaT = 1.0
+
+    def setDefaultEnable(self, enable):
+        self.__defaultEnabled = enable
+
+    def updateDeltaT(self, deltaT):
+        if(self.__defaultEnabled):
+            self.deltaT = 1.0
+        else:
+            self.deltaT = deltaT
+
+    def getDeltaT(self):
+        return self.deltaT
+
 class KalmanFilter:
     def __init__(self):
-        self.__DELTA_T = 1.0 # expresado en segundos
+        #self.__DELTA_T = 1.0 # expresado en segundos
+        self.__deltaTObj = DeltaT()
+        self.__deltaTObj.setDefaultEnable(False)
+        self.__DELTA_T = self.__deltaTObj.getDeltaT()
 
         self.__x_0  = 0 # Posicion inicial - expresado en metros
         self.__vx_0 = 0 # Velocidad inicial - expresado en m/seg
@@ -40,7 +61,10 @@ class KalmanFilter:
         # R is a 2x2 matrix R = [[delta_x^2, 0], [0, delta_vx^2]]
         self.__R = np.array([[self.__delta_x**2, 0], [0, self.__delta_vx**2]])
 
-    def inputMeasurementUpdate(self, inputMeasurement):
+    def inputMeasurementUpdate(self, inputMeasurement, deltaT):
+        self.__deltaTObj.updateDeltaT(deltaT)
+        self.__DELTA_T = self.__deltaTObj.getDeltaT()
+
         Yk = np.array([[inputMeasurement[0]], [inputMeasurement[1]]])
 
         self.__Xkp = self.__calculatePredictedState(self.__Xkm1)

@@ -58,6 +58,8 @@ class RobotThreadExecutor:
             logging.error(f'[{__name__}] path doesnt exist')
 
     def updateRobotFeedback(self, robotFeedback):
+        deltaT = 1.0
+
         logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
 
         data = json.loads(robotFeedback)
@@ -69,7 +71,7 @@ class RobotThreadExecutor:
             logging.error(f'[{__name__}] {self.__robotID} json contains invalid data')
             return False
 
-        self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]])
+        self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
         return True
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)

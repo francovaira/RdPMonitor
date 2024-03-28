@@ -16,7 +16,7 @@ class KalmanFilter2D:
         self.__measurementAccum = np.array([[0,0], [0,0]])
 
     # recibe una matriz con el formato: [[deltaX, VX], [deltaY, VY]]
-    def inputMeasurementUpdate(self, inputMeasurement):
+    def inputMeasurementUpdate(self, inputMeasurement, deltaT):
         logging.debug(f'[{__name__}] MEASUREMENT UPDATE - new measurement <{inputMeasurement}>')
 
         x_measure_accum = inputMeasurement[0][0] * (-1 if inputMeasurement[0][1] < 0 else 1) + self.__measurementAccum[0][0]
@@ -29,8 +29,8 @@ class KalmanFilter2D:
         self.__measurementAccum[1][1] = inputMeasurement[1][1]
         logging.debug(f'[{__name__}] MEASUREMENT UPDATE - new measurement accum <{self.__measurementAccum}>')
 
-        self.__kalmanFilterX.inputMeasurementUpdate(self.__measurementAccum[0])
-        self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1])
+        self.__kalmanFilterX.inputMeasurementUpdate(self.__measurementAccum[0], deltaT)
+        self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1], deltaT)
         self.__measurementCount = self.__measurementCount + 1
 
     # retorna True si se actualizo el estado tras N mediciones
