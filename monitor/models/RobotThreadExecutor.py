@@ -2,6 +2,7 @@ from .MonitorWithQueuesAndPriorityQueue import MonitorReturnStatus
 from .JobManager import Job
 from .KalmanFilter2D import KalmanFilter2D
 import macros
+from time import perf_counter
 import numpy as np
 import operator
 import logging
@@ -17,6 +18,8 @@ class RobotThreadExecutor:
         self.__kalmanFilter = KalmanFilter2D()
         self.__currentMovementVector = []
         self.__lastDesiredMovementVector = []
+        self.__time_start = 0
+        self.__time_end = 0
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -58,9 +61,13 @@ class RobotThreadExecutor:
             logging.error(f'[{__name__}] path doesnt exist')
 
     def updateRobotFeedback(self, robotFeedback):
-        deltaT = 1.0
 
-        logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
+        # medir tiempo desde la ultima medicion
+        self.__time_end = perf_counter()
+        deltaT = self.__time_end - self.__time_start
+        self.__time_start = self.__time_end
+
+        logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback} @ deltaT = {deltaT}>')
 
         data = json.loads(robotFeedback)
         dx = data['dx']
@@ -130,6 +137,7 @@ class RobotThreadExecutor:
             setpoint_message = self.traslateMovementVectorToMessage(movementVector)
             msg = self.__robot.getMqttClient().publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
+            self.__time_start = perf_counter() # comienza a contar tiempo para el deltaT desde que manda el setpoint
             return True
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
