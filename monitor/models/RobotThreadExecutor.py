@@ -20,6 +20,7 @@ class RobotThreadExecutor:
         self.__lastDesiredMovementVector = []
         self.__time_start = 0
         self.__time_end = 0
+        self.__robotReachedDestination = False;
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -70,15 +71,24 @@ class RobotThreadExecutor:
         logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback} @ deltaT = {deltaT}>')
 
         data = json.loads(robotFeedback)
-        dx = data['dx']
-        vx = data['vx']
-        dy = data['dy']
-        vy = data['vy']
-        if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
-            logging.error(f'[{__name__}] {self.__robotID} json contains invalid data')
-            return False
 
-        self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
+        if('status' in data):
+            status = data['status']
+            if(type(status)!=int):
+                logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for status')
+                return False
+            if(status == 0): # robot avisa que llego a destino
+                self.__robotReachedDestination = True
+        else:
+            dx = data['dx']
+            vx = data['vx']
+            dy = data['dy']
+            vy = data['vy']
+            if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
+                logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
+                return False
+            self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
+
         return True
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
@@ -144,6 +154,11 @@ class RobotThreadExecutor:
             return False
 
     def robotIsNearOrPassOverDestinationCoordinate(self):
+
+        if(self.__robotReachedDestination):
+            self.__robotReachedDestination = False
+            return True
+
         # currentMovementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
         # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
         # radius es el radio que se toma "llegando" a nextCoordinate

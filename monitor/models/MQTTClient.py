@@ -35,7 +35,6 @@ class MQTTClient:
 
     def on_robot_feedback_message(self, mqttc, obj, msg):
         feedback_received = str(msg.payload, 'utf-8')
-        logging.debug(f'[{__name__}] {self.__robotID} setpoint confirmation recived | <{feedback_received}>')
         self.__robotFeedbackQueue.put(feedback_received)
 
     # def on_message(self, mqttc, obj, msg):

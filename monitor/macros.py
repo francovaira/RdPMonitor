@@ -16,7 +16,7 @@ NULL_TRANSITION             = -1
 
 WAIT_ROBOT_FEEDBACK         = 300 # tiempo que el MQTT espera el mensaje de feedback del robot antes de arrojar timeout
 
-KALMAN_ESTIMATED_STATE_PERIOD = 3
+KALMAN_ESTIMATED_STATE_PERIOD = 10
 
 DEFAULT_ROBOT_LINEAR_VELOCITY   = 0.25  # expresado en metros/seg
 DEFAULT_ROBOT_ANGULAR_VELOCITY  = 0     # expresado en rad/seg ????

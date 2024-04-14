@@ -43,15 +43,17 @@ class KalmanFilter:
         self.__deltaTObj.setDefaultEnable(False)
         self.__DELTA_T = self.__deltaTObj.getDeltaT()
 
+        self.__count = 0
+
         self.__x_0  = 0 # Posicion inicial - expresado en metros
         self.__vx_0 = 0 # Velocidad inicial - expresado en m/seg
         self.__a_0  = 0 # Aceleracion inicial - expresado en m/seg^2
 
-        self.__delta_Px     = 20 # valor inicial de la varianza de proceso - expresado en metros
-        self.__delta_Pvx    = 5 # valor inicial de la varianza de proceso - expresado en m/seg
+        self.__delta_Px  = 40 # valor inicial de la varianza de proceso - expresado en metros
+        self.__delta_Pvx = 40 # valor inicial de la varianza de proceso - expresado en m/seg
 
         # observation errors - ver que significan
-        self.__delta_x = 2
+        self.__delta_x  = 2
         self.__delta_vx = 1
 
         self.__Xkm1 = np.array([[self.__x_0], [self.__vx_0]]) # estado inicial de posicion y velocidad
@@ -72,7 +74,19 @@ class KalmanFilter:
         self.__K = self.__calculateKalmanGain(Pkp, self.__R)
 
         self.__Xkm1 = self.__calculateNewEstimatedState(self.__Xkp, self.__K, Yk)
-        self.__Pkm1 = self.__calculateNewProcessCovarianceMatrix(Pkp, self.__K)
+
+        self.__count = self.__count + 1
+        if(self.__count >= 10):
+            # print(f'NUEVO CALCULO PROCESS COV MATRIX --------------------------')
+            self.__Pkm1 = self.__calculateNewProcessCovarianceMatrix(Pkp, self.__K)
+            self.__count = 0
+
+        # print(f'INPUT MEASUREMENT {inputMeasurement} || deltaT {deltaT}')
+        # print(f'\n\test state:\n{self.__Xkm1}')
+        # print(f'\n\tpred state:\n{self.__Xkp}')
+        # print(f'\n\tkalman gain:\n{self.__K}')
+        # print(f'\n\tpre process cov matrix:\n{Pkp}')
+        # print(f'\n\tpost process cov matrix:\n{self.__Pkm1}')
 
     def getEstimatedState(self):
         # returns a vector *X*k = [Xk, Vk]
@@ -86,8 +100,9 @@ class KalmanFilter:
 
     def notifyDirectionChange(self):
         # resets the covariance matrices, so it is like a clean start but keeping the estimated state
-        self.__delta_Px  = 20 # valor inicial de la varianza de proceso - expresado en metros
-        self.__delta_Pvx = 5 # valor inicial de la varianza de proceso - expresado en m/seg
+        self.__delta_Px  = 40 # valor inicial de la varianza de proceso - expresado en metros
+        self.__delta_Pvx = 40 # valor inicial de la varianza de proceso - expresado en m/seg
+        self.__count = 0
         self.__Pkm1 = np.array([[self.__delta_Px**2, 0], [0, self.__delta_Pvx**2]]) # estado inicial de la matriz de covarianza de proceso
 
     def __calculatePredictedState(self, Xkm1):
@@ -158,26 +173,31 @@ class KalmanFilter:
 #     kalmanFilter = KalmanFilter()
 
 #     measurements = []
-#     # measurements.append([4000, 280])
-#     # measurements.append([4260, 282])
-#     # measurements.append([4540, 285])
-#     # measurements.append([4825, 286])
-#     # measurements.append([5110, 290])
-#     measurements.append([0.08, 0.18])
-#     measurements.append([0.10, 0.22])
-#     measurements.append([0.12, 0.25])
-#     measurements.append([0.13, 0.27])
-#     measurements.append([0.11, 0.24])
+#     measurements.append([0.00, 0.00, 0.7077087729994673])
+#     measurements.append([0.01, 0.02, 0.41212785099924076])
+#     measurements.append([0.02, 0.04, 0.5093516880006064])
+#     measurements.append([0.04, 0.07, 0.512551355001051])
+#     measurements.append([0.05, 0.10, 0.5116268309939187])
+#     measurements.append([0.06, 0.13, 0.5142558259976795])
+#     measurements.append([0.07, 0.14, 0.5096752399986144])
+#     measurements.append([0.08, 0.15, 0.5118177460099105])
+#     measurements.append([0.08, 0.17, 0.5137088310002582])
+#     measurements.append([0.09, 0.18, 0.6150214230001438])
+#     measurements.append([0.09, 0.18, 0.305085086991312])
+#     measurements.append([0.10, 0.20, 0.5117293740040623])
+#     measurements.append([0.10, 0.20, 0.5124247729982017])
+#     measurements.append([0.10, 0.20, 0.615682989009656])
 
 #     distanciaRecorrida = 0
-#     for i in range(3*len(measurements)):
-#         distanciaRecorrida = distanciaRecorrida + measurements[i%len(measurements)][0]
-#         velocidad = measurements[i%len(measurements)][1]
+#     for i in range(len(measurements)):
+#         distanciaRecorrida = distanciaRecorrida + measurements[i][0]
+#         velocidad = measurements[i][1]
+#         deltaT = measurements[i][2]
 #         inputMeasurement = (distanciaRecorrida, velocidad)
-#         kalmanFilter.inputMeasurementUpdate(inputMeasurement)
-#         print(f"INPUT MEASUREMENT {measurements[i%len(measurements)]} || INPUT MEASUREMENT ACUMULADO {inputMeasurement}")
-#         print(f"KALMAN ESTIMATED:\n{kalmanFilter.getEstimatedState()}\n")
+
 #         print("====================================")
+#         kalmanFilter.inputMeasurementUpdate(inputMeasurement, deltaT)
+
 
 # if __name__ == "__main__":
 #     main()
