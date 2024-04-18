@@ -11,7 +11,8 @@ class RobotMachine(StateMachine):
         self.__robotFeedbackQueue = robot.getFeedbackQueue()
         super(RobotMachine, self).__init__()
 
-    disparo_monitor = State(initial=True)
+    wait_next_path_job = State(initial=True)
+    disparo_monitor = State()
     calculate_move_vector = State()
     send_setpoint_robot = State()
     espera_respuesta = State()
@@ -19,9 +20,14 @@ class RobotMachine(StateMachine):
     impactar_cambio_de_estado = State()
     finish_state = State(final=True)
 
+    waitNextPathJob = (
+        wait_next_path_job.to(disparo_monitor, cond="is_new_path_job")
+        | wait_next_path_job.to(wait_next_path_job, unless="is_new_path_job")
+    )
+
     dispararMonitor = (
         disparo_monitor.to(calculate_move_vector, cond="run_monitor")
-        | disparo_monitor.to(finish_state, unless="run_monitor")
+        | disparo_monitor.to(wait_next_path_job, unless="run_monitor")
     )
 
     calculateMovementVector = (
@@ -53,6 +59,10 @@ class RobotMachine(StateMachine):
         if (self.finish_state.is_active == True):
             return False
 
+        if(self.wait_next_path_job.is_active == True):
+            self.waitNextPathJob()
+            return True
+
         if(self.disparo_monitor.is_active == True):
             self.dispararMonitor()
             return True
@@ -76,6 +86,10 @@ class RobotMachine(StateMachine):
         if(self.compensacion_kalman.is_active == True):
             self.compensationCalculation()
             return True
+
+    def is_new_path_job(self):
+        status = self.__executor.isNewPathJob()
+        return status
 
     def run_monitor(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] running monitor')

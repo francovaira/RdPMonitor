@@ -39,7 +39,6 @@ class RdP:
         for i in range(self.__transitionCount):
             self.__threadsWaitingConfirmation.append([])
 
-
     def solicitudDisparo(self, transition):
         for i in range(0, self.__placesCount):
             if(self.__matrizEstado[i] + self.__incidence[i][transition] == -1):
@@ -75,7 +74,7 @@ class RdP:
 
 
             # si llego hasta aca es porque se desbloqueo y por ende puede terminar el disparo
-            print(f'[RED_DE_PETRI] transicion {transition} confirmada. Impacta estado.\n')
+            # print(f'[RED_DE_PETRI] transicion {transition} confirmada. Impacta estado.\n')
             self.removeRobotInCell(robotID, transition)
 
             for placeID in range(0, self.__placesCount):
@@ -87,20 +86,13 @@ class RdP:
         return 0
 
     def setCoordinateConfirmation(self, threadID, transition, confirmationValue):
-
         if(len(self.__threadsWaitingConfirmation[transition]) <= 0):
-            print(f'ASDASDASDASD LISTA VACIA PARA LA TRANSICION <{transition}>\n')
             return -1
 
-        print("[RED_DE_PETRI] inside (setCoordinateConfirmation)\n")
-
         for i in range(len(self.__threadsWaitingConfirmation[transition])):
-            print(f'[RED_DE_PETRI] checking {self.__threadsWaitingConfirmation[transition][i].threadID} |||\n')
             if(self.__threadsWaitingConfirmation[transition][i].threadID == threadID):
-                print("[RED_DE_PETRI] FOUND THREAD IN WAITING CONF LIST ...\n")
-
                 self.__threadsWaitingConfirmation[transition][i].isWaitingConfirmation = confirmationValue
-                print(f'SETTING CONFIRM ({confirmationValue}) OF TRANSITION EXECUTE {transition}\n')
+                # print(f'SETTING CONFIRM ({confirmationValue}) OF TRANSITION EXECUTE {transition}\n')
                 return 1
         return 0
 

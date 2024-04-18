@@ -14,7 +14,6 @@ class JobManager:
             logging.error(f'unable to send JOB to robot {robotID}')
         try:
             self.__robotsJobsQueue[robotID].put(job)
-            # logging.debug(f'added to robot {robotID} the job {job.getPaths()}')
         except Exception as e:
             logging.error(f'unable to put a job to robot {robotID}')
 

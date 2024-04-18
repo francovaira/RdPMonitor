@@ -21,10 +21,12 @@ class RobotThreadExecutor:
         self.__time_start = 0
         self.__time_end = 0
         self.__robotReachedDestination = False;
+        self.__isNewPathJob = False
 
     def addJob(self, job):
         if(type(job) == Job):
             self.__jobs.append(job)
+            self.__isNewPathJob = True
 
     # calculates coordinates sequence then transition sequence for each job and places robot in init position. Sets everything to start running on the thread
     def startPaths(self):
@@ -94,6 +96,13 @@ class RobotThreadExecutor:
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
         return self.__currentMovementVector
+
+    def isNewPathJob(self):
+        try:
+            return self.__isNewPathJob
+        except Exception as e:
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
+            return False
 
     def isCompensationTime(self):
         return self.__kalmanFilter.isCompensationTime()
@@ -216,6 +225,9 @@ class RobotThreadExecutor:
     def run(self):
 
         try:
+            if(len(self.__jobs) <= 0):
+                return "NO_JOBS"
+
             currentJob = self.__jobs[0]
             transitionToExecute = currentJob.getNextTransitionToExecute()
             logging.debug(f'[{self.__robotID}] proxima transicion a ejecutar en el monitor <{transitionToExecute}>')
@@ -230,6 +242,7 @@ class RobotThreadExecutor:
                 if(currentJob.updateNextTransitionToExecute()):
                     logging.debug(f'[{self.__robotID}] path sequence finished successfully.')
                     self.__jobs = []
+                    self.__isNewPathJob = False
                     return "END"
 
                 nextTransitionToExecute = currentJob.getNextTransitionToExecute()
@@ -265,6 +278,7 @@ class RobotThreadExecutor:
             return "WORKING"
 
         except Exception as e:
+            self.__isNewPathJob = False
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
             exit()
             return "NO_JOBS"

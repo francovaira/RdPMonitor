@@ -16,19 +16,20 @@ class Visualizer:
         self.__canvas = pygame.display.set_mode((self.__canvasHorizontalSizePixels, self.__canvasVerticalSizePixels))
         self.__running = True
         self.__mapInSharedMemory = None
-        # set the Controller
+
         self.__controller = None
+
         # Available robots
         self.__switch_rob_a = False
         self.__switch_rob_b = False
         self.__switch_rob_c = False
+
         # Set background color
         self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
 
         self._clock = pygame.time.Clock()
         self._fps = 60
-
 
     def __createMap(self):
         self.__horizontalCells = self.__controller.getMapHorizontalSize()

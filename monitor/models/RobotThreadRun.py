@@ -32,5 +32,5 @@ class RobotThreadRun:
             while(self.__isRunning):
                 self.__isRunning = self.stateMachine.run()
 
-    def getRobotState(self):
+    def getIsRunning(self):
         return self.__isRunning

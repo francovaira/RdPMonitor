@@ -51,6 +51,9 @@ class Robot:
     def getFeedbackQueue(self):
         return self.__feedbackQueue
 
+    def getClient(self):
+        return self.__mqtt_client
+
     def getMqttClient(self):
         return self.__mqtt_client.getClient()
 
@@ -60,8 +63,8 @@ class Robot:
     def __setRobotID(self, robotID):
         self.__robotID = robotID
 
-    def getState(self):
-        return self.robotThreadRun.getRobotState()
+    def getIsRunning(self):
+        return self.robotThreadRun.getIsRunning()
 
     # def getPrioridad(self):
 
