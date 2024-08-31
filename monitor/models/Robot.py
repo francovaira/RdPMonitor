@@ -40,7 +40,7 @@ class Robot:
         return self.__finalPoint
 
     def getRobotSendSetpointTopic(self):
-        return str(f'/topic/setpoint/{self.__robotID}')
+        return str(f'topic/setpoint/{self.__robotID}')
 
     def getThread(self):
         return self.__thread

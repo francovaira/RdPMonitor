@@ -6,8 +6,8 @@ class MQTTClient:
     def __init__(self, robotID, robotFeedbackQueue):
         self.__robotID = robotID
         self.__robotFeedbackQueue = robotFeedbackQueue
-        self.__topicRegisterRobot = f'/topic/register'
-        self.__topicFeedbackRobot = f'/topic/live/{robotID}'
+        self.__topicRegisterRobot = f'topic/register'
+        self.__topicFeedbackRobot = f'topic/live/{robotID}'
         self.__mqttClient = mqtt.Client()
 
         # self.__mqttClient.on_message = self.on_message
@@ -19,7 +19,7 @@ class MQTTClient:
         self.__mqttClient.message_callback_add(self.__topicRegisterRobot, self.on_register_robot)
 
         try:
-            self.__mqttClient.connect('localhost', 1883, 60)
+            self.__mqttClient.connect('192.168.1.83', 1883, 60)
             self.__mqttClient.loop_start()
             self.__mqttClient.subscribe(self.__topicRegisterRobot, 0)
         except:
