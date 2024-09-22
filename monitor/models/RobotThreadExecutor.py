@@ -22,6 +22,7 @@ class RobotThreadExecutor:
         self.__time_end = 0
         self.__robotReachedDestination = False;
         self.__isNewPathJob = False
+        self.__isRotating = False
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -89,6 +90,34 @@ class RobotThreadExecutor:
             if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
                 logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
                 return False
+
+            # FIXME aca segun la orientacion del robot deberia determinar a que componente corresponde en coordenadas globales del mapa
+            # hay que convertir de coordenadas locales del robot a coordenadas globales del mapa (y del filtro de kalman)
+            kalmanFeedback = self.translateRobotFeedbackToKalmanFeedback([dx, vx, dy, vy])
+            self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
+
+        return True
+
+    def processRobotFeedback(self, robotFeedback):
+        logging.debug(f'[{__name__}] {self.__robotID} received feedback <{robotFeedback}>')
+        data = json.loads(robotFeedback)
+
+        if('status' in data):
+            status = data['status']
+            if(type(status)!=int):
+                logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for status')
+                return False
+            if(status == 0): # robot avisa que llego a destino
+                self.__robotReachedDestination = True
+                return 2
+        else:
+            dx = data['dx']
+            vx = data['vx']
+            dy = data['dy']
+            vy = data['vy']
+            if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
+                logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
+                return False
             self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
 
         return True
@@ -96,6 +125,10 @@ class RobotThreadExecutor:
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
         return self.__currentMovementVector
+
+    # retorna true si el vector de movimiento solo contiene componente rotacional distinta de cero, las demas siendo cero (el robot girando sobre su propio eje)
+    def isRotacionMovement(self):
+        return self.__currentMovementVector[3] != 0 and self.__currentMovementVector[0] != 0 and self.__currentMovementVector[1] == 0 and self.__currentMovementVector[2] == 0
 
     def isNewPathJob(self):
         try:
@@ -112,6 +145,7 @@ class RobotThreadExecutor:
         currentJob = self.__jobs[0]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
         self.__currentMovementVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
+        # FIXME aca me parece que segun la orientacion deberia convertir a las coordenadas del robot, que se mueve siempre en el mismo eje de sus coordenadas locales
 
     # recibe una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def traslateMovementVectorToMessage(self, movementVector):
@@ -133,12 +167,41 @@ class RobotThreadExecutor:
         res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
         filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
         filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
-        newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+
+        # descomentar esto si se quiere que el robot se mueva en la direccion que indica la nueva coordenada sin rotacion, no se orienta al robot (full omnidireccional)
+        # newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, filtro_positivo[0]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY, 0.00]
+
+        # esta operacion calcula el nuevo movimiento basandose en que siempre el robot queda orientado para que una de sus caras siempre mire a la pared
+        # se tiene un -1.0*abs(...) en la componente Y de velocidad por la ubicacion del sensor magnetico, que esta colocado en sentido del eje -Y
+        # el robot siempre se va a mover a lo largo de su propio eje -Y (que en realidad puede ser cualquier eje relativo del robot)
+        # newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, -1.0*abs(filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+        newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
         if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
-            if(self.cambioDireccion(self.__lastDesiredMovementVector, newDesiredVector)):
+            if(not self.__isRotating and self.cambioDireccion(self.__lastDesiredMovementVector, newDesiredVector)):
                 logging.debug(f'[{__name__}] cambio de direccion (!)')
                 self.__kalmanFilter.notifyDirectionChange()
+
+                if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == 1)): # debe seguir derecho sin rotar
+                    self.__isRotating = True
+            elif(self.__isRotating):
+                self.__isRotating = False
+
+        if(self.__isRotating):
+            rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
+            rotationVelocity = macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
+
+            if(filtro_positivo[0] == -1 and filtro_positivo[1] == 0): # doblar hacia la izquierda
+                rotationVelocity = rotationVelocity
+                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
+            elif(filtro_positivo[0] == 1 and filtro_positivo[1] == 0): # doblar hacia la derecha
+                rotationVelocity = -rotationVelocity
+                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
+            elif(filtro_positivo[0] == 0 and filtro_positivo[1] == -1): # dar la vuelta (giro de 180 grados) - por default gira a la izquierda
+                rotationVelocity = rotationVelocity
+                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
+
+            newDesiredVector = [rotationDistance, 0.00, 0.00, rotationVelocity]
 
         self.__currentMovementVector = newDesiredVector
         self.__lastDesiredMovementVector = newDesiredVector
@@ -156,13 +219,14 @@ class RobotThreadExecutor:
             setpoint_message = self.traslateMovementVectorToMessage(movementVector)
             msg = self.__robot.getMqttClient().publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
             msg.wait_for_publish()
+            logging.debug(f'[{__name__}] sent setpoint to robot | {setpoint_message}')
             self.__time_start = perf_counter() # comienza a contar tiempo para el deltaT desde que manda el setpoint
             return True
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
             return False
 
-    def robotIsNearOrPassOverDestinationCoordinate(self):
+    def robotIsNearOrPassOverDestinationCoordinateDEPRECATED(self):
 
         if(self.__robotReachedDestination):
             self.__robotReachedDestination = False
@@ -215,12 +279,87 @@ class RobotThreadExecutor:
 
         return False
 
+    def robotIsNearOrPassOverDestinationCoordinate(self):
+
+        if(self.__robotReachedDestination):
+            self.__robotReachedDestination = False
+            return True
+
+        # currentMovementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
+        # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
+        # radius es el radio que se toma "llegando" a nextCoordinate
+
+        radius = macros.DEFAULT_CELL_ARRIVE_RADIUS
+
+        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
+        estimatedCurrentCoordinate = []
+        estimatedCurrentCoordinate.append(0)
+        estimatedCurrentCoordinate.append(0)
+        estimatedCurrentCoordinate[0] = estimatedCurrentState[0][0]
+        estimatedCurrentCoordinate[1] = estimatedCurrentState[1][0]
+
+        # vx = self.__lastDesiredMovementVector[1]
+        # vy = self.__lastDesiredMovementVector[2]
+
+        currentJob = self.__jobs[0]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+
+        logging.debug(f'[{__name__}] radius {radius} | estCurrCoord {estimatedCurrentCoordinate} | nextCoord {nextCoordinate}')
+
+        deltaX = abs(estimatedCurrentCoordinate[0] - nextCoordinate[0])
+        deltaY = abs(estimatedCurrentCoordinate[1] - nextCoordinate[1])
+
+        return (deltaX <= radius and deltaY <= radius)
+
+        # if(vx != 0):
+        #     x_est_curr = estimatedCurrentCoordinate[0]
+        #     x_exp_next = nextCoordinate[0]
+        #     x_delta = np.abs(x_est_curr-x_exp_next)
+
+        #     if(x_delta <= radius):
+        #         return True
+        #     if((vx > 0) and (x_est_curr >= x_exp_next)):
+        #         return True
+        #     elif((vx < 0) and (x_est_curr <= x_exp_next)):
+        #         return True
+
+        # elif(vy != 0):
+        #     y_est_curr = estimatedCurrentCoordinate[1]
+        #     y_exp_next = nextCoordinate[1]
+        #     y_delta = np.abs(y_est_curr-y_exp_next)
+
+        #     if(y_delta <= radius):
+        #         return True
+        #     elif((vy > 0) and (y_est_curr >= y_exp_next)):
+        #         return True
+        #     elif((vy < 0) and (y_est_curr <= y_exp_next)):
+        #         return True
+
+        # return False
+
     def setCoordinateConfirmation(self, confirmationValue):
         logging.debug(f'[{__name__}] SETTING COORD CONFIRMATION ...')
         currentJob = self.__jobs[0]
         destinationCoordinateTransition = currentJob.getTransitionsPathSequence()[currentJob.getTransitionIndex()]
         logging.debug(f'[{__name__} @ {self.__robotID}] confirmation of transition {destinationCoordinateTransition}')
         return self.__monitor.setCoordinateConfirmation(self.__robotID, destinationCoordinateTransition, confirmationValue)
+
+    def translateRobotFeedbackToKalmanFeedback(self, robotFeedback):
+        # dado que el robot siempre se va a mover a lo largo de su eje +Y, debemos convertir este vector "local" del robot
+        # a un vector "global" que toma el kalman. Esto es porque kalman estima el estado del robot en un marco de referencia
+        # igual al del mapa.
+        robotCurrentOrientation = self.__robot.getCurrentOrientation()
+
+        if(robotCurrentOrientation == ORIENTATION_0_DEGREE):
+            # aumento +Y robot -> aumento +Y mapa
+        elif(robotCurrentOrientation == ORIENTATION_90_DEGREE):
+            # aumento +Y robot -> aumento +X mapa
+        elif(robotCurrentOrientation == ORIENTATION_180_DEGREE):
+            # aumento +Y robot -> aumento -Y mapa
+        elif(robotCurrentOrientation == ORIENTATION_270_DEGREE):
+            # aumento +Y robot -> aumento -X mapa
+
+
 
     def run(self):
 

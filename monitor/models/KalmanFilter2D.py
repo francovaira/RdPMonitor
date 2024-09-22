@@ -69,6 +69,7 @@ class KalmanFilter2D:
 
         compensationDistance = np.hypot([dist_comp_x], [dist_comp_y])
 
+        # FIXME en lugar de cero poner algun valor que al ser tan chico no valga la pena enviarlo.
         if (compensationDistance > 0):
             if (np.abs(dist_comp_x) > np.abs(dist_comp_y)): # desplazamiento en X
                 alpha = np.arctan([dist_comp_y/dist_comp_x])

@@ -162,6 +162,17 @@ class Visualizer:
             for j in range(self.__verticalCells):
                 self.__grid[i][j].draw()
 
+        # draw reference axis
+        pygame.draw.line(self.__canvas, Colors.WHITE.value, (40, 40), (40, 80))
+        pygame.draw.line(self.__canvas, Colors.WHITE.value, (40, 40), (80, 40))
+        font = pygame.font.SysFont("Arial", 16)
+        img = font.render("(0,0)", True, Colors.WHITE.value)
+        self.__canvas.blit(img, (20, 20))
+        img = font.render("+ Y", True, Colors.WHITE.value)
+        self.__canvas.blit(img, (40, 85))
+        img = font.render("+ X", True, Colors.WHITE.value)
+        self.__canvas.blit(img, (85, 40))
+
     def __getRobotIdWidget(self):
         rob_id = self.__menu.get_widget('robot_id')
         return rob_id.get_value()[0][0]

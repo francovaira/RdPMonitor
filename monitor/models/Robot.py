@@ -15,6 +15,7 @@ class Robot:
             self.__caminoRecorrido = None
             self.__initialPoint = None
             self.__finalPoint = None
+            self.__currentOrientation = macros.ORIENTATION_0_DEGREE
             self.__feedbackQueue = queue.Queue(maxsize=1)
             self.__mqtt_client = MQTTClient(robotID, self.__feedbackQueue)
             self.__jobQueue = queue.Queue()
@@ -65,6 +66,9 @@ class Robot:
 
     def getIsRunning(self):
         return self.robotThreadRun.getIsRunning()
+
+    def getCurrentOrientation(self):
+        return self.__currentOrientation
 
     # def getPrioridad(self):
 

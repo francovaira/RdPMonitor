@@ -16,6 +16,7 @@ class RobotMachine(StateMachine):
     calculate_move_vector = State()
     send_setpoint_robot = State()
     espera_respuesta = State()
+    espera_fin_rotacion = State()
     compensacion_kalman = State()
     impactar_cambio_de_estado = State()
     finish_state = State(final=True)
@@ -40,8 +41,14 @@ class RobotMachine(StateMachine):
         | send_setpoint_robot.to(finish_state, unless="send_setpoint")
     )
 
+    esperaFinRotacion = (
+        espera_fin_rotacion.to(calculate_move_vector, cond="received_fin_rotacion_response")
+        | espera_fin_rotacion.to(espera_fin_rotacion, unless="received_fin_rotacion_response")
+    )
+
     esperaRespuesta = (
-        espera_respuesta.to(impactar_cambio_de_estado, cond="robot_has_arrived")
+        espera_respuesta.to(espera_fin_rotacion, cond="is_rotacion_movement")
+        | espera_respuesta.to(impactar_cambio_de_estado, cond="robot_has_arrived")
         | espera_respuesta.to(compensacion_kalman, cond="is_compensation_time")
         | espera_respuesta.to(espera_respuesta, cond="wait_response")
         | espera_respuesta.to(disparo_monitor, unless="wait_response")
@@ -75,6 +82,10 @@ class RobotMachine(StateMachine):
             self.sendSetpointToRobot()
             return True
 
+        if(self.espera_fin_rotacion.is_active == True):
+            self.esperaFinRotacion()
+            return True
+
         if(self.espera_respuesta.is_active == True):
             self.esperaRespuesta()
             return True
@@ -86,6 +97,11 @@ class RobotMachine(StateMachine):
         if(self.compensacion_kalman.is_active == True):
             self.compensationCalculation()
             return True
+
+    def is_rotacion_movement(self):
+        isRotacionMovement = self.__executor.isRotacionMovement()
+        logging.debug(f'[{__name__} @ {self.__robotID}] is_rotacion_movement? {isRotacionMovement}')
+        return isRotacionMovement
 
     def is_new_path_job(self):
         status = self.__executor.isNewPathJob()
@@ -117,6 +133,17 @@ class RobotMachine(StateMachine):
             robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
             return self.__executor.updateRobotFeedback(robotFeedback)
 
+        except Exception as e:
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
+            return False
+
+    def received_fin_rotacion_response(self):
+        try:
+            logging.debug(f'[{__name__} @ {self.__robotID}] waiting fin rotacion\n\n')
+            robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
+            value = self.__executor.processRobotFeedback(robotFeedback)
+            # FIXME quiza habria que hacer clear de la queue robotFeedbackQueue en el caso que el robot mande feedback cuando rota
+            return (value == 2)
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
             return False

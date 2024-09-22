@@ -19,7 +19,7 @@ class RobotThreadRun:
         self.stateMachine.output_image_state_machine()
 
         while(1):
-            logging.debug(f'[{__name__}] {self.__robot.getRobotID()} blocked')
+            logging.debug(f'[{__name__}] {self.__robot.getRobotID()} blocked waiting for new job.')
             newJob = self.__robot.getJobQueue().get() # se bloquea hasta que se ponga un elemento
 
             if(not type(newJob) == Job):

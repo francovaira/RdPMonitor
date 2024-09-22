@@ -19,7 +19,8 @@ class MQTTClient:
         self.__mqttClient.message_callback_add(self.__topicRegisterRobot, self.on_register_robot)
 
         try:
-            self.__mqttClient.connect('192.168.1.83', 1883, 60)
+            # self.__mqttClient.connect('192.168.1.83', 1883, 60)
+            self.__mqttClient.connect('127.0.0.1', 1883, 60)
             self.__mqttClient.loop_start()
             self.__mqttClient.subscribe(self.__topicRegisterRobot, 0)
         except:
