@@ -29,4 +29,4 @@ DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.775                 # expresado en m
 DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.35                  # expresado en metros/seg
 DEFAULT_ROBOT_ANGULAR_VELOCITY          = 15.0                  # expresado en RPM
 
-DEFAULT_CELL_ARRIVE_RADIUS      = 0.05  # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
+DEFAULT_CELL_ARRIVE_RADIUS      = 0.08  # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada

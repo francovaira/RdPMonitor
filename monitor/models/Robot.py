@@ -34,6 +34,9 @@ class Robot:
     def setFinalPoint(self, point):
         self.__finalPoint = point
 
+    def setCurrentOrientation(self, orientation):
+        self.__currentOrientation = orientation
+
     def getInitialPoint(self):
         return self.__initialPoint
 
