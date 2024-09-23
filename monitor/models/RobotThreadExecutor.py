@@ -183,12 +183,12 @@ class RobotThreadExecutor:
         newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
         if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
-            if(not self.__isRotating and self.cambioDireccion(currentCoordinate, nextCoordinate)):
-                logging.debug(f'[{__name__}] cambio de direccion (!)')
-                self.__kalmanFilter.notifyDirectionChange()
-
-                if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == 1)): # debe seguir derecho sin rotar
+            # if(not self.__isRotating and self.cambioDireccion(currentCoordinate, nextCoordinate)):
+            if(not self.__isRotating):
+                if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == 1)): # debe rotar porque hay un cambio de direccion
                     self.__isRotating = True
+                    logging.debug(f'[{__name__}] cambio de direccion (!)')
+                    self.__kalmanFilter.notifyDirectionChange()
             elif(self.__isRotating):
                 self.__isRotating = False
                 self.__robot.setCurrentOrientation(self.__nextOrientation)
