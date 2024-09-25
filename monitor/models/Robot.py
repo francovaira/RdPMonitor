@@ -85,6 +85,17 @@ class Robot:
         elif(self.__currentOrientation == macros.ORIENTATION_270_DEGREE):
             return (-1, 0)
 
+    def setCurrentOrientationAsVector(self, orientationVector):
+        if(orientationVector == (0, -1)):
+            self.__currentOrientation = macros.ORIENTATION_0_DEGREE
+        if(orientationVector == (1, 0)):
+            self.__currentOrientation = macros.ORIENTATION_90_DEGREE
+        if(orientationVector == (0, 1)):
+            self.__currentOrientation = macros.ORIENTATION_180_DEGREE
+        if(orientationVector == (-1, 0)):
+            self.__currentOrientation = macros.ORIENTATION_270_DEGREE
+        logging.debug(f'[{__name__}] set new current orientation of robot: {self.__currentOrientation}')
+
     # def getPrioridad(self):
 
     # def setPrioridad(self):

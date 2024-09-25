@@ -44,7 +44,13 @@ class RobotThreadExecutor:
             job.setTransitionsPathSequence(transitionsSequence)
         self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
         self.__kalmanFilter.setInitialState([[coordinatesSequence[0][0],0], [coordinatesSequence[0][1],0]])
+
         #FIXME setear la orientacion inicial del robot
+        res = tuple(map(operator.sub, coordinatesSequence[1], coordinatesSequence[0])) # obtiene el delta entre ambas coordenadas
+        filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
+        filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
+        filtro_positivo_eje_y_invertido = (filtro_positivo[0], -filtro_positivo[1])
+        self.__robot.setCurrentOrientationAsVector(filtro_positivo_eje_y_invertido)
 
         logging.debug(f'[{__name__} @ {self.__robotID}] STARTED PATHS | COORDINATES SEQUENCE = {coordinatesSequence} | TRANSITIONS SEQUENCE = {transitionsSequence}')
 
