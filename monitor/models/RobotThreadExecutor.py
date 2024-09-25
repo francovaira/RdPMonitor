@@ -92,8 +92,8 @@ class RobotThreadExecutor:
                 logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
                 return False
 
-            # FIXME aca segun la orientacion del robot deberia determinar a que componente corresponde en coordenadas globales del mapa
             # hay que convertir de coordenadas locales del robot a coordenadas globales del mapa (y del filtro de kalman)
+            # segun la orientacion del robot deberia determinar a que componente corresponde en coordenadas globales del mapa
             translatedKalmanFeedback = self.translateRobotFeedbackToKalmanFeedback([dx, vx, dy, vy])
             # self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
             self.__kalmanFilter.inputMeasurementUpdate([[translatedKalmanFeedback[0], translatedKalmanFeedback[1]], [translatedKalmanFeedback[2], translatedKalmanFeedback[3]]], deltaT)
@@ -110,17 +110,17 @@ class RobotThreadExecutor:
                 logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for status')
                 return False
             if(status == 0): # robot avisa que llego a destino
-                # self.__robotReachedDestination = True
                 return 2
         else:
-            dx = data['dx']
-            vx = data['vx']
-            dy = data['dy']
-            vy = data['vy']
-            if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
-                logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
-                return False
-            self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
+            return False
+            # dx = data['dx']
+            # vx = data['vx']
+            # dy = data['dy']
+            # vy = data['vy']
+            # if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
+            #     logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
+            #     return False
+            # self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
 
         return True
 
@@ -184,32 +184,79 @@ class RobotThreadExecutor:
 
         if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
             # if(not self.__isRotating and self.cambioDireccion(currentCoordinate, nextCoordinate)):
+            previousCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex-1]
             if(not self.__isRotating):
-                if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == 1)): # debe rotar porque hay un cambio de direccion
-                    self.__isRotating = True
+                if(self.cambioDireccion(previousCoordinate, currentCoordinate, nextCoordinate)):
                     logging.debug(f'[{__name__}] cambio de direccion (!)')
                     self.__kalmanFilter.notifyDirectionChange()
+
+                    # if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == 1)): # debe seguir derecho sin rotar
+                        # FIXME esto deberia depender de la orientacion actual del robot
+                        # self.__isRotating = True
+                    self.__isRotating = True
             elif(self.__isRotating):
                 self.__isRotating = False
                 self.__robot.setCurrentOrientation(self.__nextOrientation)
                 logging.debug(f'[{__name__}] robot new orientation = {self.__robot.getCurrentOrientation()}')
 
         if(self.__isRotating):
+            robotCurrentOrientation = self.__robot.getCurrentOrientation()
             rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
             rotationVelocity = macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
 
-            if(filtro_positivo[0] == -1 and filtro_positivo[1] == 0): # doblar hacia la derecha
-                rotationVelocity = -rotationVelocity
+            # esta condicion es malisima, habria que mejorarla en algun punto (aunque no creo que eso suceda)
+            # esto existe porque cuando filtro_positivo[1] > 0, significa que debe moverse a lo largo del eje +Y, pero en la rotacion necesita
+            # que sea < 0, entonces directamente se invierte el sentido.
+            if(filtro_positivo[1] > 0):
+                filtro_positivo = (filtro_positivo[0], -filtro_positivo[1])
+
+            grados, direccion = self.calcular_giro(self.__robot.getCurrentOrientationAsVector(), (filtro_positivo[0], filtro_positivo[1]))
+            logging.debug(f'[{__name__}] debe girar ---> {grados} / {direccion}')
+
+            if(grados == 90):
                 rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
-                self.__nextOrientation = (self.__robot.getCurrentOrientation() - macros.ORIENTATION_90_DEGREE) % 4
-            elif(filtro_positivo[0] == 1 and filtro_positivo[1] == 0): # doblar hacia la izquierda
-                rotationVelocity = rotationVelocity
-                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
-                self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_90_DEGREE) % 4
-            elif(filtro_positivo[0] == 0 and filtro_positivo[1] == -1): # dar la vuelta (giro de 180 grados) - por default gira a la izquierda
-                rotationVelocity = rotationVelocity
+                if(direccion == "izquierda"):
+                    self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_90_DEGREE) % 4
+                elif(direccion == "derecha"):
+                    self.__nextOrientation = (self.__robot.getCurrentOrientation() - macros.ORIENTATION_90_DEGREE) % 4
+            elif(grados == 180):
                 rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
                 self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_180_DEGREE) % 4
+            else:
+                rotationDistance = 0
+                self.__nextOrientation = robotCurrentOrientation
+                logging.error(f'[{__name__}] ERROR')
+
+            if(direccion == "izquierda"):
+                rotationVelocity = macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
+            elif(direccion == "derecha"):
+                rotationVelocity = -macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
+
+            # if(robotCurrentOrientation == macros.ORIENTATION_0_DEGREE):
+            #     if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == -1)):
+            #         # 
+            # elif(robotCurrentOrientation == macros.ORIENTATION_90_DEGREE):
+            #     if(not (filtro_positivo[0] == 1 and filtro_positivo[1] == 0)):
+            #         # 
+            # elif(robotCurrentOrientation == macros.ORIENTATION_180_DEGREE):
+            #     if(not (filtro_positivo[0] == 0 and filtro_positivo[1] == 1)):
+            #         # 
+            # elif(robotCurrentOrientation == macros.ORIENTATION_270_DEGREE):
+            #     if(not (filtro_positivo[0] == -1 and filtro_positivo[1] == 0)):
+            #         # 
+
+            # if(filtro_positivo[0] == -1 and filtro_positivo[1] == 0): # doblar hacia la derecha
+            #     rotationVelocity = -rotationVelocity
+            #     rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
+            #     self.__nextOrientation = (self.__robot.getCurrentOrientation() - macros.ORIENTATION_90_DEGREE) % 4
+            # elif(filtro_positivo[0] == 1 and filtro_positivo[1] == 0): # doblar hacia la izquierda
+            #     rotationVelocity = rotationVelocity
+            #     rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
+            #     self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_90_DEGREE) % 4
+            # elif(filtro_positivo[0] == 0 and filtro_positivo[1] == -1): # dar la vuelta (giro de 180 grados) - por default gira a la izquierda
+            #     rotationVelocity = rotationVelocity
+            #     rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
+            #     self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_180_DEGREE) % 4
 
             newDesiredVector = [rotationDistance, 0.00, 0.00, rotationVelocity]
 
@@ -218,10 +265,19 @@ class RobotThreadExecutor:
 
         return (self.__currentMovementVector != None)
 
-    def cambioDireccion(self, currentCoordinate, nextCoordinate):
+    def cambioDireccionDEPRECATED(self, currentCoordinate, nextCoordinate):
         if(currentCoordinate[0] != nextCoordinate[0] or currentCoordinate[1] != nextCoordinate[1]):
             return True
         return False
+
+    def cambioDireccion(self, previousCoordinate, currentCoordinate, nextCoordinate):
+        x1 = previousCoordinate[0]
+        y1 = previousCoordinate[1]
+        x2 = currentCoordinate[0]
+        y2 = currentCoordinate[1]
+        x3 = nextCoordinate[0]
+        y3 = nextCoordinate[1]
+        return (x2 - x1) * (y3 - y1) != (y2 - y1) * (x3 - x1)
 
     def sendSetpointToRobot(self):
         try:
@@ -373,6 +429,34 @@ class RobotThreadExecutor:
             translatedOutput = [kalmanFeedback[0], kalmanFeedback[2], -kalmanFeedback[1], kalmanFeedback[3]]
 
         return translatedOutput
+
+    def calcular_giro(self, vector_inicial, vector_final):
+        # Convertir los vectores a numpy arrays
+        v1 = np.array(vector_inicial)
+        v2 = np.array(vector_final)
+
+        # Calcular el ángulo entre los dos vectores
+        angulo = np.arctan2(v2[1], v2[0]) - np.arctan2(v1[1], v1[0])
+
+        # Convertir el ángulo de radianes a grados
+        angulo_grados = np.degrees(angulo)
+
+        # Normalizar el ángulo entre -180 y 180 grados
+        angulo_grados = (angulo_grados + 360) % 360
+        if angulo_grados > 180:
+            angulo_grados -= 360
+
+        logging.debug(f'[{__name__}] vectores ---> orientacion actual {v1} / orientacion destino {v2} / angulo grados {angulo_grados} / angulo radianes {angulo}')
+
+        # Determinar la dirección del giro
+        if angulo_grados > 0:
+            direccion = "izquierda"
+        elif angulo_grados < 0:
+            direccion = "derecha"
+        else:
+            direccion = "ninguna"
+
+        return abs(angulo_grados), direccion
 
     def run(self):
 

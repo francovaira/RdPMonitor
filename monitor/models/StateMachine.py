@@ -142,7 +142,6 @@ class RobotMachine(StateMachine):
             logging.debug(f'[{__name__} @ {self.__robotID}] waiting fin rotacion\n\n')
             robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
             value = self.__executor.processRobotFeedback(robotFeedback)
-            # FIXME quiza habria que hacer clear de la queue robotFeedbackQueue en el caso que el robot mande feedback cuando rota
             return (value == 2)
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')

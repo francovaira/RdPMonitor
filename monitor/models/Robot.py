@@ -73,6 +73,18 @@ class Robot:
     def getCurrentOrientation(self):
         return self.__currentOrientation
 
+    # esta funcion convierte la orientacion actual del robot a vectores unitarios en el plano cartesiano que apuntan en esa direccion
+    # tambien convierte la convencion que se tiene del robot sobre qué significa que este apuntando a 0 grados, 90, etc
+    def getCurrentOrientationAsVector(self):
+        if(self.__currentOrientation == macros.ORIENTATION_0_DEGREE):
+            return (0, -1)
+        elif(self.__currentOrientation == macros.ORIENTATION_90_DEGREE):
+            return (1, 0)
+        elif(self.__currentOrientation == macros.ORIENTATION_180_DEGREE):
+            return (0, 1)
+        elif(self.__currentOrientation == macros.ORIENTATION_270_DEGREE):
+            return (-1, 0)
+
     # def getPrioridad(self):
 
     # def setPrioridad(self):
