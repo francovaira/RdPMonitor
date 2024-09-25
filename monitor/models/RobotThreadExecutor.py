@@ -45,7 +45,6 @@ class RobotThreadExecutor:
         self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
         self.__kalmanFilter.setInitialState([[coordinatesSequence[0][0],0], [coordinatesSequence[0][1],0]])
 
-        #FIXME setear la orientacion inicial del robot
         res = tuple(map(operator.sub, coordinatesSequence[1], coordinatesSequence[0])) # obtiene el delta entre ambas coordenadas
         filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
         filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
