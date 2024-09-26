@@ -140,8 +140,11 @@ class RobotMachine(StateMachine):
     def received_fin_rotacion_response(self):
         try:
             logging.debug(f'[{__name__} @ {self.__robotID}] waiting fin rotacion\n\n')
-            robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
-            value = self.__executor.processRobotFeedback(robotFeedback)
+
+            value = 0
+            while(value != 2):
+                robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
+                value = self.__executor.processRobotFeedback(robotFeedback)
             return (value == 2)
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')

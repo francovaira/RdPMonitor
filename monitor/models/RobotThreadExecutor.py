@@ -34,9 +34,6 @@ class RobotThreadExecutor:
         if(not len(self.__jobs) or len(self.__jobs) > 1): # FIXME por ahora no soporta mas de 1 job
             logging.error(f'[{__name__}] no jobs defined. Will do nothing.')
 
-        # por aca deberia checkear que los path (si hay mas de uno) sean continuos - es decir, no seria valido ir de (1,1 a 5,5) y despues de (3,2 a 4,1)
-        # capaz se podria hacer que calcule la trayectoria del tramo faltante de ultima
-
         for job in self.__jobs:
             coordinatesSequence = self.__getCoorinatesSequence(job.getPaths())
             transitionsSequence = self.__monitor.getTransitionSequence(coordinatesSequence)
@@ -45,7 +42,7 @@ class RobotThreadExecutor:
         self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
         self.__kalmanFilter.setInitialState([[coordinatesSequence[0][0],0], [coordinatesSequence[0][1],0]])
 
-        res = tuple(map(operator.sub, coordinatesSequence[1], coordinatesSequence[0])) # obtiene el delta entre ambas coordenadas
+        res = tuple(map(operator.sub, coordinatesSequence[1], coordinatesSequence[0])) # obtiene el delta entre la coordenada actual y la destino iniciales
         filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
         filtro_positivo = tuple(map(lambda x: 1 if (x>0) else x, filtro_negativo))
         filtro_positivo_eje_y_invertido = (filtro_positivo[0], -filtro_positivo[1])
@@ -113,21 +110,12 @@ class RobotThreadExecutor:
             status = data['status']
             if(type(status)!=int):
                 logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for status')
-                return False
+                return 0
             if(status == 0): # robot avisa que llego a destino
                 return 2
         else:
-            return False
-            # dx = data['dx']
-            # vx = data['vx']
-            # dy = data['dy']
-            # vy = data['vy']
-            # if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
-            #     logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
-            #     return False
-            # self.__kalmanFilter.inputMeasurementUpdate([[dx,vx], [dy,vy]], deltaT)
-
-        return True
+            return 0
+        return 1
 
     # retorna una tupla con las velocidades y distancia a recorrer (distance, vx, vy, vrot)
     def getMovementVector(self):
@@ -187,7 +175,8 @@ class RobotThreadExecutor:
         # newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, -1.0*abs(filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
         newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
-        if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
+        # if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
+        if(transitionIndex > 0): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
             if(not self.__isRotating):
                 previousCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex-1]
                 if(self.cambioDireccion(previousCoordinate, currentCoordinate, nextCoordinate)):
@@ -204,8 +193,8 @@ class RobotThreadExecutor:
             rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
             rotationVelocity = macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
 
-            # esto existe porque cuando filtro_positivo[1] > 0, significa que debe moverse a lo largo del eje +Y, pero en la rotacion necesita
-            # que sea < 0, entonces directamente se invierte el sentido.
+            # esto existe porque cuando filtro_positivo[1] > 0, significa que debe moverse a lo largo del eje +Y, pero como el eje +Y incrementa "hacia abajo"
+            # en el mapa, se invierte el sentido
             filtro_positivo_eje_y_invertido = (filtro_positivo[0], -filtro_positivo[1])
 
             grados, direccion = self.__calculateRotation(self.__robot.getCurrentOrientationAsVector(), filtro_positivo_eje_y_invertido)
