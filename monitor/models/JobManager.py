@@ -1,4 +1,5 @@
 import logging
+
 # esta clase seria la encargada de distribuir los jobs - en teoria cualquier robot podria hacer cualquier job
 class JobManager:
     def __init__(self):
@@ -13,7 +14,6 @@ class JobManager:
             logging.error(f'unable to send JOB to robot {robotID}')
         try:
             self.__robotsJobsQueue[robotID].put(job)
-            # logging.debug(f'added to robot {robotID} the job {job.getPaths()}')
         except Exception as e:
             logging.error(f'unable to put a job to robot {robotID}')
 
@@ -55,6 +55,25 @@ class Job:
 
     def getTransitionIndex(self):
         return self.__transitionIndex
+
+    def getNextTransitionToExecute(self):
+        transitionsSequence = self.getTransitionsPathSequence()
+        transitionIndex = self.getTransitionIndex()
+        if(not len(transitionsSequence)):
+            logging.error(f'[{__name__}] Transition sequence empty - must initialize paths')
+            return -1
+        return transitionsSequence[transitionIndex]
+
+    # devuelve true si termino el camino, si no termino de recorrer retorna false
+    def updateNextTransitionToExecute(self):
+        self.setTransitionIndex(self.getTransitionIndex() + 1)
+        if(self.getTransitionIndex() >= len(self.getTransitionsPathSequence())): # path finished
+            return True
+        return False
+        # if(self.getTransitionIndex() < len(self.getTransitionsPathSequence())): # path not finished yet
+        #     self.setTransitionIndex(self.getTransitionIndex() + 1)
+        #     return False
+        # return True
 
     def setTransitionIndex(self, transitionIndex):
         self.__transitionIndex = transitionIndex

@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+import macros
 from Enums import Colors, MapCellOccupationStates, MapCellTypes
 
 class VisualizerCell:
@@ -11,6 +12,7 @@ class VisualizerCell:
         self.__height = height
         self.__borderWidth = 0
         self.__robotID = ""
+        self.__robotCurrentOrientation = macros.ORIENTATION_0_DEGREE
 
         self.update()
 
@@ -49,13 +51,31 @@ class VisualizerCell:
         pygame.draw.rect(self.__canvas, self.__color, (self.__mapCell.getPosX()*self.__width+80, self.__mapCell.getPosY()*self.__height+80, self.__width, self.__height), self.__borderWidth)
         # print((self.__mapCell.getPosX()*self.__width+80, self.__mapCell.getPosY()*self.__height+80, self.__width, self.__height))
         # draw robot ID
-        if(self.__robotID != None):
+        # if(self.__robotID != None):
+        if(self.__robotID != ""):
             font = pygame.font.SysFont(None, 20)
             img = font.render(self.__robotID, True, Colors.BLACK.value)
             self.__canvas.blit(img, (self.__mapCell.getPosX()*self.__width + 80, self.__mapCell.getPosY()*self.__height + 95))
+            self.__drawOrientation()
 
         # draw place ID
         if(self.__mapCell.getPlaceID() != None):
             font = pygame.font.SysFont(None, 20)
             img = font.render(str(self.__mapCell.getPlaceID()), True, Colors.BLACK.value)
             self.__canvas.blit(img, (self.__mapCell.getPosX()*self.__width + 82, self.__mapCell.getPosY()*self.__height + 82))
+
+    def __drawOrientation(self):
+        arrowToPrint = '↓'
+
+        if(self.__robotCurrentOrientation == macros.ORIENTATION_0_DEGREE):
+            arrowToPrint = '↓'
+        elif(self.__robotCurrentOrientation == macros.ORIENTATION_90_DEGREE):
+            arrowToPrint = '→'
+        elif(self.__robotCurrentOrientation == macros.ORIENTATION_180_DEGREE):
+            arrowToPrint = '↑'
+        elif(self.__robotCurrentOrientation == macros.ORIENTATION_270_DEGREE):
+            arrowToPrint = '←'
+
+        font = pygame.font.SysFont("Arial", 20)
+        img = font.render(arrowToPrint, True, Colors.WHITE.value)
+        self.__canvas.blit(img, (self.__mapCell.getPosX()*self.__width + (self.__width/2) + 80, self.__mapCell.getPosY()*self.__height + (self.__height/2) + 80))

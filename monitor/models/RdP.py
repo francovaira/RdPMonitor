@@ -5,6 +5,12 @@ from Enums import MapCellOccupationStates, MapCellOccupationActions
 import numpy as np
 
 # FIXME refactorizar esta clase en una que sea la RDP sola y conectado tenga la interfaz para con el mapa y hacia el monitor
+# FIXME la parte de confirmacion de disparo se podria simplificar modelandolo como brazos inhibidores
+
+class RobotInRDPCell:
+    def __init__(self, threadID):
+        self.threadID = threadID
+        self.isWaitingConfirmation = True
 
 class RdP:
 
@@ -28,6 +34,11 @@ class RdP:
             self.__matrizEstado.append(self.__initialMark[i])
             self.__matrizEstadoPrior.append(0)
 
+        # create a list for each transition to store threads waiting for confirmation - it will store RobotInRDPCell objects
+        self.__threadsWaitingConfirmation = []
+        for i in range(self.__transitionCount):
+            self.__threadsWaitingConfirmation.append([])
+
     def solicitudDisparo(self, transition):
         for i in range(0, self.__placesCount):
             if(self.__matrizEstado[i] + self.__incidence[i][transition] == -1):
@@ -50,6 +61,62 @@ class RdP:
                 self.__checkChangeAndUpdateMap(placeID, robotID)
             return 1
         return 0
+
+    def redDispararWaitConfirmation(self, transition, robotID):
+        if(self.solicitudDisparo(transition)):
+
+            # FIXME mejorar esta logica para que no agregue sino que checkee primero si existe y si esta en estado wait
+            # si esta habilitado para ejecutar la transicion (hay suficientes lugares libres en la celda destino), se bloquea hasta esperar confirmacion
+            threadInCell = self.addRobotToCell(robotID, transition)
+
+            if(threadInCell.isWaitingConfirmation == True):
+                return 2 # FIXME aca deberia devolver un estado como "BLOQUEADO_ESPERANDO_CONFIRMACION"
+
+
+            # si llego hasta aca es porque se desbloqueo y por ende puede terminar el disparo
+            # print(f'[RED_DE_PETRI] transicion {transition} confirmada. Impacta estado.\n')
+            self.removeRobotInCell(robotID, transition)
+
+            for placeID in range(0, self.__placesCount):
+                self.__matrizEstado[placeID] = self.__matrizEstado[placeID] + self.__incidence[placeID][transition]
+
+                # check if place has changed marking since last iteration
+                self.__checkChangeAndUpdateMap(placeID, robotID)
+            return 1
+        return 0
+
+    def setCoordinateConfirmation(self, threadID, transition, confirmationValue):
+        if(len(self.__threadsWaitingConfirmation[transition]) <= 0):
+            return -1
+
+        for i in range(len(self.__threadsWaitingConfirmation[transition])):
+            if(self.__threadsWaitingConfirmation[transition][i].threadID == threadID):
+                self.__threadsWaitingConfirmation[transition][i].isWaitingConfirmation = confirmationValue
+                # print(f'SETTING CONFIRM ({confirmationValue}) OF TRANSITION EXECUTE {transition}\n')
+                return 1
+        return 0
+
+    def addRobotToCell(self, threadID, transition):
+        # retorna el objeto robot si lo encuentra en la lista o lo crea
+
+        for i in range(len(self.__threadsWaitingConfirmation[transition])):
+            if(self.__threadsWaitingConfirmation[transition][i].threadID == threadID):
+                print(f'trying to add robot to transition <{transition}> but exists @ {i}. <{self.__threadsWaitingConfirmation[transition][i].threadID}>')
+                return self.__threadsWaitingConfirmation[transition][i]
+
+        self.__threadsWaitingConfirmation[transition].append(RobotInRDPCell(threadID))
+        print(f'adding robot <{threadID}> to ({transition}) to wait for confirmation')
+        return self.__threadsWaitingConfirmation[transition][len(self.__threadsWaitingConfirmation[transition])-1]
+
+    def removeRobotInCell(self, threadID, transition):
+        # retorna true si lo pudo borrar, false caso contrario
+
+        for i in range(len(self.__threadsWaitingConfirmation[transition])):
+            if(self.__threadsWaitingConfirmation[transition][i].threadID == threadID):
+                print(f'removing robot <{self.__threadsWaitingConfirmation[transition][i].threadID}> of transition <{transition}>')
+                self.__threadsWaitingConfirmation[transition].pop(i)
+                return True
+        return False
 
     def setRobotInCoordinate(self, coordinate, robotID): # Forces the marking to set a robot in a place
         placeID = self.__map.getPlaceIDFromMapCoordinate(coordinate)

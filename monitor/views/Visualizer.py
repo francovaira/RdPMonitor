@@ -16,19 +16,20 @@ class Visualizer:
         self.__canvas = pygame.display.set_mode((self.__canvasHorizontalSizePixels, self.__canvasVerticalSizePixels))
         self.__running = True
         self.__mapInSharedMemory = None
-        # set the Controller
+
         self.__controller = None
+
         # Available robots
         self.__switch_rob_a = False
         self.__switch_rob_b = False
         self.__switch_rob_c = False
+
         # Set background color
         self.__canvas.fill(Colors.BACKGROUND.value)
         pygame.display.set_caption("Titulesco")
 
         self._clock = pygame.time.Clock()
         self._fps = 60
-
 
     def __createMap(self):
         self.__horizontalCells = self.__controller.getMapHorizontalSize()
@@ -160,6 +161,17 @@ class Visualizer:
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
                 self.__grid[i][j].draw()
+
+        # draw reference axis
+        pygame.draw.line(self.__canvas, Colors.WHITE.value, (40, 40), (40, 80))
+        pygame.draw.line(self.__canvas, Colors.WHITE.value, (40, 40), (80, 40))
+        font = pygame.font.SysFont("Arial", 16)
+        img = font.render("(0,0)", True, Colors.WHITE.value)
+        self.__canvas.blit(img, (20, 20))
+        img = font.render("+ Y", True, Colors.WHITE.value)
+        self.__canvas.blit(img, (40, 85))
+        img = font.render("+ X", True, Colors.WHITE.value)
+        self.__canvas.blit(img, (85, 40))
 
     def __getRobotIdWidget(self):
         rob_id = self.__menu.get_widget('robot_id')
