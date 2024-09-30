@@ -25,6 +25,9 @@ class Model:
     def setFinalPoint(self, coordinates, rob_id):
         self.__robotsManager.setFinalPoint(coordinates, rob_id)
 
+    def getRobotOrientation(self, rob_id):
+        return self.__robotsManager.getRobotOrientation(rob_id)
+
     def getMapHorizontalSize(self):
         return self.__map.getMapDefinition().getHorizontalSize()
 

@@ -21,6 +21,9 @@ class Controller:
     def getPlaceIDFromMapCoordinate(self, coordinate):
         return self.model.getPlaceIDFromMapCoordinate(coordinate)
 
+    def getRobotOrientation(self, rob_id):
+        return self.model.getRobotOrientation(rob_id)
+
     def createRobot(self, rob_id):
         self.model.createRobot(rob_id)
 

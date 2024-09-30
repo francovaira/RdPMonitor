@@ -4,8 +4,9 @@ import macros
 from Enums import Colors, MapCellOccupationStates, MapCellTypes
 
 class VisualizerCell:
-    def __init__(self, canvas, mapCell, width, height):
+    def __init__(self, canvas, controller, mapCell, width, height):
         self.__canvas = canvas
+        self.__controller = controller
         self.__mapCell = mapCell
         self.__color = Colors.BLACK.value
         self.__width = width
@@ -22,6 +23,9 @@ class VisualizerCell:
         else:
             self.__robotID = robotID[0]
 
+    def setRobotCurrentOrientation(self, robotCurrentOrientation):
+        self.__robotCurrentOrientation = robotCurrentOrientation
+
     def getRobotID(self):
         return self.__robotID
 
@@ -30,6 +34,7 @@ class VisualizerCell:
 
     def update(self):
         self.setRobotID(self.__mapCell.getOccupantsID())
+        self.setRobotCurrentOrientation(self.__controller.getRobotOrientation(self.__robotID))
         cellType = self.__mapCell.getType()
         if(cellType == MapCellTypes.OBSTACLE):
             self.__color = Colors.LIGHT_BLUE.value

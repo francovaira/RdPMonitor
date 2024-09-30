@@ -42,7 +42,7 @@ class Visualizer:
         self.__grid = np.zeros((self.__horizontalCells, self.__verticalCells), dtype=object)
         for i in range(self.__horizontalCells):
             for j in range(self.__verticalCells):
-                self.__grid[i][j] = VisualizerCell(self.__canvas, self.__mapInSharedMemory[i][j], self.__cellWidth, self.__cellHeight)
+                self.__grid[i][j] = VisualizerCell(self.__canvas, self.__controller, self.__mapInSharedMemory[i][j], self.__cellWidth, self.__cellHeight)
                 self.__grid[i][j].draw()
 
         self.__create_menu(self.__canvas)

@@ -6,6 +6,7 @@ from .JobManager import Job
 from .JobManager import JobManager
 from .Robot import Robot
 import logging
+import macros
 # esta clase contiene todos los robots asociados y a traves del job manager les envia trabajos
 
 class RobotsManager:
@@ -34,6 +35,12 @@ class RobotsManager:
 
     def getRobotIndex(self, rob_id):
         return self.__robotNames.index(rob_id)
+
+    def getRobotOrientation(self, rob_id):
+        if(rob_id != None and rob_id != ""):
+            return self.__robots[self.getRobotIndex(rob_id)].getCurrentOrientation()
+        else:
+            return macros.ORIENTATION_0_DEGREE
 
     def setInitialPoint(self, coordinates, rob_id):
         try:
