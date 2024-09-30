@@ -40,7 +40,10 @@ class RobotThreadExecutor:
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
         self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
-        self.__kalmanFilter.setInitialState([[coordinatesSequence[0][0],0], [coordinatesSequence[0][1],0]])
+
+        # convierte al tamaño de la celda
+        kalmanInitialState = [[coordinatesSequence[0][0]*macros.DEFAULT_CELL_SIZE,0], [coordinatesSequence[0][1]*macros.DEFAULT_CELL_SIZE,0]]
+        self.__kalmanFilter.setInitialState(kalmanInitialState)
 
         res = tuple(map(operator.sub, coordinatesSequence[1], coordinatesSequence[0])) # obtiene el delta entre la coordenada actual y la destino iniciales
         filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
@@ -140,6 +143,9 @@ class RobotThreadExecutor:
         currentJob = self.__jobs[0]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
 
+        # convierte al tamaño de la celda
+        nextCoordinate = (nextCoordinate[0]*macros.DEFAULT_CELL_SIZE, nextCoordinate[1]*macros.DEFAULT_CELL_SIZE)
+
         # self.__currentMovementVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
         compensatedVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinate)
         translatedCompensatedVector = self.translateKalmanFeedbackToRobotFeedback(compensatedVector)
@@ -173,7 +179,7 @@ class RobotThreadExecutor:
         # se tiene un -1.0*abs(...) en la componente Y de velocidad por la ubicacion del sensor magnetico, que esta colocado en sentido del eje -Y
         # el robot siempre se va a mover a lo largo de su propio eje -Y (que en realidad puede ser cualquier eje relativo del robot)
         # newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, -1.0*abs(filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
-        newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+        newDesiredVector = [macros.DEFAULT_CELL_SIZE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
         # if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
         if(transitionIndex > 0): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
@@ -224,11 +230,6 @@ class RobotThreadExecutor:
         self.__currentMovementVector = newDesiredVector
         return (self.__currentMovementVector != None)
 
-    def cambioDireccionDEPRECATED(self, currentCoordinate, nextCoordinate):
-        if(currentCoordinate[0] != nextCoordinate[0] or currentCoordinate[1] != nextCoordinate[1]):
-            return True
-        return False
-
     def cambioDireccion(self, previousCoordinate, currentCoordinate, nextCoordinate):
         x1 = previousCoordinate[0]
         y1 = previousCoordinate[1]
@@ -271,6 +272,9 @@ class RobotThreadExecutor:
 
         currentJob = self.__jobs[0]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+
+        # convierte al tamaño de la celda
+        nextCoordinate = (nextCoordinate[0]*macros.DEFAULT_CELL_SIZE, nextCoordinate[1]*macros.DEFAULT_CELL_SIZE)
 
         logging.debug(f'[{__name__}] radius {radius} | estCurrCoord {estimatedCurrentCoordinate} | nextCoord {nextCoordinate}')
 
