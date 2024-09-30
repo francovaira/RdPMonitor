@@ -1,0 +1,19 @@
+ENTORNO PARA SIMULAR EL ROBOT
+-----------------------------
+
+    #) consola para ejecutar el python
+
+    #) consola con MQTT_PUB para simular los feedbacks del robot
+            mosquitto_pub -h localhost -p 1883 -t "topic/live/ROB_A" -m '{"dx":0.00, "vx":0.00, "dy":0.25, "vy":0.25}'
+
+    #) consola con MQTT_PUB para enviar los "status:0"
+            mosquitto_pub -h localhost -p 1883 -t "topic/live/ROB_A" -m '{"status":0}'
+
+    #) consola con MQTT_SUB para ver los setpoints enviados por el python
+            mosquitto_sub -t 'topic/setpoint/ROB_A'
+
+    #) consola con MQTT_SUB para ver los feedbacks enviados por el robot
+            mosquitto_sub -t 'topic/live/ROB_A'
+
+    #) consola con MQTT_SUB para ver el register del robot
+            mosquitto_sub -t 'topic/register'
