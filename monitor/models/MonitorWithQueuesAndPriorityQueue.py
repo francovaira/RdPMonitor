@@ -257,7 +257,7 @@ class MonitorWithQueuesAndPriorityQueue:
     def getTransitionSequence(self, coordinatesSequence):
         with self.__directRdPAccessCondition:
             transitionSequence = self.__petriNet.getTransitionSequence(coordinatesSequence)
-            self.__directRdPAccessCondition.notify_all() # FIXME checkear si el with ya lo hace o no
+            self.__directRdPAccessCondition.notify_all()
             return transitionSequence
 
     def setRobotInCoordinate(self, coordinate, robotID):
@@ -275,7 +275,7 @@ class MonitorWithQueuesAndPriorityQueue:
     def calculatePath(self, startX, startY, endX, endY):
         with self.__directPathFinderAccessCondition:
             pathCoordinates = self.__pathFinder.calculatePath(startX, startY, endX, endY)
-            self.__directPathFinderAccessCondition.notify_all() # FIXME checkear si el with ya lo hace o no
+            self.__directPathFinderAccessCondition.notify_all()
             return pathCoordinates
 
     def calculateDynamicPath(self, startX, startY, endX, endY, cellsCoordinatesMarkedAsOccupied):
