@@ -179,7 +179,7 @@ class RobotThreadExecutor:
         # se tiene un -1.0*abs(...) en la componente Y de velocidad por la ubicacion del sensor magnetico, que esta colocado en sentido del eje -Y
         # el robot siempre se va a mover a lo largo de su propio eje -Y (que en realidad puede ser cualquier eje relativo del robot)
         # newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, -1.0*abs(filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
-        newDesiredVector = [macros.DEFAULT_CELL_SIZE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+        # newDesiredVector = [macros.DEFAULT_CELL_SIZE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
         # if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
         if(transitionIndex > 0): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
@@ -193,6 +193,14 @@ class RobotThreadExecutor:
                 self.__isRotating = False
                 self.__robot.setCurrentOrientation(self.__nextOrientation)
                 logging.debug(f'[{__name__}] robot new orientation = {self.__robot.getCurrentOrientation()}')
+
+        # FIXME aca para el newDesiredVector deberia ver la diferencia de posicion con la coordenada esperada dado que la condicion de llegar depende de un radio,
+        # entonces la parte de distancia del setpoint deberia ser mayor o menor dependiendo
+        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
+        nextCoordinateTranslated = [nextCoordinate[0]*macros.DEFAULT_CELL_SIZE, nextCoordinate[1]*macros.DEFAULT_CELL_SIZE]
+        compensatedVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinateTranslated)
+        translatedCompensatedVector = self.translateKalmanFeedbackToRobotFeedback(compensatedVector)
+        newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
         if(self.__isRotating):
             robotCurrentOrientation = self.__robot.getCurrentOrientation()
@@ -252,10 +260,22 @@ class RobotThreadExecutor:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
             return False
 
-    def robotIsNearOrPassOverDestinationCoordinate(self):
+    def sendStopSetpointToRobot(self):
+        try:
+            movementVector = [0, 0, 0, 0]
+            setpoint_message = self.traslateMovementVectorToMessage(movementVector)
+            msg = self.__robot.getMqttClient().publish(self.__robot.getRobotSendSetpointTopic(), setpoint_message, qos=0)
+            msg.wait_for_publish()
+            logging.debug(f'[{__name__}] sent STOPPPP to robot | {setpoint_message}')
+            return True
+        except Exception as e:
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
+            return False
+
+    def robotIsNearOrPassOverDestinationCoordinateDEPRECATED(self):
         if(self.__robotReachedDestination):
             self.__robotReachedDestination = False
-            return True
+            # return True
 
         # currentMovementVector me dice hacia donde me estoy moviendo (desired vector no puede ser el vector compensado, es el vector ideal con solo 1 eje de velocidad != 0)
         # estimatedCurrentCoordinate me sirve para comparar y ver si llegue/me pase a nextCoordinate
@@ -281,6 +301,39 @@ class RobotThreadExecutor:
         deltaX = abs(estimatedCurrentCoordinate[0] - nextCoordinate[0])
         deltaY = abs(estimatedCurrentCoordinate[1] - nextCoordinate[1])
         return (deltaX <= radius and deltaY <= radius)
+
+    def robotIsNearOrPassOverDestinationCoordinate(self):
+
+        radius = macros.DEFAULT_CELL_ARRIVE_RADIUS
+
+        estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
+        estimatedCurrentCoordinate = []
+        estimatedCurrentCoordinate.append(0)
+        estimatedCurrentCoordinate.append(0)
+        estimatedCurrentCoordinate[0] = estimatedCurrentState[0][0]
+        estimatedCurrentCoordinate[1] = estimatedCurrentState[1][0]
+
+        currentJob = self.__jobs[0]
+        nextCoordinate = currentJob.getCoordinatesPathSequence()[currentJob.getTransitionIndex()+1]
+        # convierte al tamaño de la celda
+        nextCoordinate = (nextCoordinate[0]*macros.DEFAULT_CELL_SIZE, nextCoordinate[1]*macros.DEFAULT_CELL_SIZE)
+
+        logging.debug(f'[{__name__}] radius {radius} | estCurrCoord {estimatedCurrentCoordinate} | nextCoord {nextCoordinate}')
+
+        robotCurrentOrientation = self.__robot.getCurrentOrientation()
+        if(robotCurrentOrientation == macros.ORIENTATION_0_DEGREE):
+            if(estimatedCurrentCoordinate[1] >= (nextCoordinate[1] - radius)):
+                return True
+        elif(robotCurrentOrientation == macros.ORIENTATION_90_DEGREE):
+            if(estimatedCurrentCoordinate[0] >= (nextCoordinate[0] - radius)):
+                return True
+        elif(robotCurrentOrientation == macros.ORIENTATION_180_DEGREE):
+            if(estimatedCurrentCoordinate[1] <= (nextCoordinate[1] + radius)):
+                return True
+        elif(robotCurrentOrientation == macros.ORIENTATION_270_DEGREE):
+            if(estimatedCurrentCoordinate[0] <= (nextCoordinate[0] + radius)):
+                return True
+        return False
 
     def setCoordinateConfirmation(self, confirmationValue):
         logging.debug(f'[{__name__}] SETTING COORD CONFIRMATION ...')

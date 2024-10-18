@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-
+import macros
 
 # Filtro de Kalman >unidimensional<, modelando un sistema que realiza un movimiento rectilineo
 # uniforme con aceleracion inicial.
@@ -76,7 +76,7 @@ class KalmanFilter:
         self.__Xkm1 = self.__calculateNewEstimatedState(self.__Xkp, self.__K, Yk)
 
         self.__count = self.__count + 1
-        if(self.__count >= 10):
+        if(self.__count >= macros.KALMAN_CALCULATE_PROCESS_COVARIANCE_MATRIX_PERIOD):
             # print(f'NUEVO CALCULO PROCESS COV MATRIX --------------------------')
             self.__Pkm1 = self.__calculateNewProcessCovarianceMatrix(Pkp, self.__K)
             self.__count = 0

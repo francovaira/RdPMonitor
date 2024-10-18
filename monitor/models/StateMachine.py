@@ -1,5 +1,6 @@
 from statemachine import StateMachine, State
 import json
+import time
 import logging
 import macros
 
@@ -120,6 +121,8 @@ class RobotMachine(StateMachine):
             return False
 
     def calculate_movement_vector(self):
+        logging.debug(f'[{__name__} @ {self.__robotID}] waiting some time before next setpoint')
+        time.sleep(macros.WAIT_TIME_BEFORE_SEND_NEXT_SETPOINT)
         logging.debug(f'[{__name__} @ {self.__robotID}] calculating setpoint')
         return self.__executor.calculateMovementVector()
 
@@ -161,9 +164,12 @@ class RobotMachine(StateMachine):
         return True
 
     def robot_has_arrived(self):
-        value = self.__executor.robotIsNearOrPassOverDestinationCoordinate()
-        logging.debug(f'[{__name__} @ {self.__robotID}] robot has arrived ? {value}')
-        return value
+        robotHasArrived = self.__executor.robotIsNearOrPassOverDestinationCoordinate()
+        logging.debug(f'[{__name__} @ {self.__robotID}] robot has arrived ? {robotHasArrived}')
+        if(robotHasArrived):
+            logging.debug(f'[{__name__} @ {self.__robotID}] sending stop setpoint to robot')
+            self.__executor.sendStopSetpointToRobot()
+        return robotHasArrived
 
     def send_confirmacion_monitor(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] sending confirmation to monitor')
