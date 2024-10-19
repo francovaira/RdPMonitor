@@ -77,16 +77,9 @@ class KalmanFilter:
 
         self.__count = self.__count + 1
         if(self.__count >= macros.KALMAN_CALCULATE_PROCESS_COVARIANCE_MATRIX_PERIOD):
-            # print(f'NUEVO CALCULO PROCESS COV MATRIX --------------------------')
+            logging.debug(f'[{__name__}] actualizando matriz de covarianza')
             self.__Pkm1 = self.__calculateNewProcessCovarianceMatrix(Pkp, self.__K)
             self.__count = 0
-
-        # print(f'INPUT MEASUREMENT {inputMeasurement} || deltaT {deltaT}')
-        # print(f'\n\test state:\n{self.__Xkm1}')
-        # print(f'\n\tpred state:\n{self.__Xkp}')
-        # print(f'\n\tkalman gain:\n{self.__K}')
-        # print(f'\n\tpre process cov matrix:\n{Pkp}')
-        # print(f'\n\tpost process cov matrix:\n{self.__Pkm1}')
 
     def getEstimatedState(self):
         # returns a vector *X*k = [Xk, Vk]
