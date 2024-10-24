@@ -23,8 +23,8 @@ ORIENTATION_270_DEGREE          = 3
 DEFAULT_CELL_SIZE                       = 0.45                  # expresado en metros - es cuanto mide el lado de una celda fisica real
 DEFAULT_ROBOT_MOVE_DISTANCE             = DEFAULT_CELL_SIZE     # expresado en metros
 # DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.775                 # expresado en metros - distancia para dar una vuelta de 180 grados
-DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.9                   # expresado en metros - distancia para dar una vuelta de 180 grados
-DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.36                  # expresado en metros/seg
+DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.95                   # expresado en metros - distancia para dar una vuelta de 180 grados
+DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.3                  # expresado en metros/seg
 DEFAULT_ROBOT_ANGULAR_VELOCITY          = 18.0                  # expresado en RPM
 
 # FIXME este valor en 0.1 es muy grande, deberia mejorarse
