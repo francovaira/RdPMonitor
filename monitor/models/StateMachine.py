@@ -10,6 +10,7 @@ class RobotMachine(StateMachine):
         self.__robot = robot
         self.__robotID = robot.getRobotID()
         self.__robotFeedbackQueue = robot.getFeedbackQueue()
+        self.__isSlowModeLast = False
         super(RobotMachine, self).__init__()
 
     wait_next_path_job = State(initial=True)
@@ -50,6 +51,7 @@ class RobotMachine(StateMachine):
     esperaRespuesta = (
         espera_respuesta.to(espera_fin_rotacion, cond="is_rotacion_movement")
         | espera_respuesta.to(impactar_cambio_de_estado, cond="robot_has_arrived")
+        | espera_respuesta.to(calculate_move_vector, cond="is_slow_mode")
         | espera_respuesta.to(compensacion_kalman, cond="is_compensation_time")
         | espera_respuesta.to(espera_respuesta, cond="wait_response")
         | espera_respuesta.to(disparo_monitor, unless="wait_response")
@@ -64,7 +66,7 @@ class RobotMachine(StateMachine):
     )
 
     def run(self):
-        if (self.finish_state.is_active == True):
+        if(self.finish_state.is_active == True):
             return False
 
         if(self.wait_next_path_job.is_active == True):
@@ -114,6 +116,8 @@ class RobotMachine(StateMachine):
         logging.debug(f'[{__name__} @ {self.__robotID}] returned from RUN: {status}')
 
         if (status == "WAIT_CONF"):
+            logging.debug(f'[{__name__} @ {self.__robotID}] waiting some time before next setpoint')
+            time.sleep(macros.WAIT_TIME_BEFORE_SEND_NEXT_SETPOINT)
             return True
         elif (status == "WORKING"):
             return True
@@ -121,8 +125,6 @@ class RobotMachine(StateMachine):
             return False
 
     def calculate_movement_vector(self):
-        logging.debug(f'[{__name__} @ {self.__robotID}] waiting some time before next setpoint')
-        time.sleep(macros.WAIT_TIME_BEFORE_SEND_NEXT_SETPOINT)
         logging.debug(f'[{__name__} @ {self.__robotID}] calculating setpoint')
         return self.__executor.calculateMovementVector()
 
@@ -148,6 +150,10 @@ class RobotMachine(StateMachine):
             while(value != 2):
                 robotFeedback = self.__robotFeedbackQueue.get(timeout=macros.WAIT_ROBOT_FEEDBACK)
                 value = self.__executor.processRobotFeedback(robotFeedback)
+
+            logging.debug(f'[{__name__} @ {self.__robotID}] waiting some time before next setpoint')
+            time.sleep(macros.WAIT_TIME_BEFORE_SEND_NEXT_SETPOINT)
+
             return (value == 2)
         except Exception as e:
             logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)}')
@@ -163,17 +169,31 @@ class RobotMachine(StateMachine):
         self.__executor.calculateCompensatedVector()
         return True
 
+    def is_slow_mode(self):
+        is_slow_mode = self.__executor.isSlowMode()
+        logging.debug(f'[{__name__} @ {self.__robotID}] is_slow_mode? {is_slow_mode}')
+
+        if(not self.__isSlowModeLast and is_slow_mode):
+            self.__isSlowModeLast = True
+            return True
+        elif(self.__isSlowModeLast and not is_slow_mode):
+            self.__isSlowModeLast = False
+        return False
+
     def robot_has_arrived(self):
         robotHasArrived = self.__executor.robotIsNearOrPassOverDestinationCoordinate()
         logging.debug(f'[{__name__} @ {self.__robotID}] robot has arrived ? {robotHasArrived}')
         if(robotHasArrived):
             logging.debug(f'[{__name__} @ {self.__robotID}] sending stop setpoint to robot')
             self.__executor.sendStopSetpointToRobot()
+            logging.debug(f'[{__name__} @ {self.__robotID}] waiting some time before next setpoint')
+            time.sleep(macros.WAIT_TIME_BEFORE_SEND_NEXT_SETPOINT)
         return robotHasArrived
 
     def send_confirmacion_monitor(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] sending confirmation to monitor')
-        return self.__executor.setCoordinateConfirmation(False)
+        value = self.__executor.setCoordinateConfirmation(False)
+        return value
 
     def on_exit_finish_state(self):
         logging.debug(f'[{__name__} @ {self.__robotID}] cycle completed')

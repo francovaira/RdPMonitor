@@ -23,6 +23,7 @@ class RobotThreadExecutor:
         self.__robotReachedDestination = False;
         self.__isNewPathJob = False
         self.__isRotating = False
+        self.__isSlowMode = False
 
     def addJob(self, job):
         if(type(job) == Job):
@@ -124,6 +125,13 @@ class RobotThreadExecutor:
     def getMovementVector(self):
         return self.__currentMovementVector
 
+    def isSlowMode(self):
+        try:
+            return self.__isSlowMode
+        except Exception as e:
+            logging.error(f'[{__name__}] EXCEPTION RAISED: {repr(e)} @ {type(e).__name__}, {__file__}, {e.__traceback__.tb_lineno}')
+            return False
+
     # retorna true si el vector de movimiento solo contiene componente rotacional distinta de cero, las demas siendo cero (el robot girando sobre su propio eje)
     def isRotacionMovement(self):
         return self.__currentMovementVector[3] != 0 and self.__currentMovementVector[0] != 0 and self.__currentMovementVector[1] == 0 and self.__currentMovementVector[2] == 0
@@ -166,7 +174,7 @@ class RobotThreadExecutor:
         transitionIndex = currentJob.getTransitionIndex()
         currentCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex]
         nextCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex+1]
-        logging.debug(f'[{__name__}] busque la nueva coordenada <{nextCoordinate}> | transicion <{transitionIndex}>')
+        logging.debug(f'[{__name__}] la siguiente coordenada es <{nextCoordinate}> | transicion <{transitionIndex}>')
 
         res = tuple(map(operator.sub, nextCoordinate, currentCoordinate)) # obtiene el delta entre ambas coordenadas
         filtro_negativo = tuple(map(lambda x: -1 if (x<0) else x, res)) # normaliza la tupla
@@ -181,9 +189,8 @@ class RobotThreadExecutor:
         # newDesiredVector = [macros.DEFAULT_ROBOT_MOVE_DISTANCE, 0.00, -1.0*abs(filtro_positivo[1]*macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
         # newDesiredVector = [macros.DEFAULT_CELL_SIZE, 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
-        # if(transitionIndex > 1): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
-        if(transitionIndex > 0): # FIXME deberia ser >0 cuando se arregle que el disparo de la red se haga y recien cuando llegue impacte el estado
-            if(not self.__isRotating):
+        if(transitionIndex > 0):
+            if(not self.__isRotating and not self.__isSlowMode):
                 previousCoordinate = currentJob.getCoordinatesPathSequence()[transitionIndex-1]
                 if(self.cambioDireccion(previousCoordinate, currentCoordinate, nextCoordinate)):
                     logging.debug(f'[{__name__}] cambio de direccion (!)')
@@ -200,7 +207,13 @@ class RobotThreadExecutor:
         nextCoordinateTranslated = [nextCoordinate[0]*macros.DEFAULT_CELL_SIZE, nextCoordinate[1]*macros.DEFAULT_CELL_SIZE]
         compensatedVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinateTranslated)
         translatedCompensatedVector = self.translateKalmanFeedbackToRobotFeedback(compensatedVector)
-        newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+
+        if(self.__isSlowMode):
+            # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
+            newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+        else:
+            # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
+            newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
 
         if(self.__isRotating):
             robotCurrentOrientation = self.__robot.getCurrentOrientation()
@@ -305,6 +318,7 @@ class RobotThreadExecutor:
     def robotIsNearOrPassOverDestinationCoordinate(self):
 
         radius = macros.DEFAULT_CELL_ARRIVE_RADIUS
+        radiusSlowMode = macros.DEFAULT_CELL_ARRIVE_RADIUS_SLOW_MODE
 
         estimatedCurrentState = self.__kalmanFilter.getEstimatedState()
         estimatedCurrentCoordinate = []
@@ -323,16 +337,32 @@ class RobotThreadExecutor:
         robotCurrentOrientation = self.__robot.getCurrentOrientation()
         if(robotCurrentOrientation == macros.ORIENTATION_0_DEGREE):
             if(estimatedCurrentCoordinate[1] >= (nextCoordinate[1] - radius)):
+                self.__isSlowMode = False
                 return True
+            elif(estimatedCurrentCoordinate[1] >= (nextCoordinate[1] - radiusSlowMode)):
+                self.__isSlowMode = True
+                return False
         elif(robotCurrentOrientation == macros.ORIENTATION_90_DEGREE):
             if(estimatedCurrentCoordinate[0] >= (nextCoordinate[0] - radius)):
+                self.__isSlowMode = False
                 return True
+            elif(estimatedCurrentCoordinate[0] >= (nextCoordinate[0] - radiusSlowMode)):
+                self.__isSlowMode = True
+                return False
         elif(robotCurrentOrientation == macros.ORIENTATION_180_DEGREE):
             if(estimatedCurrentCoordinate[1] <= (nextCoordinate[1] + radius)):
+                self.__isSlowMode = False
                 return True
+            elif(estimatedCurrentCoordinate[1] <= (nextCoordinate[1] + radiusSlowMode)):
+                self.__isSlowMode = True
+                return False
         elif(robotCurrentOrientation == macros.ORIENTATION_270_DEGREE):
             if(estimatedCurrentCoordinate[0] <= (nextCoordinate[0] + radius)):
+                self.__isSlowMode = False
                 return True
+            elif(estimatedCurrentCoordinate[0] <= (nextCoordinate[0] + radiusSlowMode)):
+                self.__isSlowMode = True
+                return False
         return False
 
     def setCoordinateConfirmation(self, confirmationValue):
@@ -340,6 +370,7 @@ class RobotThreadExecutor:
         currentJob = self.__jobs[0]
         destinationCoordinateTransition = currentJob.getTransitionsPathSequence()[currentJob.getTransitionIndex()]
         logging.debug(f'[{__name__} @ {self.__robotID}] confirmation of transition {destinationCoordinateTransition}')
+        self.__isSlowMode = False
         return self.__monitor.setCoordinateConfirmation(self.__robotID, destinationCoordinateTransition, confirmationValue)
 
     # robotFeedback recibe algo como [dx, vx, dy, vy]
