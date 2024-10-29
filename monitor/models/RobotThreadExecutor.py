@@ -15,7 +15,7 @@ class RobotThreadExecutor:
         self.__robot = robot
         self.__robotID = robot.getRobotID()
         self.__jobs = []
-        self.__kalmanFilter = KalmanFilter2D()
+        self.__kalmanFilter = KalmanFilter2D(robot.getMqttClient())
         self.__currentMovementVector = []
         self.__nextOrientation = robot.getCurrentOrientation()
         self.__time_start = 0

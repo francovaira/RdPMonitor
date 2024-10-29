@@ -5,15 +5,16 @@ import operator
 import numpy as np
 import logging
 import random
-
+import json
 
 class KalmanFilter2D:
-    def __init__(self):
+    def __init__(self, mqtt_client):
         self.__kalmanFilterX = KalmanFilter()
         self.__kalmanFilterY = KalmanFilter()
         self.__measurementCount = 0
         self.__isCompensationTime = False
         self.__measurementAccum = np.array([[0,0], [0,0]])
+        self.__mqttClient = mqtt_client
 
     # recibe una matriz con el formato: [[deltaX, VX], [deltaY, VY]]
     def inputMeasurementUpdate(self, inputMeasurement, deltaT):
@@ -96,6 +97,17 @@ class KalmanFilter2D:
 
             compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
             logging.debug(f'[{__name__}] compensacion vector {compensationVelocityVector} | alpha = {alpha} ({alphaDegrees}°)')
+
+            # Manda la posición (x,y) estimada al tópico positions
+            try:
+                message = {
+                    "x": x_est_curr,
+                    "y": y_est_curr
+                }
+                self.__mqttClient.publish('topic/positions', str(json.dumps(message)), qos=0)
+            except Exception as e:
+                print(e)
+
             return compensationVelocityVector
 
     def notifyDirectionChange(self):
