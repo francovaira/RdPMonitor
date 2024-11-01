@@ -208,6 +208,16 @@ class RobotThreadExecutor:
         compensatedVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinateTranslated)
         translatedCompensatedVector = self.translateKalmanFeedbackToRobotFeedback(compensatedVector)
 
+        # Manda la posición (x,y) estimada al tópico positions
+        try:
+            message = {
+                "x": estimatedCurrentState[0][0],
+                "y": estimatedCurrentState[1][0]
+            }
+            self.__robot.getMqttClient().publish('topic/positions', str(json.dumps(message)), qos=0)
+        except Exception as e:
+            print(e)
+
         if(self.__isSlowMode):
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
             newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]

@@ -34,6 +34,16 @@ class KalmanFilter2D:
         self.__kalmanFilterY.inputMeasurementUpdate(self.__measurementAccum[1], deltaT)
         self.__measurementCount = self.__measurementCount + 1
 
+        # Manda la posición (x,y) estimada al tópico positions
+        try:
+            message = {
+                "x_accum": self.__measurementAccum[0][0],
+                "y_accum": self.__measurementAccum[1][0]
+            }
+            self.__mqttClient.publish('topic/positions_accum', str(json.dumps(message)), qos=0)
+        except Exception as e:
+            print(e)
+
     # retorna True si se actualizo el estado tras N mediciones
     def isCompensationTime(self):
         if(self.__measurementCount >= macros.KALMAN_ESTIMATED_STATE_PERIOD):
@@ -97,16 +107,6 @@ class KalmanFilter2D:
 
             compensationVelocityVector = [compensationDistance[0], vx_comp[0], vy_comp[0], 0.00]
             logging.debug(f'[{__name__}] compensacion vector {compensationVelocityVector} | alpha = {alpha} ({alphaDegrees}°)')
-
-            # Manda la posición (x,y) estimada al tópico positions
-            try:
-                message = {
-                    "x": x_est_curr,
-                    "y": y_est_curr
-                }
-                self.__mqttClient.publish('topic/positions', str(json.dumps(message)), qos=0)
-            except Exception as e:
-                print(e)
 
             return compensationVelocityVector
 
