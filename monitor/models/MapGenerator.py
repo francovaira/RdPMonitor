@@ -37,7 +37,6 @@ class MapGenerator:
         self.__mapDefinitionRead = self.__fileMapDefinitionRead()
         if(self.__mapDefinitionRead == None):
             print("ERROR MAP GENERATOR - Unable to get map definition file")
-            # FIXME aca generar el mapa segun la configuracion
 
         self.__mapDefinition = MapDefinition(self.__mapDefinitionRead)
 
@@ -65,9 +64,6 @@ class MapGenerator:
         return mapDefinitionRead
 
     def __checkConsistency(self, mapDefinition):
-
-        # FIXME hacer todo en un solo for
-
         # check that map is a square or rectangle
         lastLength = 0
         for i in range(len(mapDefinition)):

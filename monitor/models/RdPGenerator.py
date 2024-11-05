@@ -118,9 +118,6 @@ class RdPGenerator:
         incidence[placeDestination+1][transitionIndex] = -1
 
     def __checkConsistency(self, incidence, initialMark):
-
-        # FIXME hacer todo en un solo for
-
         # check that initial marking count and incidence matrix row (place) count match
         if(len(incidence) != len(initialMark)):
             print("ERROR DE INCONSISTENCIA RDP - Marcado != Incidencia")

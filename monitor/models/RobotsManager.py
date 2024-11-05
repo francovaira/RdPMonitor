@@ -15,7 +15,7 @@ class RobotsManager:
         self.__jobManager = JobManager()
         self.__robots = []
 
-        # create instances for each robot - FIXME proximamente esto seria automatico cuando se registren los robots al conectarse
+        # create instances for each robot
         self.__robotNames = []
 
     def addRobot(self, rob_id):

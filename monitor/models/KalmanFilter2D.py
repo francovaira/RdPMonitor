@@ -235,8 +235,6 @@ def main():
     compensatedDesiredVector = []
     measure_index = 0
 
-    # FIXME probar con tiempo de medicion random
-
     while(1):
 
         for index_coordinate in range(len(coordinatesSequence)-1):

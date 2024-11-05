@@ -228,10 +228,12 @@ class RobotThreadExecutor:
 
         if(self.__isSlowMode):
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
-            newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], macros.DEFAULT_SLOW_MODE_FACTOR*abs(translatedCompensatedVector[2]), 0.00]
         else:
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
-            newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], 1.0*abs(translatedCompensatedVector[2]), 0.00]
 
         if(self.__isRotating):
             robotCurrentOrientation = self.__robot.getCurrentOrientation()
@@ -435,10 +437,12 @@ class RobotThreadExecutor:
 
         elif(robotCurrentOrientation == macros.ORIENTATION_180_DEGREE):
             # aumento -Y mapa -> aumento +Y robot
-            translatedOutput = [kalmanFeedback[0], kalmanFeedback[1], -kalmanFeedback[2], kalmanFeedback[3]]
+            # translatedOutput = [kalmanFeedback[0], kalmanFeedback[1], -kalmanFeedback[2], kalmanFeedback[3]]
+            translatedOutput = [kalmanFeedback[0], -kalmanFeedback[1], -kalmanFeedback[2], kalmanFeedback[3]]
 
         elif(robotCurrentOrientation == macros.ORIENTATION_270_DEGREE):
             # aumento -X mapa -> aumento +Y robot
+            # translatedOutput = [kalmanFeedback[0], kalmanFeedback[2], -kalmanFeedback[1], kalmanFeedback[3]]
             translatedOutput = [kalmanFeedback[0], kalmanFeedback[2], -kalmanFeedback[1], kalmanFeedback[3]]
 
         return translatedOutput
