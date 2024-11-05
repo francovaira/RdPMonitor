@@ -8,6 +8,7 @@ import operator
 import logging
 import time
 import json
+import math
 
 class RobotThreadExecutor:
     def __init__(self, robot, monitor):
@@ -94,6 +95,13 @@ class RobotThreadExecutor:
             vx = data['vx']
             dy = data['dy']
             vy = data['vy']
+
+            #Posición angular enviada por el robot
+            if data['vr'] > 0:
+                self.__robot.setRealOrientation(data['dr'])
+            else:
+                self.__robot.setRealOrientation(-(data['dr']))
+
             if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
                 logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
                 return False
@@ -238,13 +246,13 @@ class RobotThreadExecutor:
             logging.debug(f'[{__name__}] debe girar ---> {grados} / {direccion}')
 
             if(grados == 90):
-                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
+                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2 + self.__robot.getRealOrientation()
                 if(direccion == "izquierda"):
                     self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_90_DEGREE) % 4
                 elif(direccion == "derecha"):
                     self.__nextOrientation = (self.__robot.getCurrentOrientation() - macros.ORIENTATION_90_DEGREE) % 4
             elif(grados == 180):
-                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
+                rotationDistance = (macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE + self.__robot.getRealOrientation())
                 self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_180_DEGREE) % 4
             else:
                 rotationDistance = 0
@@ -256,6 +264,7 @@ class RobotThreadExecutor:
             elif(direccion == "derecha"):
                 rotationVelocity = -macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
 
+            logging.debug(f'[{__name__}] ROTACIÓN REAL ---> {rotationDistance}')
             newDesiredVector = [rotationDistance, 0.00, 0.00, rotationVelocity]
 
         self.__currentMovementVector = newDesiredVector

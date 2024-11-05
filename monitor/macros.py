@@ -20,7 +20,7 @@ ORIENTATION_90_DEGREE           = 1
 ORIENTATION_180_DEGREE          = 2
 ORIENTATION_270_DEGREE          = 3
 
-DEFAULT_CELL_SIZE                       = 0.45                  # expresado en metros - es cuanto mide el lado de una celda fisica real
+DEFAULT_CELL_SIZE                       = 0.5                  # expresado en metros - es cuanto mide el lado de una celda fisica real
 DEFAULT_ROBOT_MOVE_DISTANCE             = DEFAULT_CELL_SIZE     # expresado en metros
 # DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.775                 # expresado en metros - distancia para dar una vuelta de 180 grados
 DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.93                   # expresado en metros - distancia para dar una vuelta de 180 grados
