@@ -229,10 +229,12 @@ class RobotThreadExecutor:
         if(self.__isSlowMode):
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
             # newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
-            newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], macros.DEFAULT_SLOW_MODE_FACTOR*abs(translatedCompensatedVector[2]), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], macros.DEFAULT_SLOW_MODE_FACTOR*abs(translatedCompensatedVector[2]), 0.00]
+            newDesiredVector = [translatedCompensatedVector[0], macros.DEFAULT_SLOW_MODE_FACTOR*translatedCompensatedVector[1], macros.DEFAULT_SLOW_MODE_FACTOR*abs(translatedCompensatedVector[2]), 0.00]
         else:
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
             # newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], 1.0*abs(translatedCompensatedVector[2]), 0.00]
             newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], 1.0*abs(translatedCompensatedVector[2]), 0.00]
 
         if(self.__isRotating):

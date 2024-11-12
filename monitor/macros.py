@@ -22,11 +22,10 @@ ORIENTATION_270_DEGREE          = 3
 
 DEFAULT_CELL_SIZE                       = 0.50                  # expresado en metros - es cuanto mide el lado de una celda fisica real
 DEFAULT_ROBOT_MOVE_DISTANCE             = DEFAULT_CELL_SIZE     # expresado en metros
-# DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.775                 # expresado en metros - distancia para dar una vuelta de 180 grados
-DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.93                   # expresado en metros - distancia para dar una vuelta de 180 grados
-DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.35                  # expresado en metros/seg
-DEFAULT_ROBOT_ANGULAR_VELOCITY          = 18.0                  # expresado en RPM
+DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.92                   # expresado en metros - distancia para dar una vuelta de 180 grados
+DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.4                  # expresado en metros/seg
+DEFAULT_ROBOT_ANGULAR_VELOCITY          = 14.0                  # expresado en RPM
 
-DEFAULT_CELL_ARRIVE_RADIUS              = 0.05                  # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
-DEFAULT_CELL_ARRIVE_RADIUS_SLOW_MODE    = 0.25                  # expresado en metros. Radio minimo en cual se setea una velocidad menor para mejorar la precision de llegada
-DEFAULT_SLOW_MODE_FACTOR                = 0.55                  # expresion adimensional. Admite valores entre 0 y 1 para atenuar la velocidad de movimiento cuando esta llegando a una coordenada
+DEFAULT_CELL_ARRIVE_RADIUS              = 0.050                  # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
+DEFAULT_CELL_ARRIVE_RADIUS_SLOW_MODE    = 0.305                # expresado en metros. Radio minimo en cual se setea una velocidad menor para mejorar la precision de llegada
+DEFAULT_SLOW_MODE_FACTOR                = 0.65                  # expresion adimensional. Admite valores entre 0 y 1 para atenuar la velocidad de movimiento cuando esta llegando a una coordenada
