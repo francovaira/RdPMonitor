@@ -16,7 +16,7 @@ class Robot:
             self.__initialPoint = None
             self.__finalPoint = None
             self.__currentOrientation = macros.ORIENTATION_0_DEGREE
-            self.__realOrientation = None
+            self.__realOrientation = 0.0
             self.__feedbackQueue = queue.Queue(maxsize=1)
             self.__mqtt_client = MQTTClient(robotID, self.__feedbackQueue)
             self.__jobQueue = queue.Queue()
@@ -39,7 +39,8 @@ class Robot:
         self.__currentOrientation = orientation
 
     def setRealOrientation(self, orientation):
-        self.__realOrientation = orientation
+        self.__realOrientation = self.__realOrientation + orientation
+        logging.debug(f'[{__name__}] orientacion actual robot [ {self.__realOrientation} ]')
 
     def getInitialPoint(self):
         return self.__initialPoint
