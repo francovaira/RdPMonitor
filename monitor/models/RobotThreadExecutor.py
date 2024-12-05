@@ -38,10 +38,14 @@ class RobotThreadExecutor:
 
         for job in self.__jobs:
             coordinatesSequence = self.__getCoorinatesSequence(job.getPaths())
+
+            # SECUENCIA EN L
+            coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
+
             transitionsSequence = self.__monitor.getTransitionSequence(coordinatesSequence)
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
-        self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
+        self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID) # FIXME hacer que se correspondda con el tamaño de la celda
 
         # convierte al tamaño de la celda
         kalmanInitialState = [[coordinatesSequence[0][0]*macros.DEFAULT_CELL_SIZE,0], [coordinatesSequence[0][1]*macros.DEFAULT_CELL_SIZE,0]]
@@ -275,6 +279,13 @@ class RobotThreadExecutor:
         return (self.__currentMovementVector != None)
 
     def cambioDireccion(self, previousCoordinate, currentCoordinate, nextCoordinate):
+        # Dirección anterior
+        direction1 = (currentCoordinate[0] - previousCoordinate[0], currentCoordinate[1] - previousCoordinate[1])
+        # Dirección actual
+        direction2 = (nextCoordinate[0] - currentCoordinate[0], nextCoordinate[1] - currentCoordinate[1])
+        return direction1 != direction2
+
+    def cambioDireccionDEPRECATED(self, previousCoordinate, currentCoordinate, nextCoordinate):
         x1 = previousCoordinate[0]
         y1 = previousCoordinate[1]
         x2 = currentCoordinate[0]
