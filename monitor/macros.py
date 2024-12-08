@@ -23,11 +23,10 @@ ORIENTATION_270_DEGREE          = 3
 DEFAULT_CELL_SIZE                       = 0.50                  # expresado en metros - es cuanto mide el lado de una celda fisica real
 DEFAULT_ROBOT_MOVE_DISTANCE             = DEFAULT_CELL_SIZE     # expresado en metros
 DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE   = 0.92                   # expresado en metros - distancia para dar una vuelta de 180 grados
-DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.35                  # expresado en metros/seg
+DEFAULT_ROBOT_LINEAR_VELOCITY           = 0.365                  # expresado en metros/seg
 DEFAULT_ROBOT_ANGULAR_VELOCITY          = 15.0                  # expresado en RPM
 
 DEFAULT_CELL_ARRIVE_RADIUS              = 0.050                  # expresado en metros. Radio minimo en cual debe estar el robot para considerar que llego a la coordenada esperada
 DEFAULT_CELL_ARRIVE_RADIUS_SLOW_MODE    = 0.305                # expresado en metros. Radio minimo en cual se setea una velocidad menor para mejorar la precision de llegada
-DEFAULT_SLOW_MODE_FACTOR                = 0.60                  # expresion adimensional. Admite valores entre 0 y 1 para atenuar la velocidad de movimiento cuando esta llegando a una coordenada
+DEFAULT_SLOW_MODE_FACTOR                = 0.49                  # expresion adimensional. Admite valores entre 0 y 1 para atenuar la velocidad de movimiento cuando esta llegando a una coordenada
 
-# FIXMEEEE agregar lo que se saco del calculo de saber cuando tienee que rotar 180°

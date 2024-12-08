@@ -40,7 +40,10 @@ class RobotThreadExecutor:
             coordinatesSequence = self.__getCoorinatesSequence(job.getPaths())
 
             # SECUENCIA EN L
-            coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
+            # coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
+
+            # SECUENCIA EN C
+            coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1)]
 
             transitionsSequence = self.__monitor.getTransitionSequence(coordinatesSequence)
             job.setCoordinatesPathSequence(coordinatesSequence)
@@ -260,7 +263,7 @@ class RobotThreadExecutor:
                 elif(direccion == "derecha"):
                     self.__nextOrientation = (self.__robot.getCurrentOrientation() - macros.ORIENTATION_90_DEGREE) % 4
             elif(grados == 180):
-                rotationDistance = (macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE + self.__robot.getRealOrientation())
+                rotationDistance = (macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE - self.__robot.getRealOrientation())
                 self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_180_DEGREE) % 4
             else:
                 rotationDistance = 0
