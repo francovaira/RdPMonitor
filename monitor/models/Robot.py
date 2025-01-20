@@ -42,6 +42,9 @@ class Robot:
         self.__realOrientation = self.__realOrientation + orientation
         logging.debug(f'[{__name__}] orientacion actual robot [ {self.__realOrientation} ]')
 
+    def clearRealOrientation(self):
+        self.__realOrientation = 0.0
+
     def getInitialPoint(self):
         return self.__initialPoint
 

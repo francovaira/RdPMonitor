@@ -43,7 +43,10 @@ class RobotThreadExecutor:
             # coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
 
             # SECUENCIA EN C
-            coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1)]
+            # coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1)]
+
+            # SECUENCIA EN C ida y vuelta
+            coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (2, 1), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
 
             transitionsSequence = self.__monitor.getTransitionSequence(coordinatesSequence)
             job.setCoordinatesPathSequence(coordinatesSequence)
@@ -214,6 +217,7 @@ class RobotThreadExecutor:
             elif(self.__isRotating):
                 self.__isRotating = False
                 self.__robot.setCurrentOrientation(self.__nextOrientation)
+                self.__robot.clearRealOrientation()
                 logging.debug(f'[{__name__}] robot new orientation = {self.__robot.getCurrentOrientation()}')
 
         # FIXME aca para el newDesiredVector deberia ver la diferencia de posicion con la coordenada esperada dado que la condicion de llegar depende de un radio,
@@ -223,6 +227,10 @@ class RobotThreadExecutor:
         compensatedVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinateTranslated)
         translatedCompensatedVector = self.translateKalmanFeedbackToRobotFeedback(compensatedVector)
 
+        estimationError = [0, 0]
+        estimationError[0] = estimatedCurrentState[0][0] - (currentCoordinate[0] * macros.DEFAULT_CELL_SIZE)
+        estimationError[1] = estimatedCurrentState[1][0] - (currentCoordinate[1] * macros.DEFAULT_CELL_SIZE)
+
         # Manda la posición (x,y) estimada al tópico positions
         try:
             message = {
@@ -230,6 +238,16 @@ class RobotThreadExecutor:
                 "y": estimatedCurrentState[1][0]
             }
             self.__robot.getMqttClient().publish('topic/positions', str(json.dumps(message)), qos=0)
+        except Exception as e:
+            print(e)
+
+        # Manda el error (x,y) entre el estimado y el deseado
+        try:
+            message = {
+                "error_x": estimationError[0],
+                "error_y": estimationError[1]
+            }
+            self.__robot.getMqttClient().publish('topic/error_estimation', str(json.dumps(message)), qos=0)
         except Exception as e:
             print(e)
 
