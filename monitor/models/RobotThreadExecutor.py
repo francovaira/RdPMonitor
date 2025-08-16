@@ -8,6 +8,7 @@ import operator
 import logging
 import time
 import json
+import math
 
 class RobotThreadExecutor:
     def __init__(self, robot, monitor):
@@ -15,7 +16,7 @@ class RobotThreadExecutor:
         self.__robot = robot
         self.__robotID = robot.getRobotID()
         self.__jobs = []
-        self.__kalmanFilter = KalmanFilter2D()
+        self.__kalmanFilter = KalmanFilter2D(robot.getMqttClient())
         self.__currentMovementVector = []
         self.__nextOrientation = robot.getCurrentOrientation()
         self.__time_start = 0
@@ -37,10 +38,20 @@ class RobotThreadExecutor:
 
         for job in self.__jobs:
             coordinatesSequence = self.__getCoorinatesSequence(job.getPaths())
+
+            # SECUENCIA EN L
+            # coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
+
+            # SECUENCIA EN C
+            # coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1)]
+
+            # SECUENCIA EN C ida y vuelta
+            coordinatesSequence = [(3, 3), (2, 3), (1, 3), (1, 2), (1, 1), (2, 1), (3, 1), (2, 1), (1, 1), (1, 2), (1, 3), (2, 3), (3, 3)]
+
             transitionsSequence = self.__monitor.getTransitionSequence(coordinatesSequence)
             job.setCoordinatesPathSequence(coordinatesSequence)
             job.setTransitionsPathSequence(transitionsSequence)
-        self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID)
+        self.__monitor.setRobotInCoordinate(coordinatesSequence[0], self.__robotID) # FIXME hacer que se correspondda con el tamaño de la celda
 
         # convierte al tamaño de la celda
         kalmanInitialState = [[coordinatesSequence[0][0]*macros.DEFAULT_CELL_SIZE,0], [coordinatesSequence[0][1]*macros.DEFAULT_CELL_SIZE,0]]
@@ -94,6 +105,13 @@ class RobotThreadExecutor:
             vx = data['vx']
             dy = data['dy']
             vy = data['vy']
+
+            #Posición angular enviada por el robot
+            if data['vr'] > 0:
+                self.__robot.setRealOrientation(data['dr'])
+            else:
+                self.__robot.setRealOrientation(-(data['dr']))
+
             if(type(dx)!=float or type(vx)!=float or type(dy)!=float or type(vy)!=float):
                 logging.error(f'[{__name__}] {self.__robotID} json contains invalid data for measurement feedback')
                 return False
@@ -199,6 +217,7 @@ class RobotThreadExecutor:
             elif(self.__isRotating):
                 self.__isRotating = False
                 self.__robot.setCurrentOrientation(self.__nextOrientation)
+                self.__robot.clearRealOrientation()
                 logging.debug(f'[{__name__}] robot new orientation = {self.__robot.getCurrentOrientation()}')
 
         # FIXME aca para el newDesiredVector deberia ver la diferencia de posicion con la coordenada esperada dado que la condicion de llegar depende de un radio,
@@ -208,12 +227,40 @@ class RobotThreadExecutor:
         compensatedVector = self.__kalmanFilter.getCompensatedVectorAutomagic(estimatedCurrentState, nextCoordinateTranslated)
         translatedCompensatedVector = self.translateKalmanFeedbackToRobotFeedback(compensatedVector)
 
+        estimationError = [0, 0]
+        estimationError[0] = estimatedCurrentState[0][0] - (currentCoordinate[0] * macros.DEFAULT_CELL_SIZE)
+        estimationError[1] = estimatedCurrentState[1][0] - (currentCoordinate[1] * macros.DEFAULT_CELL_SIZE)
+
+        # Manda la posición (x,y) estimada al tópico positions
+        try:
+            message = {
+                "x": estimatedCurrentState[0][0],
+                "y": estimatedCurrentState[1][0]
+            }
+            self.__robot.getMqttClient().publish('topic/positions', str(json.dumps(message)), qos=0)
+        except Exception as e:
+            print(e)
+
+        # Manda el error (x,y) entre el estimado y el deseado
+        try:
+            message = {
+                "error_x": estimationError[0],
+                "error_y": estimationError[1]
+            }
+            self.__robot.getMqttClient().publish('topic/error_estimation', str(json.dumps(message)), qos=0)
+        except Exception as e:
+            print(e)
+
         if(self.__isSlowMode):
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
-            newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 0.00, macros.DEFAULT_SLOW_MODE_FACTOR*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], macros.DEFAULT_SLOW_MODE_FACTOR*abs(translatedCompensatedVector[2]), 0.00]
+            newDesiredVector = [translatedCompensatedVector[0], macros.DEFAULT_SLOW_MODE_FACTOR*translatedCompensatedVector[1], macros.DEFAULT_SLOW_MODE_FACTOR*abs(translatedCompensatedVector[2]), 0.00]
         else:
             # FIXME esto deberia usar todas las componentes que entrega kalman!!!!!
-            newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 0.00, 1.0*abs(macros.DEFAULT_ROBOT_LINEAR_VELOCITY), 0.00]
+            # newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], 1.0*abs(translatedCompensatedVector[2]), 0.00]
+            newDesiredVector = [translatedCompensatedVector[0], 1.0*translatedCompensatedVector[1], 1.0*abs(translatedCompensatedVector[2]), 0.00]
 
         if(self.__isRotating):
             robotCurrentOrientation = self.__robot.getCurrentOrientation()
@@ -228,13 +275,13 @@ class RobotThreadExecutor:
             logging.debug(f'[{__name__}] debe girar ---> {grados} / {direccion}')
 
             if(grados == 90):
-                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2
+                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE/2 + self.__robot.getRealOrientation()
                 if(direccion == "izquierda"):
                     self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_90_DEGREE) % 4
                 elif(direccion == "derecha"):
                     self.__nextOrientation = (self.__robot.getCurrentOrientation() - macros.ORIENTATION_90_DEGREE) % 4
             elif(grados == 180):
-                rotationDistance = macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE
+                rotationDistance = (macros.DEFAULT_ROBOT_ROTATE_180_DEG_DISTANCE - self.__robot.getRealOrientation())
                 self.__nextOrientation = (self.__robot.getCurrentOrientation() + macros.ORIENTATION_180_DEGREE) % 4
             else:
                 rotationDistance = 0
@@ -246,12 +293,20 @@ class RobotThreadExecutor:
             elif(direccion == "derecha"):
                 rotationVelocity = -macros.DEFAULT_ROBOT_ANGULAR_VELOCITY
 
+            logging.debug(f'[{__name__}] ROTACIÓN REAL ---> {rotationDistance}')
             newDesiredVector = [rotationDistance, 0.00, 0.00, rotationVelocity]
 
         self.__currentMovementVector = newDesiredVector
         return (self.__currentMovementVector != None)
 
     def cambioDireccion(self, previousCoordinate, currentCoordinate, nextCoordinate):
+        # Dirección anterior
+        direction1 = (currentCoordinate[0] - previousCoordinate[0], currentCoordinate[1] - previousCoordinate[1])
+        # Dirección actual
+        direction2 = (nextCoordinate[0] - currentCoordinate[0], nextCoordinate[1] - currentCoordinate[1])
+        return direction1 != direction2
+
+    def cambioDireccionDEPRECATED(self, previousCoordinate, currentCoordinate, nextCoordinate):
         x1 = previousCoordinate[0]
         y1 = previousCoordinate[1]
         x2 = currentCoordinate[0]
@@ -416,10 +471,12 @@ class RobotThreadExecutor:
 
         elif(robotCurrentOrientation == macros.ORIENTATION_180_DEGREE):
             # aumento -Y mapa -> aumento +Y robot
-            translatedOutput = [kalmanFeedback[0], kalmanFeedback[1], -kalmanFeedback[2], kalmanFeedback[3]]
+            # translatedOutput = [kalmanFeedback[0], kalmanFeedback[1], -kalmanFeedback[2], kalmanFeedback[3]]
+            translatedOutput = [kalmanFeedback[0], -kalmanFeedback[1], -kalmanFeedback[2], kalmanFeedback[3]]
 
         elif(robotCurrentOrientation == macros.ORIENTATION_270_DEGREE):
             # aumento -X mapa -> aumento +Y robot
+            # translatedOutput = [kalmanFeedback[0], kalmanFeedback[2], -kalmanFeedback[1], kalmanFeedback[3]]
             translatedOutput = [kalmanFeedback[0], kalmanFeedback[2], -kalmanFeedback[1], kalmanFeedback[3]]
 
         return translatedOutput

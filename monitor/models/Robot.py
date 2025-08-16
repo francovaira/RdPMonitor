@@ -16,6 +16,7 @@ class Robot:
             self.__initialPoint = None
             self.__finalPoint = None
             self.__currentOrientation = macros.ORIENTATION_0_DEGREE
+            self.__realOrientation = 0.0
             self.__feedbackQueue = queue.Queue(maxsize=1)
             self.__mqtt_client = MQTTClient(robotID, self.__feedbackQueue)
             self.__jobQueue = queue.Queue()
@@ -36,6 +37,13 @@ class Robot:
 
     def setCurrentOrientation(self, orientation):
         self.__currentOrientation = orientation
+
+    def setRealOrientation(self, orientation):
+        self.__realOrientation = self.__realOrientation + orientation
+        logging.debug(f'[{__name__}] orientacion actual robot [ {self.__realOrientation} ]')
+
+    def clearRealOrientation(self):
+        self.__realOrientation = 0.0
 
     def getInitialPoint(self):
         return self.__initialPoint
@@ -72,6 +80,9 @@ class Robot:
 
     def getCurrentOrientation(self):
         return self.__currentOrientation
+
+    def getRealOrientation(self):
+        return self.__realOrientation
 
     # esta funcion convierte la orientacion actual del robot a vectores unitarios en el plano cartesiano que apuntan en esa direccion
     # tambien convierte la convencion que se tiene del robot sobre qué significa que este apuntando a 0 grados, 90, etc

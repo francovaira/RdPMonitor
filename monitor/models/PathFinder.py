@@ -346,8 +346,6 @@ class PathFinder:
                 pathSequence.append([0.25, -0.25, 0, oneCellDistance])
                 direction = 0
 
-            # FIXME agregar filtro para agregar movimientos de rotacion al tener que cambiar de direccion
-
         # messages generated with format [vel_x; vel_y; theta; setpoint]
         return pathSequence
 
